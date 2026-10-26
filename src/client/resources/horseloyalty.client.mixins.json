@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "com.example.horseloyalty.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AbstractHorseRidingMixin",
+		"AbstractMountInventoryScreenMixin",
+		"HudMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,67 @@
+plugins {
+	// Minecraft 26.x is unobfuscated, so this is the non-remapping Loom plugin.
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = 'horse-loyalty'
+}
+
+repositories {
+	// Only needed when depending on other mods. Loom adds the repositories
+	// for Minecraft and its libraries automatically.
+}
+
+loom {
+	// Keeps client-only code (keybinds, input handling, rendering) in src/client
+	// so it can never be loaded on a dedicated server by accident.
+	splitEnvironmentSourceSets()
+
+	runs {
+		client {
+			// Fixed dev username, so the offline player UUID stays the same between
+			// launches. Otherwise horses you tamed last run belong to a "different" player.
+			programArgs "--username", "XZiggsX"
+		}
+	}
+
+	mods {
+		"horseloyalty" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	// Versions live in gradle.properties
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API: data attachments, events, networking, keybinds.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	// Generates a sources jar when you build, handy if you publish later.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}

@@ -1,0 +1,11 @@
+# Gradle / Loom
+.gradle/
+build/
+out/
+
+# Dev game folder (worlds, logs, options)
+run/
+
+# IDE
+.idea/
+*.iml

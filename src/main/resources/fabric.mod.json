@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "horseloyalty",
+	"version": "${version}",
+	"name": "Horse Loyalty",
+	"description": "Horses with loyalty levels, gaits and boat-style steering.",
+	"authors": [
+		"Your Name"
+	],
+	"license": "All-Rights-Reserved",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.example.horseloyalty.HorseLoyaltyMod"
+		],
+		"client": [
+			"com.example.horseloyalty.client.HorseLoyaltyClient"
+		]
+	},
+	"mixins": [
+		"horseloyalty.mixins.json",
+		{
+			"config": "horseloyalty.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"horseloyalty.loyalty.level.0": "Untamed",
+	"horseloyalty.loyalty.level.1": "Unruly",
+	"horseloyalty.loyalty.level.2": "Wary",
+	"horseloyalty.loyalty.level.3": "Trusting",
+	"horseloyalty.loyalty.level.4": "Devoted",
+	"horseloyalty.loyalty.level.5": "Partners",
+	"horseloyalty.loyalty.screen": "Loyalty %s/%s",
+	"horseloyalty.loyalty.status": "Loyalty %s/%s: %s  (fed %sx, ridden %s min)",
+	"horseloyalty.loyalty.level_up": "%s's loyalty rose to %s/%s: %s",
+	"horseloyalty.loyalty.level_down": "%s is hungry and its loyalty to you fell to %s/%s: %s",
+	"horseloyalty.gait.halt": "Halt",
+	"horseloyalty.gait.walk": "Walk",
+	"horseloyalty.gait.trot": "Trot",
+	"horseloyalty.gait.canter": "Canter",
+	"horseloyalty.gait.gallop": "Gallop",
+	"horseloyalty.gait.dropped": "Your horse eased down to %s"
+}
