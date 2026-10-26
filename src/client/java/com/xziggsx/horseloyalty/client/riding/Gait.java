@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import java.util.Locale;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -50,6 +51,6 @@ public enum Gait {
 
 	/** Translated name, from the lang key {@code horseloyalty.gait.NAME}. */
 	public Component displayName() {
-		return Component.translatable("horseloyalty.gait." + name().toLowerCase());
+		return Component.translatable("horseloyalty.gait." + name().toLowerCase(Locale.ROOT));
 	}
 }

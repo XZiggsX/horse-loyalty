@@ -1,7 +1,6 @@
 plugins {
 	// Minecraft 26.x is unobfuscated, so this is the non-remapping Loom plugin.
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
 }
 
 version = project.mod_version
@@ -67,7 +66,7 @@ jar {
 }
 
 java {
-	// Generates a sources jar when you build, handy if you publish later.
+	// Also builds a -sources.jar with the code. Don't upload that one to Modrinth.
 	withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_25

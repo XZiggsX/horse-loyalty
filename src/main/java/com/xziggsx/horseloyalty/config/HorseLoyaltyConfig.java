@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.config;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.personality.Personality;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -10,7 +11,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import com.xziggsx.horseloyalty.personality.Personality;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

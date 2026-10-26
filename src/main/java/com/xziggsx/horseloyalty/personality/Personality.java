@@ -115,8 +115,8 @@ public enum Personality {
 		}
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
 		RandomSource random = foal.getRandom();
-		Personality a = parentA.getAttachedOrElse(DATA, roll(random));
-		Personality b = parentB.getAttachedOrElse(DATA, roll(random));
+		Personality a = parentOrRoll(parentA, random);
+		Personality b = parentOrRoll(parentB, random);
 		double chance = random.nextDouble();
 		Personality result;
 		if (a == b) {
@@ -129,6 +129,12 @@ public enum Personality {
 			result = roll(random);
 		}
 		foal.setAttached(DATA, result);
+	}
+
+	/** A parent's personality, or a fresh roll if it has none yet (only rolled when needed). */
+	private static Personality parentOrRoll(AbstractHorse parent, RandomSource random) {
+		Personality personality = parent.getAttached(DATA);
+		return personality != null ? personality : roll(random);
 	}
 
 	/** A random personality, weighted by the config. */

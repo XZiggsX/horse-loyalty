@@ -76,7 +76,8 @@ public final class Loyalty {
 
 	/** This player's stats with the horse (empty if they have none). Server side only. */
 	public static LoyaltyData get(AbstractHorse horse, Player player) {
-		return horse.getAttachedOrCreate(DATA).getOrDefault(player.getUUID(), LoyaltyData.EMPTY);
+		// OrElse, not OrCreate: just looking must not save an empty record on every horse.
+		return horse.getAttachedOrElse(DATA, Map.of()).getOrDefault(player.getUUID(), LoyaltyData.EMPTY);
 	}
 
 	/** This player's level with the horse. Works on both sides, using the synced levels. */
@@ -133,7 +134,7 @@ public final class Loyalty {
 	/** Saves a player's new stats, refreshes the synced levels and, if {@code celebrate}, celebrates a level up. */
 	private static void update(AbstractHorse horse, Player player, LoyaltyData next, boolean celebrate) {
 		UUID id = player.getUUID();
-		Map<UUID, LoyaltyData> riders = new HashMap<>(horse.getAttachedOrCreate(DATA));
+		Map<UUID, LoyaltyData> riders = new HashMap<>(horse.getAttachedOrElse(DATA, Map.of()));
 		riders.put(id, next);
 		forgetExtraRiders(riders, id);
 		horse.setAttached(DATA, riders);
