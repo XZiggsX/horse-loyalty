@@ -14,6 +14,7 @@
 	"horseloyalty.gait.trot": "Trot",
 	"horseloyalty.gait.canter": "Canter",
 	"horseloyalty.gait.gallop": "Gallop",
+	"horseloyalty.gait.reverse": "Backing up",
 	"horseloyalty.gait.dropped": "Your horse eased down to %s",
 	"horseloyalty.foal.born": "A foal is born and trusts you already. Loyalty %s/%s: %s",
 	"horseloyalty.personality.steady": "Steady",

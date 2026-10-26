@@ -1,9 +1,15 @@
 package com.example.horseloyalty.client.riding;
 
+import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import net.minecraft.network.chat.Component;
 
 /**
- * Riding speeds. Tap W to shift up one gait, tap S to shift down one.
+ * Riding speeds. Tap W to shift up one gait, tap S to shift down one. Pressing S again
+ * at a halt and holding it backs the horse up (see {@link #REVERSE_SPEED}).
+ * <p>
+ * Each gait is a fixed share of the horse's own top speed, set in the config
+ * ({@code gaitSpeedPercent}, by default walk 30%, trot 50%, canter 75%, gallop 100%), so the
+ * gaits feel clearly different on every horse. The rider's loyalty then scales all of them.
  * <p>
  * Speeds are "effective" movement speeds: the speed value the horse moves with when
  * given a full forward input. A player walking moves at 0.1 speed with a 0.98 input,
@@ -18,12 +24,10 @@ public enum Gait {
 
 	/** Unenchanted player walking pace, about 4.3 blocks/s. */
 	public static final double PLAYER_WALK_SPEED = 0.1 * 0.98;
-	/** Player sprinting pace (walk + 30%), about 5.6 blocks/s. */
-	public static final double PLAYER_SPRINT_SPEED = 0.13 * 0.98;
-	/** Canter is this share of the horse's own top speed. */
-	public static final double CANTER_SHARE = 0.75;
 	/** Converts an effective speed to blocks per second on flat ground. */
 	public static final double SPEED_TO_BLOCKS_PER_SECOND = 4.317 / PLAYER_WALK_SPEED;
+	/** Backing up, about 1.5 blocks/s whatever the horse or loyalty. */
+	public static final double REVERSE_SPEED = 1.5 / SPEED_TO_BLOCKS_PER_SECOND;
 
 	/** The next faster gait, or GALLOP if already galloping. */
 	public Gait up() {
@@ -37,18 +41,11 @@ public enum Gait {
 
 	/**
 	 * @param horseSpeed the horse's movement speed attribute
-	 * @return the effective speed for this gait. Each gait is at least as fast as the
-	 *         one below, so a slow horse's canter never drops under a sprint.
+	 * @return the effective speed for this gait before the loyalty cap: its configured
+	 *         share of the horse's top speed. Each gait is faster than the one below.
 	 */
 	public double speed(double horseSpeed) {
-		double horseTop = horseSpeed * 0.98;
-		return switch (this) {
-			case HALT -> 0;
-			case WALK -> PLAYER_WALK_SPEED;
-			case TROT -> PLAYER_SPRINT_SPEED;
-			case CANTER -> Math.max(horseTop * CANTER_SHARE, PLAYER_SPRINT_SPEED);
-			case GALLOP -> Math.max(horseTop, Math.max(horseTop * CANTER_SHARE, PLAYER_SPRINT_SPEED));
-		};
+		return horseSpeed * 0.98 * HorseLoyaltyConfig.get().gaitSpeedShare(ordinal());
 	}
 
 	/** Translated name, from the lang key {@code horseloyalty.gait.NAME}. */

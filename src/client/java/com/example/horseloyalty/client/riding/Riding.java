@@ -16,8 +16,8 @@ public final class Riding {
 	}
 
 	/**
-	 * Highest speed the horse will run for this rider, as a share of its own top speed.
-	 * Gaits above the cap run at the cap.
+	 * How fast the horse will go for this rider, as a share of its normal speed.
+	 * Every gait is scaled by it, so a less loyal horse is slower in every gait.
 	 */
 	public static double topSpeedShare(AbstractHorse horse, Player player) {
 		return HorseLoyaltyConfig.get().topSpeedShare(Loyalty.level(horse, player));
@@ -42,12 +42,11 @@ public final class Riding {
 	}
 
 	/**
-	 * Effective speed for a gait with this rider, after the loyalty cap.
+	 * Effective speed for a gait with this rider, scaled by their loyalty.
 	 * @param horseSpeed the horse's movement speed attribute
 	 */
 	public static double gaitSpeed(Gait gait, double horseSpeed, AbstractHorse horse, Player player) {
-		double cap = Gait.GALLOP.speed(horseSpeed) * topSpeedShare(horse, player);
-		return Math.min(gait.speed(horseSpeed), cap);
+		return gait.speed(horseSpeed) * topSpeedShare(horse, player);
 	}
 
 	/** Chance per check that the horse drops a gait on its own for this rider. Lazy horses drop more often. */

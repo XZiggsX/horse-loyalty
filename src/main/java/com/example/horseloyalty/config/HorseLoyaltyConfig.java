@@ -40,7 +40,8 @@ public final class HorseLoyaltyConfig {
 			+ "but only once per feedCooldownSeconds per player. Riding a moving horse gives 1 point "
 			+ "per ridingSecondsPerPoint. loyaltyLevels (1 Unruly to 5 Partners): pointsNeeded is the "
 			+ "total points to reach that level (level 1 is just tamed). topSpeedPercent is the most of "
-			+ "the horse's own top speed it will run for you (walk and trot are never slowed). "
+			+ "the horse's normal speed it will run for you; every gait is scaled by it. gaitSpeedPercent: "
+			+ "each gait's share of the horse's top speed, before the loyalty scaling. "
 			+ "turnDegreesPerTick is how fast A/D turn it; double it to halve the turn circle. "
 			+ "turnEaseTicks is how long it takes to reach full turn rate. While moving, every "
 			+ "gaitDropEverySeconds without the rider shifting gait, the horse has gaitDropChancePercent "
@@ -73,6 +74,8 @@ public final class HorseLoyaltyConfig {
 
 	private int turnEaseTicks = 4;
 
+	private GaitSpeeds gaitSpeedPercent = new GaitSpeeds();
+
 	private List<LevelSettings> loyaltyLevels = defaultLevels();
 
 	public static final class LoyaltyGain {
@@ -86,6 +89,13 @@ public final class HorseLoyaltyConfig {
 		private double secondsUntilHungry = 1200;
 		private double loyaltyLossEverySeconds = 120;
 		private int loyaltyPointsLost = 1;
+	}
+
+	public static final class GaitSpeeds {
+		private double walk = 30;
+		private double trot = 50;
+		private double canter = 75;
+		private double gallop = 100;
 	}
 
 	public static final class FoalSettings {
@@ -149,10 +159,10 @@ public final class HorseLoyaltyConfig {
 		List<LevelSettings> levels = new ArrayList<>();
 		// Levels 1 to 4 roll every 30 s, averaging one drop every 50 s, 75 s, 2 min and
 		// 3 min 20 s. Level 5 never drops by chance, only on a fixed 5 minute timer.
-		levels.add(new LevelSettings(1, 0, 60, 2.0, 30, 60));
-		levels.add(new LevelSettings(2, 10, 70, 3.0, 30, 40));
-		levels.add(new LevelSettings(3, 40, 80, 4.0, 30, 25));
-		levels.add(new LevelSettings(4, 100, 90, 6.0, 30, 15));
+		levels.add(new LevelSettings(1, 0, 60, 4.0, 30, 60));
+		levels.add(new LevelSettings(2, 10, 70, 5.0, 30, 40));
+		levels.add(new LevelSettings(3, 40, 80, 6.0, 30, 25));
+		levels.add(new LevelSettings(4, 100, 90, 7.0, 30, 15));
 		levels.add(new LevelSettings(5, 200, 100, 8.0, 300, 100));
 		return levels;
 	}
@@ -160,6 +170,7 @@ public final class HorseLoyaltyConfig {
 	// --- Resolved values, indexed by level 0 to 5 --------------------------------
 
 	private transient double[] topSpeedShare;
+	private transient double[] gaitShares;
 	private transient float[] turnDegrees;
 	private transient int[] pointsNeeded;
 	private transient double[] gaitDropChance;
@@ -182,6 +193,11 @@ public final class HorseLoyaltyConfig {
 	/** Top speed as a share (0.6 = 60%) for a loyalty level. */
 	public double topSpeedShare(int level) {
 		return topSpeedShare[Math.clamp(level, 0, Loyalty.MAX_LEVEL)];
+	}
+
+	/** A gait's share (0.5 = 50%) of the horse's top speed, by gait index (0 halt to 4 gallop). */
+	public double gaitSpeedShare(int gait) {
+		return gaitShares[Math.clamp(gait, 0, gaitShares.length - 1)];
 	}
 
 	/** Top A/D turn rate for a loyalty level, in degrees per tick. */
@@ -385,6 +401,15 @@ public final class HorseLoyaltyConfig {
 		feedCooldownTicks = Math.round(Math.max(0, gain.feedCooldownSeconds) * 20);
 		// At least one tick per point; 0 or less would divide by zero.
 		ridingTicksPerPoint = (int) Math.max(1, Math.round(gain.ridingSecondsPerPoint * 20));
+
+		// Halt, walk, trot, canter, gallop. Each gait at least 5% faster than the one below.
+		GaitSpeeds speeds = gaitSpeedPercent != null ? gaitSpeedPercent : new GaitSpeeds();
+		double[] percents = {0, speeds.walk, speeds.trot, speeds.canter, speeds.gallop};
+		gaitShares = new double[percents.length];
+		for (int gait = 1; gait < percents.length; gait++) {
+			double percent = Math.clamp(percents[gait], 5, 200);
+			gaitShares[gait] = Math.max(percent / 100.0, gaitShares[gait - 1] + 0.05);
+		}
 
 		HungerSettings hungerSettings = hunger != null ? hunger : new HungerSettings();
 		hungerEnabled = hungerSettings.enabled;

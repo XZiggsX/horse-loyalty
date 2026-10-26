@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Client-side riding controls: gaits (W/S taps), gait speeds, boat-style A/D steering,
+ * Client-side riding controls: gaits (W/S taps), backing up, gait speeds, boat-style A/D steering,
  * random gait drops, and skittish horses bolting from creepers.
  * <p>
  * Minecraft moves a player-ridden horse on that player's own client and sends the
@@ -40,6 +40,10 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	/** Current gait. */
 	@Unique
 	private Gait horseloyalty$gait = Gait.HALT;
+
+	/** Whether the rider is holding S at a halt to back the horse up. */
+	@Unique
+	private boolean horseloyalty$reversing;
 
 	/** Rider's forward input last tick, to detect W and S taps. */
 	@Unique
@@ -92,6 +96,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$turnSpeed = 0;
 		horseloyalty$pendingRiderTurn = 0;
 		horseloyalty$gaitDropTimer = 0;
+		horseloyalty$reversing = false;
 		horseloyalty$boltTicks = 0;
 		horseloyalty$boltCheckTimer = 0;
 		horseloyalty$boltTurn = 0;
@@ -99,7 +104,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 
 	/**
 	 * Gait control: W taps shift up, S taps shift down, and the horse keeps going at
-	 * its gait without holding a key. A and D steer (see getRiddenRotation), so they
+	 * its gait without holding a key. Pressing S again at a halt and holding it backs up. A and D steer (see getRiddenRotation), so they
 	 * no longer strafe. Also rolls the random gait drop.
 	 */
 	@Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
@@ -114,10 +119,20 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (bolting) {
 			// The rider has no say until the bolt is over.
 			horseloyalty$gait = Gait.GALLOP;
+			horseloyalty$reversing = false;
 		} else if (forward > 0 && horseloyalty$lastForward <= 0) {
 			horseloyalty$gait = horseloyalty$gait.up();
 		} else if (forward < 0 && horseloyalty$lastForward >= 0) {
-			horseloyalty$gait = horseloyalty$gait.down();
+			if (horseloyalty$gait == Gait.HALT) {
+				// A fresh S press while already halted: back up for as long as it's held.
+				horseloyalty$reversing = true;
+				player.sendOverlayMessage(Component.translatable("horseloyalty.gait.reverse"));
+			} else {
+				horseloyalty$gait = horseloyalty$gait.down();
+			}
+		}
+		if (forward >= 0) {
+			horseloyalty$reversing = false;
 		}
 		horseloyalty$lastForward = forward;
 		// While bolting there are no gait messages or drops; updateBolt sends its own messages.
@@ -145,7 +160,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (cir.getReturnValue() == Vec3.ZERO) {
 			return;
 		}
-		cir.setReturnValue(new Vec3(0, 0, horseloyalty$gait == Gait.HALT ? 0 : 1));
+		cir.setReturnValue(new Vec3(0, 0, horseloyalty$reversing ? -1 : horseloyalty$gait == Gait.HALT ? 0 : 1));
 	}
 
 	/**
@@ -193,10 +208,15 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		}
 	}
 
-	/** Replaces the horse's speed with the current gait's speed, capped by the rider's loyalty. */
+	/** Replaces the horse's speed with the current gait's speed, scaled by the rider's loyalty. */
 	@Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$gaitSpeed(Player player, CallbackInfoReturnable<Float> cir) {
-		if (Loyalty.appliesTo(horseloyalty$self()) && horseloyalty$gait != Gait.HALT) {
+		if (!Loyalty.appliesTo(horseloyalty$self())) {
+			return;
+		}
+		if (horseloyalty$reversing) {
+			cir.setReturnValue((float) Gait.REVERSE_SPEED);
+		} else if (horseloyalty$gait != Gait.HALT) {
 			cir.setReturnValue((float) Riding.gaitSpeed(horseloyalty$gait, cir.getReturnValueF(), horseloyalty$self(), player));
 		}
 	}
