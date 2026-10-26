@@ -1,0 +1,38 @@
+name: Bug report
+description: Something broke, crashed or doesn't work as described
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Horse Loyalty version
+      placeholder: 0.1.0-alpha.1
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options:
+        - Singleplayer
+        - Multiplayer (server)
+        - LAN
+    validations:
+      required: true
+  - type: input
+    id: log
+    attributes:
+      label: Log or crash report
+      description: Upload logs/latest.log (or the file in crash-reports) to https://mclo.gs and paste the link.
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: Any other mods you had installed, besides Fabric API.
