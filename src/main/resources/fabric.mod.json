@@ -3,18 +3,19 @@
 	"id": "horseloyalty",
 	"version": "${version}",
 	"name": "Horse Loyalty",
-	"description": "Horses with loyalty levels, gaits and boat-style steering.",
+	"description": "Horses bond with their riders: loyalty levels, gaits, boat-style steering, hunger, foals and personalities.",
 	"authors": [
-		"Your Name"
+		"XZiggsX"
 	],
-	"license": "All-Rights-Reserved",
+	"license": "MIT",
+	"icon": "assets/horseloyalty/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.horseloyalty.HorseLoyaltyMod"
+			"com.xziggsx.horseloyalty.HorseLoyaltyMod"
 		],
 		"client": [
-			"com.example.horseloyalty.client.HorseLoyaltyClient"
+			"com.xziggsx.horseloyalty.client.HorseLoyaltyClient"
 		]
 	},
 	"mixins": [

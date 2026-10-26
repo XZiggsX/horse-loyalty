@@ -58,6 +58,14 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 }
 
+jar {
+	// Ships the license inside the jar, next to the mod's files.
+	inputs.property "archivesName", project.base.archivesName
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}" }
+	}
+}
+
 java {
 	// Generates a sources jar when you build, handy if you publish later.
 	withSourcesJar()

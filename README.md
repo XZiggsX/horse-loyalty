@@ -89,5 +89,7 @@ To remove it completely, delete `client/dev/`, `mixin/client/HudMixin.java` and 
   client. Before a public release the server should send its config to joining players.
 - The gait drop sound is only heard by the rider, and only the rider sees a skittish bolt
   as a bolt (others see a fast horse).
-- Mod id is `horseloyalty`, package `com.example.horseloyalty`, author placeholder in
-  `fabric.mod.json`: rename before publishing.
+
+## License
+
+MIT, see `LICENSE`.

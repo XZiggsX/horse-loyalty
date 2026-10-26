@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.example.horseloyalty.mixin.client",
+	"package": "com.xziggsx.horseloyalty.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractHorseRidingMixin",
