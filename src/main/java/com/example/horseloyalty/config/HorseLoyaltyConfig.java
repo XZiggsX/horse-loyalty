@@ -45,11 +45,19 @@ public final class HorseLoyaltyConfig {
 			+ "fixed timer, 0 to never drop. hunger: a tamed horse that hasn't been fed or left to graze "
 			+ "(unridden, on grass, mycelium or podzol) for secondsUntilHungry shows dark particles at its "
 			+ "hooves and loses loyaltyPointsLost points with every rider each loyaltyLossEverySeconds. "
-			+ "It never drops below level 1 or becomes untamed. Restart the game after editing.";
+			+ "It never drops below level 1 or becomes untamed. foals: a foal bred by a player is born tamed "
+			+ "to them, with parentLoyaltyPercent of the average of their points with the two parents. It picks "
+			+ "one parent at random to follow (roleplay it as mother or father) once more than "
+			+ "followParentDistance blocks away, up to followParentMaxDistance. Without that parent near, it "
+			+ "follows its breeder the same way. It skips strollSkipPercent of its random strolls and never "
+			+ "strolls further than strollMaxDistance from that parent or player. Foals that spawn in the wild "
+			+ "act as in vanilla. Restart the game after editing.";
 
 	private LoyaltyGain loyaltyGain = new LoyaltyGain();
 
 	private HungerSettings hunger = new HungerSettings();
+
+	private FoalSettings foals = new FoalSettings();
 
 	private int turnEaseTicks = 4;
 
@@ -66,6 +74,17 @@ public final class HorseLoyaltyConfig {
 		private double secondsUntilHungry = 1200;
 		private double loyaltyLossEverySeconds = 120;
 		private int loyaltyPointsLost = 1;
+	}
+
+	public static final class FoalSettings {
+		private boolean enabled = true;
+		private double parentLoyaltyPercent = 25;
+		private double followParentDistance = 5;
+		private double followParentMaxDistance = 24;
+		private double followPlayerDistance = 4;
+		private double followPlayerMaxDistance = 16;
+		private double strollSkipPercent = 50;
+		private double strollMaxDistance = 6;
 	}
 
 	public static final class LevelSettings {
@@ -115,6 +134,7 @@ public final class HorseLoyaltyConfig {
 	private transient long ticksUntilHungry;
 	private transient long loyaltyLossIntervalTicks;
 	private transient int loyaltyPointsLost;
+	private transient FoalSettings resolvedFoals;
 
 	/** The loaded config. Holds the defaults until {@link #load()} has run. */
 	public static HorseLoyaltyConfig get() {
@@ -186,6 +206,46 @@ public final class HorseLoyaltyConfig {
 		return loyaltyPointsLost;
 	}
 
+	/** Whether bred foals get a family (tamed at birth, follow a parent and their breeder). */
+	public boolean foalsEnabled() {
+		return resolvedFoals.enabled;
+	}
+
+	/** Share (0.25 = 25%) of the breeder's average points with the parents that a foal starts with. */
+	public double foalParentLoyaltyShare() {
+		return resolvedFoals.parentLoyaltyPercent / 100.0;
+	}
+
+	/** Blocks from its parent before a foal starts following. */
+	public double foalFollowParentDistance() {
+		return resolvedFoals.followParentDistance;
+	}
+
+	/** Beyond this many blocks a foal gives up following its parent. */
+	public double foalFollowParentMaxDistance() {
+		return resolvedFoals.followParentMaxDistance;
+	}
+
+	/** Blocks from its breeder before a foal starts following them. */
+	public double foalFollowPlayerDistance() {
+		return resolvedFoals.followPlayerDistance;
+	}
+
+	/** Beyond this many blocks a foal gives up following its breeder. */
+	public double foalFollowPlayerMaxDistance() {
+		return resolvedFoals.followPlayerMaxDistance;
+	}
+
+	/** Chance (0.5 = 50%) that a foal skips a random stroll. */
+	public double foalStrollSkipChance() {
+		return resolvedFoals.strollSkipPercent / 100.0;
+	}
+
+	/** Foals don't stroll further than this from their parent or breeder. */
+	public double foalStrollMaxDistance() {
+		return resolvedFoals.strollMaxDistance;
+	}
+
 	// --- Loading -----------------------------------------------------------------
 
 	/** A config with only default values, resolved and ready to use. */
@@ -233,6 +293,20 @@ public final class HorseLoyaltyConfig {
 		ticksUntilHungry = Math.round(Math.max(1, hungerSettings.secondsUntilHungry) * 20);
 		loyaltyLossIntervalTicks = Math.round(Math.max(1, hungerSettings.loyaltyLossEverySeconds) * 20);
 		loyaltyPointsLost = Math.max(0, hungerSettings.loyaltyPointsLost);
+
+		// Copied with every value clamped, so a missing or broken section can't break the AI.
+		FoalSettings foalSettings = foals != null ? foals : new FoalSettings();
+		resolvedFoals = new FoalSettings();
+		resolvedFoals.enabled = foalSettings.enabled;
+		resolvedFoals.parentLoyaltyPercent = Math.clamp(foalSettings.parentLoyaltyPercent, 0, 100);
+		resolvedFoals.followParentDistance = Math.clamp(foalSettings.followParentDistance, 2, 64);
+		resolvedFoals.followParentMaxDistance = Math.clamp(foalSettings.followParentMaxDistance,
+				resolvedFoals.followParentDistance, 64);
+		resolvedFoals.followPlayerDistance = Math.clamp(foalSettings.followPlayerDistance, 2, 64);
+		resolvedFoals.followPlayerMaxDistance = Math.clamp(foalSettings.followPlayerMaxDistance,
+				resolvedFoals.followPlayerDistance, 64);
+		resolvedFoals.strollSkipPercent = Math.clamp(foalSettings.strollSkipPercent, 0, 100);
+		resolvedFoals.strollMaxDistance = Math.clamp(foalSettings.strollMaxDistance, 1, 64);
 
 		List<LevelSettings> defaults = defaultLevels();
 		topSpeedShare = new double[Loyalty.MAX_LEVEL + 1];

@@ -114,16 +114,24 @@ public final class Loyalty {
 
 	/** Adds one counted feed for this player. Server side. */
 	public static void recordFeed(AbstractHorse horse, Player player) {
-		update(horse, player, get(horse, player).withFeed(horse.level().getGameTime()));
+		update(horse, player, get(horse, player).withFeed(horse.level().getGameTime()), true);
 	}
 
 	/** Adds one tick of riding for this player. Server side, called every tick while they ride. */
 	public static void recordRideTick(AbstractHorse horse, Player player) {
-		update(horse, player, get(horse, player).withRideTick());
+		update(horse, player, get(horse, player).withRideTick(), true);
 	}
 
-	/** Saves a player's new stats, refreshes the synced levels and celebrates a level up. */
-	private static void update(AbstractHorse horse, Player player, LoyaltyData next) {
+	/**
+	 * Gives a player bonus points with a horse without the level-up celebration, such as
+	 * a newly born foal's head start (see {@link Family}). Server side.
+	 */
+	public static void startWith(AbstractHorse horse, Player player, int bonusPoints) {
+		update(horse, player, get(horse, player).withBonus(bonusPoints), false);
+	}
+
+	/** Saves a player's new stats, refreshes the synced levels and, if {@code celebrate}, celebrates a level up. */
+	private static void update(AbstractHorse horse, Player player, LoyaltyData next, boolean celebrate) {
 		UUID id = player.getUUID();
 		Map<UUID, LoyaltyData> riders = new HashMap<>(horse.getAttachedOrCreate(DATA));
 		riders.put(id, next);
@@ -138,7 +146,7 @@ public final class Loyalty {
 			riders.forEach((uuid, data) -> updated.put(uuid, earnedLevel(data)));
 			horse.setAttached(EARNED_LEVELS, updated);
 		}
-		if (after > before) {
+		if (celebrate && after > before) {
 			onLevelUp(horse, player, after);
 		}
 	}

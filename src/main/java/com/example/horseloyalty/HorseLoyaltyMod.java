@@ -1,6 +1,7 @@
 package com.example.horseloyalty;
 
 import com.example.horseloyalty.config.HorseLoyaltyConfig;
+import com.example.horseloyalty.loyalty.Family;
 import com.example.horseloyalty.loyalty.Hunger;
 import com.example.horseloyalty.loyalty.Loyalty;
 import net.fabricmc.api.ModInitializer;
@@ -24,6 +25,7 @@ public class HorseLoyaltyMod implements ModInitializer {
 		// Registers the data saved on horses (Fabric Data Attachment API).
 		Loyalty.init();
 		Hunger.init();
+		Family.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }

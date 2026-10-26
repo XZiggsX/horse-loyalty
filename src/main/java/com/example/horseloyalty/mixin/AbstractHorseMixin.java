@@ -1,7 +1,11 @@
 package com.example.horseloyalty.mixin;
 
+import com.example.horseloyalty.ai.FollowBreederGoal;
+import com.example.horseloyalty.ai.FollowChosenParentGoal;
+import com.example.horseloyalty.loyalty.Family;
 import com.example.horseloyalty.loyalty.Hunger;
 import com.example.horseloyalty.loyalty.Loyalty;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -18,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Server-side horse hooks: loyalty from feeding and riding, hunger, and the loyalty
- * status shown on mounting. Every hook here returns straight away on the client.
+ * Server-side horse hooks: loyalty from feeding and riding, hunger, the loyalty status
+ * shown on mounting, and the foal goals. Every hook here returns straight away on the client.
  * <p>
  * The riding controls (gaits, steering) run on the rider's client instead, see
  * {@code mixin/client/AbstractHorseRidingMixin} in the client source set.
@@ -103,6 +107,30 @@ public abstract class AbstractHorseMixin {
 		AbstractHorse horse = horseloyalty$self();
 		if (passenger instanceof ServerPlayer player && isTamed() && Loyalty.appliesTo(horse)) {
 			player.sendOverlayMessage(Loyalty.describe(horse, player));
+		}
+	}
+
+	/**
+	 * Adds the bred foal goals. Priority 3 puts them ahead of vanilla's FollowParentGoal (4)
+	 * and random strolling (6). They only ever run for foals with a {@link Family}.
+	 */
+	@Inject(method = "registerGoals", at = @At("TAIL"))
+	private void horseloyalty$addFoalGoals(CallbackInfo ci) {
+		AbstractHorse horse = horseloyalty$self();
+		GoalSelector goals = ((MobAccessor) horse).horseloyalty$getGoalSelector();
+		goals.addGoal(3, new FollowChosenParentGoal(horse));
+		goals.addGoal(3, new FollowBreederGoal(horse));
+	}
+
+	/**
+	 * Vanilla nudges bred foals toward whichever horse is nearest. A foal with a family
+	 * and a parent nearby follows that parent instead, so skip the nudge.
+	 */
+	@Inject(method = "followMommy", at = @At("HEAD"), cancellable = true)
+	private void horseloyalty$skipNearestHorse(ServerLevel level, CallbackInfo ci) {
+		AbstractHorse horse = horseloyalty$self();
+		if (Family.isFamilyFoal(horse) && Family.parentToFollow(horse, level).isPresent()) {
+			ci.cancel();
 		}
 	}
 }

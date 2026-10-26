@@ -3,7 +3,10 @@
 	"package": "com.example.horseloyalty.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"AbstractHorseMixin"
+		"AbstractHorseMixin",
+		"AnimalBreedingMixin",
+		"MobAccessor",
+		"RandomStrollGoalMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
