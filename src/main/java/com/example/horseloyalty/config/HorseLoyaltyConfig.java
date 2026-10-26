@@ -10,8 +10,11 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.example.horseloyalty.personality.Personality;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
@@ -51,13 +54,22 @@ public final class HorseLoyaltyConfig {
 			+ "followParentDistance blocks away, up to followParentMaxDistance. Without that parent near, it "
 			+ "follows its breeder the same way. It skips strollSkipPercent of its random strolls and never "
 			+ "strolls further than strollMaxDistance from that parent or player. Foals that spawn in the wild "
-			+ "act as in vanilla. Restart the game after editing.";
+			+ "act as in vanilla. personality: every horse gets one, rolled with the weights (steady has no "
+			+ "quirk; brave only panics when burning; skittish flees creepers within skittishFleeDistance and, "
+			+ "ridden, bolts at a gallop for boltSeconds when one is within boltCreeperDistance, half as long at "
+			+ "loyalty 4 and never at 5; curious wanders toward a village bell within curiousSearchRadius about "
+			+ "every curiousWanderEverySeconds when loose; lazy multiplies the gait drop chance and time by the "
+			+ "lazy multipliers). You see it in the horse screen from revealAtLevel. A foal gets each parent's "
+			+ "personality with inheritPercent chance (the rest is a fresh roll), or sameParentsPercent when both "
+			+ "parents share one. Restart the game after editing.";
 
 	private LoyaltyGain loyaltyGain = new LoyaltyGain();
 
 	private HungerSettings hunger = new HungerSettings();
 
 	private FoalSettings foals = new FoalSettings();
+
+	private PersonalitySettings personality = new PersonalitySettings();
 
 	private int turnEaseTicks = 4;
 
@@ -85,6 +97,31 @@ public final class HorseLoyaltyConfig {
 		private double followPlayerMaxDistance = 16;
 		private double strollSkipPercent = 50;
 		private double strollMaxDistance = 6;
+	}
+
+	public static final class PersonalitySettings {
+		private boolean enabled = true;
+		private int revealAtLevel = 2;
+		private Map<String, Double> weights = defaultWeights();
+		private double inheritPercent = 40;
+		private double sameParentsPercent = 70;
+		private double skittishFleeDistance = 8;
+		private double boltCreeperDistance = 6;
+		private double boltSeconds = 2.5;
+		private int curiousSearchRadius = 48;
+		private double curiousWanderEverySeconds = 300;
+		private double lazyGaitDropChanceMultiplier = 1.5;
+		private double lazyGaitDropTimeMultiplier = 0.7;
+
+		private static Map<String, Double> defaultWeights() {
+			Map<String, Double> weights = new LinkedHashMap<>();
+			weights.put("steady", 40.0);
+			weights.put("brave", 15.0);
+			weights.put("skittish", 15.0);
+			weights.put("curious", 15.0);
+			weights.put("lazy", 15.0);
+			return weights;
+		}
 	}
 
 	public static final class LevelSettings {
@@ -135,6 +172,7 @@ public final class HorseLoyaltyConfig {
 	private transient long loyaltyLossIntervalTicks;
 	private transient int loyaltyPointsLost;
 	private transient FoalSettings resolvedFoals;
+	private transient PersonalitySettings resolvedPersonality;
 
 	/** The loaded config. Holds the defaults until {@link #load()} has run. */
 	public static HorseLoyaltyConfig get() {
@@ -246,6 +284,66 @@ public final class HorseLoyaltyConfig {
 		return resolvedFoals.strollMaxDistance;
 	}
 
+	/** Whether horses have personalities. Off means every horse acts steady (vanilla). */
+	public boolean personalityEnabled() {
+		return resolvedPersonality.enabled;
+	}
+
+	/** Loyalty level at which a player sees a horse's personality. */
+	public int personalityRevealLevel() {
+		return resolvedPersonality.revealAtLevel;
+	}
+
+	/** Relative odds of rolling this personality. */
+	public double personalityWeight(Personality personality) {
+		return resolvedPersonality.weights.getOrDefault(personality.id(), 0.0);
+	}
+
+	/** Chance (0.4 = 40%) a foal gets one given parent's personality. */
+	public double personalityInheritChance() {
+		return resolvedPersonality.inheritPercent / 100.0;
+	}
+
+	/** Chance a foal gets its parents' personality when both share it. */
+	public double personalitySameParentsChance() {
+		return resolvedPersonality.sameParentsPercent / 100.0;
+	}
+
+	/** Blocks within which an unridden skittish horse runs from a creeper. */
+	public double skittishFleeDistance() {
+		return resolvedPersonality.skittishFleeDistance;
+	}
+
+	/** Blocks within which a creeper makes a ridden skittish horse bolt. */
+	public double boltCreeperDistance() {
+		return resolvedPersonality.boltCreeperDistance;
+	}
+
+	/** Ticks a skittish horse bolts for, at loyalty below 4. */
+	public int boltTicks() {
+		return (int) Math.round(resolvedPersonality.boltSeconds * 20);
+	}
+
+	/** Blocks a curious horse looks for a village bell in. */
+	public int curiousSearchRadius() {
+		return resolvedPersonality.curiousSearchRadius;
+	}
+
+	/** Average ticks between a loose curious horse's trips toward a village. */
+	public int curiousWanderEveryTicks() {
+		return (int) Math.round(resolvedPersonality.curiousWanderEverySeconds * 20);
+	}
+
+	/** A lazy horse's gait drop chance is multiplied by this. */
+	public double lazyGaitDropChanceMultiplier() {
+		return resolvedPersonality.lazyGaitDropChanceMultiplier;
+	}
+
+	/** A lazy horse's time between gait drop rolls is multiplied by this. */
+	public double lazyGaitDropTimeMultiplier() {
+		return resolvedPersonality.lazyGaitDropTimeMultiplier;
+	}
+
 	// --- Loading -----------------------------------------------------------------
 
 	/** A config with only default values, resolved and ready to use. */
@@ -307,6 +405,30 @@ public final class HorseLoyaltyConfig {
 				resolvedFoals.followPlayerDistance, 64);
 		resolvedFoals.strollSkipPercent = Math.clamp(foalSettings.strollSkipPercent, 0, 100);
 		resolvedFoals.strollMaxDistance = Math.clamp(foalSettings.strollMaxDistance, 1, 64);
+
+		PersonalitySettings personalitySettings = personality != null ? personality : new PersonalitySettings();
+		resolvedPersonality = new PersonalitySettings();
+		resolvedPersonality.enabled = personalitySettings.enabled;
+		resolvedPersonality.revealAtLevel = Math.clamp(personalitySettings.revealAtLevel, 1, Loyalty.MAX_LEVEL);
+		// Missing personalities keep their default weight; negative weights count as 0.
+		Map<String, Double> weights = PersonalitySettings.defaultWeights();
+		if (personalitySettings.weights != null) {
+			personalitySettings.weights.forEach((id, weight) -> {
+				if (weights.containsKey(id) && weight != null) {
+					weights.put(id, Math.max(0, weight));
+				}
+			});
+		}
+		resolvedPersonality.weights = weights;
+		resolvedPersonality.inheritPercent = Math.clamp(personalitySettings.inheritPercent, 0, 50);
+		resolvedPersonality.sameParentsPercent = Math.clamp(personalitySettings.sameParentsPercent, 0, 100);
+		resolvedPersonality.skittishFleeDistance = Math.clamp(personalitySettings.skittishFleeDistance, 1, 32);
+		resolvedPersonality.boltCreeperDistance = Math.clamp(personalitySettings.boltCreeperDistance, 1, 32);
+		resolvedPersonality.boltSeconds = Math.clamp(personalitySettings.boltSeconds, 0, 30);
+		resolvedPersonality.curiousSearchRadius = Math.clamp(personalitySettings.curiousSearchRadius, 8, 128);
+		resolvedPersonality.curiousWanderEverySeconds = Math.clamp(personalitySettings.curiousWanderEverySeconds, 10, 86400);
+		resolvedPersonality.lazyGaitDropChanceMultiplier = Math.clamp(personalitySettings.lazyGaitDropChanceMultiplier, 0, 10);
+		resolvedPersonality.lazyGaitDropTimeMultiplier = Math.clamp(personalitySettings.lazyGaitDropTimeMultiplier, 0.1, 10);
 
 		List<LevelSettings> defaults = defaultLevels();
 		topSpeedShare = new double[Loyalty.MAX_LEVEL + 1];

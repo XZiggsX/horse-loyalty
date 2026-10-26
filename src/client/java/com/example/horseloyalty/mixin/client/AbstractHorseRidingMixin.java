@@ -3,12 +3,15 @@ package com.example.horseloyalty.mixin.client;
 import com.example.horseloyalty.client.riding.Gait;
 import com.example.horseloyalty.client.riding.GaitHolder;
 import com.example.horseloyalty.client.riding.Riding;
+import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import com.example.horseloyalty.loyalty.Loyalty;
+import com.example.horseloyalty.personality.Personality;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -21,8 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Client-side riding controls: gaits (W/S taps), gait speeds, boat-style A/D steering
- * and random gait drops.
+ * Client-side riding controls: gaits (W/S taps), gait speeds, boat-style A/D steering,
+ * random gait drops, and skittish horses bolting from creepers.
  * <p>
  * Minecraft moves a player-ridden horse on that player's own client and sends the
  * result to the server, so vanilla only calls getRiddenInput, getRiddenSpeed and
@@ -54,6 +57,18 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Unique
 	private int horseloyalty$gaitDropTimer;
 
+	/** Ticks left of a skittish bolt. While above 0 the horse gallops and steers itself. */
+	@Unique
+	private int horseloyalty$boltTicks;
+
+	/** Ticks until the next creeper check; also the calm-down time after a bolt. */
+	@Unique
+	private int horseloyalty$boltCheckTimer;
+
+	/** Which way a bolting horse veers: -1 left, 0 straight, 1 right. */
+	@Unique
+	private int horseloyalty$boltTurn;
+
 	@Override
 	public Gait horseloyalty$getGait() {
 		return horseloyalty$gait;
@@ -77,6 +92,9 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$turnSpeed = 0;
 		horseloyalty$pendingRiderTurn = 0;
 		horseloyalty$gaitDropTimer = 0;
+		horseloyalty$boltTicks = 0;
+		horseloyalty$boltCheckTimer = 0;
+		horseloyalty$boltTurn = 0;
 	}
 
 	/**
@@ -92,13 +110,20 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		}
 		float forward = player.zza;
 		Gait before = horseloyalty$gait;
-		if (forward > 0 && horseloyalty$lastForward <= 0) {
+		boolean bolting = horseloyalty$updateBolt(horse, player);
+		if (bolting) {
+			// The rider has no say until the bolt is over.
+			horseloyalty$gait = Gait.GALLOP;
+		} else if (forward > 0 && horseloyalty$lastForward <= 0) {
 			horseloyalty$gait = horseloyalty$gait.up();
 		} else if (forward < 0 && horseloyalty$lastForward >= 0) {
 			horseloyalty$gait = horseloyalty$gait.down();
 		}
 		horseloyalty$lastForward = forward;
-		if (horseloyalty$gait != before) {
+		// While bolting there are no gait messages or drops; updateBolt sends its own messages.
+		if (bolting) {
+			horseloyalty$gaitDropTimer = 0;
+		} else if (horseloyalty$gait != before) {
 			// Only the rider's own client runs this, so this shows on their screen only.
 			player.sendOverlayMessage(horseloyalty$gait.displayName());
 			// Shifting gait shows the rider is paying attention, so the drop timer restarts.
@@ -112,11 +137,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 				horseloyalty$gait = horseloyalty$gait.down();
 				player.sendOverlayMessage(Component.translatable("horseloyalty.gait.dropped",
 						horseloyalty$gait.displayName()));
-				// The vanilla bucking/angry sound, played locally: only the rider hears it for now.
-				SoundEvent angry = getAngrySound();
-				if (angry != null) {
-					horse.level().playLocalSound(horse, angry, horse.getSoundSource(), 1.0F, horse.getVoicePitch());
-				}
+				horseloyalty$playAngrySound(horse);
 			}
 		}
 
@@ -125,6 +146,51 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 			return;
 		}
 		cir.setReturnValue(new Vec3(0, 0, horseloyalty$gait == Gait.HALT ? 0 : 1));
+	}
+
+	/**
+	 * Runs a skittish horse's bolt: counts down a bolt in progress, or every half second looks
+	 * for a creeper close enough to start one. Returns whether the horse is bolting this tick.
+	 */
+	@Unique
+	private boolean horseloyalty$updateBolt(AbstractHorse horse, Player player) {
+		if (horseloyalty$boltTicks > 0) {
+			horseloyalty$boltTicks--;
+			if (horseloyalty$boltTicks % 10 == 0) {
+				horseloyalty$boltTurn = horse.getRandom().nextInt(3) - 1;
+			}
+			if (horseloyalty$boltTicks == 0) {
+				horseloyalty$boltTurn = 0;
+				player.sendOverlayMessage(Component.translatable("horseloyalty.personality.bolt_end", horse.getName()));
+			}
+			return true;
+		}
+		if (Personality.of(horse) != Personality.SKITTISH || --horseloyalty$boltCheckTimer > 0) {
+			return false;
+		}
+		horseloyalty$boltCheckTimer = 10;
+		int ticks = Riding.boltTicks(horse, player);
+		double distance = HorseLoyaltyConfig.get().boltCreeperDistance();
+		if (ticks <= 0 || horse.level().getEntitiesOfClass(Creeper.class,
+				horse.getBoundingBox().inflate(distance), Entity::isAlive).isEmpty()) {
+			return false;
+		}
+		horseloyalty$boltTicks = ticks;
+		// Five seconds to calm down after the bolt before it can bolt again.
+		horseloyalty$boltCheckTimer = 100;
+		horseloyalty$boltTurn = horse.getRandom().nextInt(3) - 1;
+		player.sendOverlayMessage(Component.translatable("horseloyalty.personality.bolt", horse.getName()));
+		horseloyalty$playAngrySound(horse);
+		return true;
+	}
+
+	/** The vanilla bucking/angry sound, played locally: only the rider hears it for now. */
+	@Unique
+	private void horseloyalty$playAngrySound(AbstractHorse horse) {
+		SoundEvent angry = getAngrySound();
+		if (angry != null) {
+			horse.level().playLocalSound(horse, angry, horse.getSoundSource(), 1.0F, horse.getVoicePitch());
+		}
 	}
 
 	/** Replaces the horse's speed with the current gait's speed, capped by the rider's loyalty. */
@@ -151,7 +217,8 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		float maxRate = rider instanceof Player player ? Riding.turnRate(horse, player) : Riding.defaultTurnRate();
 		float ease = Riding.turnEase(maxRate);
 		// xxa is positive while holding A (left). Turning left lowers yaw.
-		float target = Math.signum(rider.xxa) * -maxRate;
+		// A bolting horse ignores the rider and veers on its own.
+		float target = horseloyalty$boltTicks > 0 ? horseloyalty$boltTurn * maxRate : Math.signum(rider.xxa) * -maxRate;
 		float change = Math.clamp(target - horseloyalty$turnSpeed, -ease, ease);
 		horseloyalty$turnSpeed += change;
 		horseloyalty$pendingRiderTurn += horseloyalty$turnSpeed;

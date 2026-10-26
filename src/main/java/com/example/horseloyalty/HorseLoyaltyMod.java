@@ -4,6 +4,7 @@ import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import com.example.horseloyalty.loyalty.Family;
 import com.example.horseloyalty.loyalty.Hunger;
 import com.example.horseloyalty.loyalty.Loyalty;
+import com.example.horseloyalty.personality.Personality;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Loyalty.init();
 		Hunger.init();
 		Family.init();
+		Personality.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }

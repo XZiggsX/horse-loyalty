@@ -2,6 +2,7 @@ package com.example.horseloyalty.client.riding;
 
 import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import com.example.horseloyalty.loyalty.Loyalty;
+import com.example.horseloyalty.personality.Personality;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 
@@ -49,13 +50,33 @@ public final class Riding {
 		return Math.min(gait.speed(horseSpeed), cap);
 	}
 
-	/** Chance per check that the horse drops a gait on its own for this rider. */
+	/** Chance per check that the horse drops a gait on its own for this rider. Lazy horses drop more often. */
 	public static double gaitDropChance(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().gaitDropChance(Loyalty.level(horse, player));
+		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		double chance = config.gaitDropChance(Loyalty.level(horse, player));
+		if (Personality.of(horse) == Personality.LAZY) {
+			chance = Math.min(1, chance * config.lazyGaitDropChanceMultiplier());
+		}
+		return chance;
 	}
 
-	/** Ticks of riding without shifting gait before each gait drop roll for this rider. */
+	/** Ticks of riding without shifting gait before each gait drop roll for this rider. Lazy horses roll sooner. */
 	public static int gaitDropTicks(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().gaitDropTicks(Loyalty.level(horse, player));
+		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		int ticks = config.gaitDropTicks(Loyalty.level(horse, player));
+		if (Personality.of(horse) == Personality.LAZY) {
+			ticks = (int) Math.max(20, Math.round(ticks * config.lazyGaitDropTimeMultiplier()));
+		}
+		return ticks;
+	}
+
+	/**
+	 * How long a skittish horse bolts for this rider when a creeper comes near, in ticks.
+	 * Half as long at loyalty 4; a level 5 horse trusts its rider and doesn't bolt at all.
+	 */
+	public static int boltTicks(AbstractHorse horse, Player player) {
+		int level = Loyalty.level(horse, player);
+		int ticks = HorseLoyaltyConfig.get().boltTicks();
+		return level >= Loyalty.MAX_LEVEL ? 0 : level == Loyalty.MAX_LEVEL - 1 ? ticks / 2 : ticks;
 	}
 }

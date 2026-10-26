@@ -4,6 +4,7 @@ import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import com.example.horseloyalty.loyalty.Hunger;
 import com.example.horseloyalty.loyalty.Loyalty;
 import com.example.horseloyalty.loyalty.LoyaltyData;
+import com.example.horseloyalty.personality.Personality;
 import com.example.horseloyalty.client.riding.Gait;
 import com.example.horseloyalty.client.riding.GaitHolder;
 import com.example.horseloyalty.client.riding.Riding;
@@ -87,6 +88,8 @@ public final class LoyaltyDebugHud {
 
 		int level = Loyalty.level(horse, player);
 		lines.add("Your level: " + level + "/" + Loyalty.MAX_LEVEL + " " + Loyalty.levelName(level).getString());
+		lines.add("Personality: " + Personality.of(horse).displayName().getString()
+				+ (Personality.isRevealedTo(horse, player) ? "" : "  (hidden from you in the screen)"));
 
 		// Points, feeds and ride time are server-only data. In singleplayer we can read
 		// them straight from the integrated server's copy of the horse.

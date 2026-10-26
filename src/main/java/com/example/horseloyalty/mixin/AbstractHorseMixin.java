@@ -1,10 +1,13 @@
 package com.example.horseloyalty.mixin;
 
+import com.example.horseloyalty.ai.CuriousWanderGoal;
 import com.example.horseloyalty.ai.FollowBreederGoal;
 import com.example.horseloyalty.ai.FollowChosenParentGoal;
+import com.example.horseloyalty.ai.SkittishAvoidGoal;
 import com.example.horseloyalty.loyalty.Family;
 import com.example.horseloyalty.loyalty.Hunger;
 import com.example.horseloyalty.loyalty.Loyalty;
+import com.example.horseloyalty.personality.Personality;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Server-side horse hooks: loyalty from feeding and riding, hunger, the loyalty status
- * shown on mounting, and the foal goals. Every hook here returns straight away on the client.
+ * shown on mounting, personalities, and the foal and personality goals. Every hook here returns straight away on the client.
  * <p>
  * The riding controls (gaits, steering) run on the rider's client instead, see
  * {@code mixin/client/AbstractHorseRidingMixin} in the client source set.
@@ -86,6 +89,7 @@ public abstract class AbstractHorseMixin {
 			return;
 		}
 		Hunger.tick(horse, serverLevel);
+		Personality.ensureAssigned(horse);
 
 		double dx = horse.getX() - horseloyalty$lastX;
 		double dz = horse.getZ() - horseloyalty$lastZ;
@@ -111,15 +115,19 @@ public abstract class AbstractHorseMixin {
 	}
 
 	/**
-	 * Adds the bred foal goals. Priority 3 puts them ahead of vanilla's FollowParentGoal (4)
-	 * and random strolling (6). They only ever run for foals with a {@link Family}.
+	 * Adds our goals. The foal goals (priority 3) only run for foals with a {@link Family}, ahead
+	 * of vanilla's FollowParentGoal (4) and random strolling (6). The personality goals only run
+	 * for that personality: skittish fleeing (2) just below panicking, curious wandering (6)
+	 * alongside random strolling.
 	 */
 	@Inject(method = "registerGoals", at = @At("TAIL"))
-	private void horseloyalty$addFoalGoals(CallbackInfo ci) {
+	private void horseloyalty$addGoals(CallbackInfo ci) {
 		AbstractHorse horse = horseloyalty$self();
 		GoalSelector goals = ((MobAccessor) horse).horseloyalty$getGoalSelector();
+		goals.addGoal(2, new SkittishAvoidGoal(horse));
 		goals.addGoal(3, new FollowChosenParentGoal(horse));
 		goals.addGoal(3, new FollowBreederGoal(horse));
+		goals.addGoal(6, new CuriousWanderGoal(horse));
 	}
 
 	/**

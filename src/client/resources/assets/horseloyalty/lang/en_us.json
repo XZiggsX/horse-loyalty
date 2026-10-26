@@ -15,5 +15,12 @@
 	"horseloyalty.gait.canter": "Canter",
 	"horseloyalty.gait.gallop": "Gallop",
 	"horseloyalty.gait.dropped": "Your horse eased down to %s",
-	"horseloyalty.foal.born": "A foal is born and trusts you already. Loyalty %s/%s: %s"
+	"horseloyalty.foal.born": "A foal is born and trusts you already. Loyalty %s/%s: %s",
+	"horseloyalty.personality.steady": "Steady",
+	"horseloyalty.personality.brave": "Brave",
+	"horseloyalty.personality.skittish": "Skittish",
+	"horseloyalty.personality.curious": "Curious",
+	"horseloyalty.personality.lazy": "Lazy",
+	"horseloyalty.personality.bolt": "%s spooks at a creeper and bolts!",
+	"horseloyalty.personality.bolt_end": "%s calms down. You have the reins again"
 }

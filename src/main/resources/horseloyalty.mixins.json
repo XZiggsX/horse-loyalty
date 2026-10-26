@@ -6,6 +6,7 @@
 		"AbstractHorseMixin",
 		"AnimalBreedingMixin",
 		"MobAccessor",
+		"PanicGoalMixin",
 		"RandomStrollGoalMixin"
 	],
 	"injectors": {
