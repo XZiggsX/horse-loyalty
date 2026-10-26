@@ -26,7 +26,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Server-side horse hooks: loyalty from feeding and riding, hunger, the loyalty status
- * shown on mounting, personalities, and the foal and personality goals. Every hook here returns straight away on the client.
+ * shown on mounting, personalities, and the foal and personality goals. Every hook here
+ * returns straight away on the client.
  * <p>
  * The riding controls (gaits, steering) run on the rider's client instead, see
  * {@code mixin/client/AbstractHorseRidingMixin} in the client source set.
