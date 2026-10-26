@@ -6,6 +6,7 @@ import com.example.horseloyalty.client.riding.Riding;
 import com.example.horseloyalty.config.HorseLoyaltyConfig;
 import com.example.horseloyalty.loyalty.Loyalty;
 import com.example.horseloyalty.personality.Personality;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Client-side riding controls: gaits (W/S taps), backing up, gait speeds, boat-style A/D steering,
+ * sidestepping (sprint key + A/D),
  * random gait drops, and skittish horses bolting from creepers.
  * <p>
  * Minecraft moves a player-ridden horse on that player's own client and sends the
@@ -40,6 +42,10 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	/** Current gait. */
 	@Unique
 	private Gait horseloyalty$gait = Gait.HALT;
+
+	/** Whether the rider is holding the sprint key with A or D: move diagonally instead of turning. */
+	@Unique
+	private boolean horseloyalty$sidestepping;
 
 	/** Whether the rider is holding S at a halt to back the horse up. */
 	@Unique
@@ -97,6 +103,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$pendingRiderTurn = 0;
 		horseloyalty$gaitDropTimer = 0;
 		horseloyalty$reversing = false;
+		horseloyalty$sidestepping = false;
 		horseloyalty$boltTicks = 0;
 		horseloyalty$boltCheckTimer = 0;
 		horseloyalty$boltTurn = 0;
@@ -134,6 +141,10 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (forward >= 0) {
 			horseloyalty$reversing = false;
 		}
+		// Sprint key (Ctrl by default) + A/D: the horse keeps facing the same way and moves at an
+		// angle instead. Halted, it steps straight sideways. A bolting horse ignores the rider.
+		horseloyalty$sidestepping = !bolting && player.xxa != 0
+				&& Minecraft.getInstance().options.keySprint.isDown();
 		horseloyalty$lastForward = forward;
 		// While bolting there are no gait messages or drops; updateBolt sends its own messages.
 		if (bolting) {
@@ -160,7 +171,16 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (cir.getReturnValue() == Vec3.ZERO) {
 			return;
 		}
-		cir.setReturnValue(new Vec3(0, 0, horseloyalty$reversing ? -1 : horseloyalty$gait == Gait.HALT ? 0 : 1));
+		double forwardInput = horseloyalty$reversing ? -1 : horseloyalty$gait == Gait.HALT ? 0 : 1;
+		double sideInput = 0;
+		if (horseloyalty$sidestepping) {
+			// xxa is positive for A, and a positive x input moves left, so the signs match.
+			// Moving, the angle sets the sideways share; halted, it's a pure sidestep.
+			double side = forwardInput == 0 ? 1 : Math.tan(Math.toRadians(HorseLoyaltyConfig.get().sidestepAngleDegrees()));
+			sideInput = Math.signum(player.xxa) * side;
+		}
+		// Vanilla scales an input longer than 1 back down to 1, so moving diagonally keeps the gait's speed.
+		cir.setReturnValue(new Vec3(sideInput, 0, forwardInput));
 	}
 
 	/**
@@ -216,6 +236,9 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		}
 		if (horseloyalty$reversing) {
 			cir.setReturnValue((float) Gait.REVERSE_SPEED);
+		} else if (horseloyalty$sidestepping && horseloyalty$gait == Gait.HALT) {
+			// Stepping sideways from a halt goes at walking pace.
+			cir.setReturnValue((float) Riding.gaitSpeed(Gait.WALK, cir.getReturnValueF(), horseloyalty$self(), player));
 		} else if (horseloyalty$gait != Gait.HALT) {
 			cir.setReturnValue((float) Riding.gaitSpeed(horseloyalty$gait, cir.getReturnValueF(), horseloyalty$self(), player));
 		}
@@ -237,8 +260,9 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		float maxRate = rider instanceof Player player ? Riding.turnRate(horse, player) : Riding.defaultTurnRate();
 		float ease = Riding.turnEase(maxRate);
 		// xxa is positive while holding A (left). Turning left lowers yaw.
-		// A bolting horse ignores the rider and veers on its own.
-		float target = horseloyalty$boltTicks > 0 ? horseloyalty$boltTurn * maxRate : Math.signum(rider.xxa) * -maxRate;
+		// A bolting horse ignores the rider and veers on its own; a sidestepping one doesn't turn.
+		float target = horseloyalty$boltTicks > 0 ? horseloyalty$boltTurn * maxRate
+				: horseloyalty$sidestepping ? 0 : Math.signum(rider.xxa) * -maxRate;
 		float change = Math.clamp(target - horseloyalty$turnSpeed, -ease, ease);
 		horseloyalty$turnSpeed += change;
 		horseloyalty$pendingRiderTurn += horseloyalty$turnSpeed;

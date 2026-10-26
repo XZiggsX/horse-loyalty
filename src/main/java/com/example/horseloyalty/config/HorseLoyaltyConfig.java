@@ -41,7 +41,8 @@ public final class HorseLoyaltyConfig {
 			+ "per ridingSecondsPerPoint. loyaltyLevels (1 Unruly to 5 Partners): pointsNeeded is the "
 			+ "total points to reach that level (level 1 is just tamed). topSpeedPercent is the most of "
 			+ "the horse's normal speed it will run for you; every gait is scaled by it. gaitSpeedPercent: "
-			+ "each gait's share of the horse's top speed, before the loyalty scaling. "
+			+ "each gait's share of the horse's top speed, before the loyalty scaling. sidestepAngleDegrees: "
+			+ "how far off straight ahead the horse moves while you hold sprint with A or D. "
 			+ "turnDegreesPerTick is how fast A/D turn it; double it to halve the turn circle. "
 			+ "turnEaseTicks is how long it takes to reach full turn rate. While moving, every "
 			+ "gaitDropEverySeconds without the rider shifting gait, the horse has gaitDropChancePercent "
@@ -73,6 +74,8 @@ public final class HorseLoyaltyConfig {
 	private PersonalitySettings personality = new PersonalitySettings();
 
 	private int turnEaseTicks = 4;
+
+	private double sidestepAngleDegrees = 45;
 
 	private GaitSpeeds gaitSpeedPercent = new GaitSpeeds();
 
@@ -203,6 +206,11 @@ public final class HorseLoyaltyConfig {
 	/** Top A/D turn rate for a loyalty level, in degrees per tick. */
 	public float turnDegreesPerTick(int level) {
 		return turnDegrees[Math.clamp(level, 0, Loyalty.MAX_LEVEL)];
+	}
+
+	/** Angle off straight ahead while sidestepping (sprint key + A/D), in degrees. */
+	public double sidestepAngleDegrees() {
+		return sidestepAngleDegrees;
 	}
 
 	/** Ticks to go from no turn to the full turn rate. */
@@ -487,6 +495,7 @@ public final class HorseLoyaltyConfig {
 		gaitDropChance[0] = gaitDropChance[1];
 		gaitDropTicks[0] = gaitDropTicks[1];
 		turnEaseTicks = Math.clamp(turnEaseTicks, 1, 100);
+		sidestepAngleDegrees = Math.clamp(sidestepAngleDegrees, 5, 85);
 	}
 
 	/** The user's settings for a level, or null if the file has none. */

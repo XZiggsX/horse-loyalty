@@ -11,6 +11,8 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
 - **Gaits**: tap W to shift up (Walk, Trot, Canter, Gallop), tap S to shift down.
   The horse keeps its gait without holding a key. Each gait is a share of the horse's top
   speed (30/50/75/100% by default). Press S again at a halt and hold it to back up.
+- **Sidestepping**: hold sprint (Ctrl) with A or D and the horse moves at an angle (45° by
+  default) without turning; from a halt it steps straight sideways.
 - **Boat-style steering**: A and D turn at a fixed rate, so faster gaits make wider turns.
 - **Loyalty matters**: it scales the speed of every gait, sets the turn rate, and sets how often the
   horse drops a gait on its own (level 5: a fixed 5 minute timer without input, against AFK riding).
