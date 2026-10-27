@@ -11,11 +11,18 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
 - **Gaits**: tap W to shift up (Walk, Trot, Canter, Gallop), tap S to shift down.
   The horse keeps its gait without holding a key. Each gait is a share of the horse's top
   speed (30/50/75/100% by default). Press S again at a halt and hold it to back up.
+- **Pushing at a gallop**: keep tapping W at a gallop to push the horse 2% faster per tap, up to
+  120% of its gallop. Stop tapping for 1.5 seconds and the extra speed fades away, halving every
+  second, back to a normal gallop. While pushed the horse breathes hard (quietly, only for you)
+  and the HUD gait bar glows.
+- **Balking**: a horse that barely knows you (loyalty 1 to 3) may refuse to go from a walk to a trot.
+  It prances instead, and won't go faster for 10 seconds; a skittish one may throw you off. Which
+  shifts can fail, and how likely, is in the config.
 - **Sidestepping**: hold sprint (Ctrl) with A or D and the horse moves at an angle (45° by
   default) without turning; from a halt it steps straight sideways.
 - **Boat-style steering**: A and D turn at a fixed rate, so faster gaits make wider turns.
 - **Loyalty matters**: it scales the speed of every gait, sets the turn rate, and sets how often the
-  horse drops a gait on its own (level 5: a fixed 5 minute timer without input, against AFK riding).
+  horse drops a gait on its own (level 5: a fixed 10 minute timer without input, against AFK riding).
 - **Hunger**: a tamed horse that isn't fed or left to graze on grass, mycelium or podzol
   shows dark particles and slowly loses loyalty with every rider, down to level 1.
 - **Foals**: a foal you breed is born tamed to you, with 25% of your average loyalty with
@@ -30,8 +37,11 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
   galloping horses kick up dust (splashes in water), and in snowy places they breathe out little
   puffs. Everyone nearby sees and hears this, and hears a horse snort when it drops a gait or bolts.
   A loyalty level up gets a whinny and a toast; a level lost to hunger gets a low snort and a toast.
+  A horse that balks rears up with a snort for everyone, and you get a toast saying what happened.
   Each part can be turned off under `feedback` in the config.
-- **Config** in `config/horseloyalty.json` for all of the numbers above.
+- **Config** in `config/horseloyalty.json` for all of the numbers above. On a server, the server's
+  riding numbers (speeds, turning, gait drops, balking, pushing) apply to everyone, whatever their
+  own file says; HUD and sound settings stay each player's own.
 - **Dev panel** (development only) in the top left while riding.
 
 ## Requirements
@@ -52,6 +62,7 @@ client; `client` is only loaded on the client and never on a dedicated server.
     src/main/java/.../
       HorseLoyaltyMod.java            common entrypoint: loads config, registers saved data
       config/HorseLoyaltyConfig.java  config/horseloyalty.json, defaults and validation
+      config/RidingRules.java         the server's riding numbers, sent to every player who joins
       loyalty/Loyalty.java            loyalty levels, per-rider points, level up/down (server)
       loyalty/LoyaltyData.java        what a horse remembers about one rider (saved)
       loyalty/Hunger.java             hunger timer, particles and loyalty loss (server)
@@ -75,9 +86,12 @@ client; `client` is only loaded on the client and never on a dedicated server.
       client/riding/Riding.java       speed caps, turn rate and gait drops per loyalty level
       client/riding/GaitHolder.java   lets client code read a horse's gait
       client/riding/ClientGait.java   a horse's gait on this client: your own, or the synced one
+      client/riding/GaitRaise.java    the chance a horse refuses to go faster (balking), and its cooldown
+      client/riding/GallopPush.java   pushing a gallop with W taps: extra speed, fade-out, breathing
       client/feedback/RidingHud.java  loyalty horseshoes and gait bar while riding
       client/feedback/GaitEffects.java    dust, splashes and cold breath
       client/feedback/LoyaltyToasts.java  toast when your loyalty level changes
+      client/feedback/RidingToasts.java   toasts about the ride, such as a horse balking
       client/dev/LoyaltyDebugHud.java dev panel (off in release builds)
       mixin/client/AbstractHorseRidingMixin.java          gaits, steering, gait drops, skittish bolts
       mixin/client/AbstractMountInventoryScreenMixin.java loyalty label in the horse inventory

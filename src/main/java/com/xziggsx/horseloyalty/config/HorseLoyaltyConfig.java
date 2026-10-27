@@ -22,16 +22,24 @@ import net.fabricmc.loader.api.FabricLoader;
  * launch; read once at startup, so changes need a game restart.
  * <p>
  * Loaded on both sides from the same file. Loyalty gain, level thresholds and hunger are
- * used by the server. Speed caps, turning and gait drops are used by the rider's client,
- * because riding runs there.
+ * used by the server. Speed caps, turning, gait drops and the rest of riding are used by the
+ * rider's client, because riding runs there; while connected to a server with the mod, those
+ * come from the server's file instead (see {@link RidingRules}).
  * <p>
  * Field names here are the JSON keys, so renaming a field breaks existing config files.
+ * The JSON fields can't be final: Gson fills them in when reading the file.
  */
+@SuppressWarnings("FieldMayBeFinal")
 public final class HorseLoyaltyConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 	private static final String FILE_NAME = HorseLoyaltyMod.MOD_ID + ".json";
+	/** Bump when a default changes in a way old files should pick up, and handle it in {@link #migrate}. */
+	private static final int CURRENT_VERSION = 2;
 
+	/** The config to use: the file's, with the server's riding rules swapped in while connected to one. */
 	private static HorseLoyaltyConfig instance = defaults();
+	/** The config as read from this side's own file. */
+	private static HorseLoyaltyConfig local = instance;
 
 	// --- JSON fields -------------------------------------------------------------
 
@@ -66,7 +74,16 @@ public final class HorseLoyaltyConfig {
 			+ "parents share one. feedback: ridingHud shows loyalty horseshoes and a gait bar above the hotbar while "
 			+ "riding; gaitSounds plays hoofbeats that match the gait; gaitParticles kicks up dust and splashes at a "
 			+ "canter or gallop; coldBreath shows breath puffs in snowy places; loyaltyToasts shows a toast when "
-			+ "loyalty changes. Restart the game after editing.";
+			+ "loyalty changes; ridingToasts shows a toast when the horse balks at a gait change (off: a message "
+			+ "above the hotbar). gaitRaise: asking for a faster gait can fail. failChancePercent lists, per gait "
+			+ "you shift up from, the chance for loyalty levels 1 to 5 (by default only from a walk). The horse "
+			+ "prances instead and you can't shift up for cooldownSeconds. A horse with one of the "
+			+ "buckOffPersonalities throws you off instead with buckOffPercent chance. gallopPush: tap W again "
+			+ "at a gallop to push the horse percentPerPush faster each tap, up to maxPercent of its gallop "
+			+ "speed. Stop tapping for holdSeconds and the extra speed fades away, halving every fadeHalfLifeSeconds; changing gait ends it at once. While pushed the horse breathes hard, at soundVolumePercent of full volume (0 for none). Restart the game after editing.";
+
+	/** Version of the defaults this file was written with; see {@link #migrate}. Missing in old files, so 0. */
+	private int configVersion;
 
 	private LoyaltyGain loyaltyGain = new LoyaltyGain();
 
@@ -77,6 +94,10 @@ public final class HorseLoyaltyConfig {
 	private PersonalitySettings personality = new PersonalitySettings();
 
 	private FeedbackSettings feedback = new FeedbackSettings();
+
+	private GaitRaiseSettings gaitRaise = new GaitRaiseSettings();
+
+	private GallopPushSettings gallopPush = new GallopPushSettings();
 
 	private int turnEaseTicks = 4;
 
@@ -148,6 +169,34 @@ public final class HorseLoyaltyConfig {
 		private boolean gaitParticles = true;
 		private boolean coldBreath = true;
 		private boolean loyaltyToasts = true;
+		private boolean ridingToasts = true;
+	}
+
+	public static final class GaitRaiseSettings {
+		private boolean enabled = true;
+		private double cooldownSeconds = 10;
+		private Map<String, List<Double>> failChancePercent = defaultFailChances();
+		private List<String> buckOffPersonalities = new ArrayList<>(List.of("skittish"));
+		private double buckOffPercent = 35;
+
+		/**
+		 * Only shifting up from a walk can fail by default, and only for a horse that barely knows
+		 * you. Add a gait here (such as "trot", or "gallop" for pushing) to make that shift risky too.
+		 */
+		private static Map<String, List<Double>> defaultFailChances() {
+			Map<String, List<Double>> chances = new LinkedHashMap<>();
+			chances.put("walk", List.of(6.0, 3.0, 0.5, 0.0, 0.0));
+			return chances;
+		}
+	}
+
+	public static final class GallopPushSettings {
+		private boolean enabled = true;
+		private double percentPerPush = 2;
+		private double maxPercent = 120;
+		private double holdSeconds = 1.5;
+		private double fadeHalfLifeSeconds = 1;
+		private double soundVolumePercent = 40;
 	}
 
 	public static final class LevelSettings {
@@ -173,13 +222,13 @@ public final class HorseLoyaltyConfig {
 	/** Default settings for levels 1 to 5. Also the fallback for missing values. */
 	private static List<LevelSettings> defaultLevels() {
 		List<LevelSettings> levels = new ArrayList<>();
-		// Levels 1 to 4 roll every 30 s, averaging one drop every 50 s, 75 s, 2 min and
-		// 3 min 20 s. Level 5 never drops by chance, only on a fixed 5 minute timer.
-		levels.add(new LevelSettings(1, 0, 60, 4.0, 30, 60));
-		levels.add(new LevelSettings(2, 10, 70, 5.0, 30, 40));
-		levels.add(new LevelSettings(3, 40, 80, 6.0, 30, 25));
-		levels.add(new LevelSettings(4, 100, 90, 7.0, 30, 15));
-		levels.add(new LevelSettings(5, 200, 100, 8.0, 300, 100));
+		// Levels 1 to 4 roll every 45 s, averaging one drop every 1 min 50 s, 3 min, 5 min
+		// and 9 min 20 s. Level 5 never drops by chance, only on a fixed 10 minute timer.
+		levels.add(new LevelSettings(1, 0, 60, 4.0, 45, 40));
+		levels.add(new LevelSettings(2, 10, 70, 5.0, 45, 25));
+		levels.add(new LevelSettings(3, 40, 80, 6.0, 45, 15));
+		levels.add(new LevelSettings(4, 100, 90, 7.0, 45, 8));
+		levels.add(new LevelSettings(5, 200, 100, 8.0, 600, 100));
 		return levels;
 	}
 
@@ -201,6 +250,18 @@ public final class HorseLoyaltyConfig {
 	private transient FoalSettings resolvedFoals;
 	private transient PersonalitySettings resolvedPersonality;
 	private transient FeedbackSettings resolvedFeedback;
+	private transient boolean gaitRaiseEnabled;
+	private transient int gaitRaiseCooldownTicks;
+	/** Fail chance (0.06 = 6%) by gait index (0 halt to 4 gallop), then loyalty level 0 to 5. */
+	private transient double[][] gaitRaiseFailChance;
+	private transient List<Personality> buckOffPersonalities;
+	private transient double buckOffChance;
+	private transient boolean gallopPushEnabled;
+	private transient double gallopPushStep;
+	private transient double gallopPushMax;
+	private transient int gallopPushHoldTicks;
+	private transient double gallopPushFadePerTick;
+	private transient float gallopPushSoundVolume;
 
 	/** The loaded config. Holds the defaults until {@link #load()} has run. */
 	public static HorseLoyaltyConfig get() {
@@ -407,6 +468,70 @@ public final class HorseLoyaltyConfig {
 		return resolvedFeedback.loyaltyToasts;
 	}
 
+	/** Whether a toast shows when the horse balks at a gait change. Off: a message above the hotbar. */
+	public boolean ridingToasts() {
+		return resolvedFeedback.ridingToasts;
+	}
+
+	/** Whether shifting up can fail at all. */
+	public boolean gaitRaiseEnabled() {
+		return gaitRaiseEnabled;
+	}
+
+	/** Ticks the rider can't shift up after the horse balked. */
+	public int gaitRaiseCooldownTicks() {
+		return gaitRaiseCooldownTicks;
+	}
+
+	/**
+	 * Chance (0.06 = 6%) that asking for more speed fails, by the gait shifted up from
+	 * (0 halt to 4 gallop, where 4 is a gallop push) and loyalty level.
+	 */
+	public double gaitRaiseFailChance(int fromGait, int level) {
+		double[] byLevel = gaitRaiseFailChance[Math.clamp(fromGait, 0, gaitRaiseFailChance.length - 1)];
+		return byLevel[Math.clamp(level, 0, Loyalty.MAX_LEVEL)];
+	}
+
+	/** Whether a horse with this personality throws its rider off when it balks, instead of only prancing. */
+	public boolean bucksOff(Personality personality) {
+		return buckOffPersonalities.contains(personality);
+	}
+
+	/** Chance (0.35 = 35%) that a balking horse with a buck-off personality throws its rider. */
+	public double buckOffChance() {
+		return buckOffChance;
+	}
+
+	/** Whether tapping W at a gallop pushes the horse faster. */
+	public boolean gallopPushEnabled() {
+		return gallopPushEnabled;
+	}
+
+	/** Extra share of gallop speed per push (0.1 = 10%). */
+	public double gallopPushStep() {
+		return gallopPushStep;
+	}
+
+	/** Ticks a gallop push lasts after the last W tap. At least 1. */
+	public int gallopPushHoldTicks() {
+		return gallopPushHoldTicks;
+	}
+
+	/** What the gallop push is multiplied by each tick while it fades (0.966 halves it in a second). */
+	public double gallopPushFadePerTick() {
+		return gallopPushFadePerTick;
+	}
+
+	/** Volume (0.4 = 40%) of the straining breaths while pushing. 0 for none. */
+	public float gallopPushSoundVolume() {
+		return gallopPushSoundVolume;
+	}
+
+	/** Most extra share of gallop speed all pushes together can add (0.2 = up to 120%). */
+	public double gallopPushMax() {
+		return gallopPushMax;
+	}
+
 	// --- Loading -----------------------------------------------------------------
 
 	/** A config with only default values, resolved and ready to use. */
@@ -420,6 +545,7 @@ public final class HorseLoyaltyConfig {
 	public static void load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
 		HorseLoyaltyConfig config = new HorseLoyaltyConfig();
+		boolean readFailed = false;
 		if (Files.exists(path)) {
 			try (Reader reader = Files.newBufferedReader(path)) {
 				HorseLoyaltyConfig read = GSON.fromJson(reader, HorseLoyaltyConfig.class);
@@ -429,16 +555,124 @@ public final class HorseLoyaltyConfig {
 			} catch (IOException | JsonParseException e) {
 				// Keep the user's broken file so they can fix it; just run on defaults.
 				HorseLoyaltyMod.LOGGER.error("Could not read {}, using defaults: {}", path, e.getMessage());
+				readFailed = true;
 			}
 		} else {
-			try (Writer writer = Files.newBufferedWriter(path)) {
-				GSON.toJson(config, writer);
-			} catch (IOException e) {
-				HorseLoyaltyMod.LOGGER.warn("Could not write default config {}: {}", path, e.getMessage());
-			}
+			config.configVersion = CURRENT_VERSION;
+			write(config, path);
+		}
+		if (!readFailed && config.configVersion < CURRENT_VERSION) {
+			config.migrate();
+			write(config, path);
 		}
 		config.resolve();
 		instance = config;
+		local = config;
+	}
+
+	/** This side's own riding rules, from its own file. The server sends these to joining players. */
+	public static RidingRules localRidingRules() {
+		HorseLoyaltyConfig config = local;
+		PersonalitySettings personality = config.resolvedPersonality;
+		return new RidingRules(config.topSpeedShare, config.gaitShares, config.turnDegrees, config.turnEaseTicks,
+				config.sidestepAngleDegrees, config.gaitDropChance, config.gaitDropTicks, personality.enabled,
+				personality.lazyGaitDropChanceMultiplier, personality.lazyGaitDropTimeMultiplier,
+				personality.boltSeconds, personality.boltCreeperDistance, config.gaitRaiseEnabled,
+				config.gaitRaiseCooldownTicks, config.gaitRaiseFailChance, config.buckOffPersonalities,
+				config.buckOffChance, config.gallopPushEnabled, config.gallopPushStep, config.gallopPushMax,
+				config.gallopPushHoldTicks, config.gallopPushFadePerTick);
+	}
+
+	/**
+	 * Client: ride by the server's rules from now on, or by the local file again with null (on
+	 * disconnecting). Everything that isn't about riding, like the HUD and sound settings, stays local.
+	 */
+	public static void useServerRidingRules(RidingRules rules) {
+		if (rules == null) {
+			instance = local;
+			return;
+		}
+		// A copy of the local config, so the local one is still there to go back to.
+		HorseLoyaltyConfig config = GSON.fromJson(GSON.toJson(local), HorseLoyaltyConfig.class);
+		config.resolve();
+		config.apply(rules);
+		instance = config;
+	}
+
+	/** Takes over the server's riding rules. An array of another size (a different mod version) keeps the local one. */
+	private void apply(RidingRules rules) {
+		topSpeedShare = sameLength(rules.topSpeedShare(), topSpeedShare);
+		gaitShares = sameLength(rules.gaitShares(), gaitShares);
+		if (rules.turnDegrees().length == turnDegrees.length) {
+			turnDegrees = rules.turnDegrees();
+		}
+		turnEaseTicks = Math.max(1, rules.turnEaseTicks());
+		sidestepAngleDegrees = rules.sidestepAngleDegrees();
+		gaitDropChance = sameLength(rules.gaitDropChance(), gaitDropChance);
+		if (rules.gaitDropTicks().length == gaitDropTicks.length) {
+			gaitDropTicks = rules.gaitDropTicks();
+		}
+		resolvedPersonality.enabled = rules.personalityEnabled();
+		resolvedPersonality.lazyGaitDropChanceMultiplier = rules.lazyGaitDropChanceMultiplier();
+		resolvedPersonality.lazyGaitDropTimeMultiplier = rules.lazyGaitDropTimeMultiplier();
+		resolvedPersonality.boltSeconds = rules.boltSeconds();
+		resolvedPersonality.boltCreeperDistance = rules.boltCreeperDistance();
+		gaitRaiseEnabled = rules.gaitRaiseEnabled();
+		gaitRaiseCooldownTicks = rules.gaitRaiseCooldownTicks();
+		double[][] failChance = rules.gaitRaiseFailChance();
+		boolean failChanceFits = failChance.length == gaitRaiseFailChance.length;
+		for (int gait = 0; failChanceFits && gait < failChance.length; gait++) {
+			failChanceFits = failChance[gait].length == gaitRaiseFailChance[gait].length;
+		}
+		if (failChanceFits) {
+			gaitRaiseFailChance = failChance;
+		}
+		buckOffPersonalities = rules.buckOffPersonalities();
+		buckOffChance = rules.buckOffChance();
+		gallopPushEnabled = rules.gallopPushEnabled();
+		gallopPushStep = rules.gallopPushStep();
+		gallopPushMax = rules.gallopPushMax();
+		gallopPushHoldTicks = Math.max(1, rules.gallopPushHoldTicks());
+		gallopPushFadePerTick = rules.gallopPushFadePerTick();
+	}
+
+	private static double[] sameLength(double[] server, double[] local) {
+		return server.length == local.length ? server : local;
+	}
+
+	private static void write(HorseLoyaltyConfig config, Path path) {
+		try (Writer writer = Files.newBufferedWriter(path)) {
+			GSON.toJson(config, writer);
+		} catch (IOException e) {
+			HorseLoyaltyMod.LOGGER.warn("Could not write config {}: {}", path, e.getMessage());
+		}
+	}
+
+	/**
+	 * Brings a file written by an older version up to date. Only values still at an old default
+	 * change, so anything the user tuned is kept. The file is then saved again, which also adds
+	 * any new settings to it.
+	 */
+	private void migrate() {
+		if (configVersion < 2 && loyaltyLevels != null) {
+			// Version 2 made gait drops rarer. Old defaults by level: {seconds, chance}.
+			double[][] oldDrops = {{30, 60}, {30, 40}, {30, 25}, {30, 15}, {300, 100}};
+			List<LevelSettings> defaults = defaultLevels();
+			for (LevelSettings settings : loyaltyLevels) {
+				if (settings == null || settings.level < 1 || settings.level > Loyalty.MAX_LEVEL) {
+					continue;
+				}
+				double[] old = oldDrops[settings.level - 1];
+				LevelSettings fallback = defaults.get(settings.level - 1);
+				if (settings.gaitDropEverySeconds != null && settings.gaitDropEverySeconds == old[0]
+						&& settings.gaitDropChancePercent != null && settings.gaitDropChancePercent == old[1]) {
+					settings.gaitDropEverySeconds = fallback.gaitDropEverySeconds;
+					settings.gaitDropChancePercent = fallback.gaitDropChancePercent;
+				}
+			}
+		}
+		HorseLoyaltyMod.LOGGER.info("Updated config from version {} to {}", configVersion, CURRENT_VERSION);
+		configVersion = CURRENT_VERSION;
 	}
 
 	/** Fills the per-level arrays, falling back to defaults for missing or nonsense values. */
@@ -503,6 +737,43 @@ public final class HorseLoyaltyConfig {
 		resolvedPersonality.lazyGaitDropTimeMultiplier = Math.clamp(personalitySettings.lazyGaitDropTimeMultiplier, 0.1, 10);
 
 		resolvedFeedback = feedback != null ? feedback : new FeedbackSettings();
+
+		GaitRaiseSettings raise = gaitRaise != null ? gaitRaise : new GaitRaiseSettings();
+		gaitRaiseEnabled = raise.enabled;
+		gaitRaiseCooldownTicks = (int) Math.round(Math.clamp(raise.cooldownSeconds, 0, 600) * 20);
+		Map<String, List<Double>> chances = raise.failChancePercent != null
+				? raise.failChancePercent : GaitRaiseSettings.defaultFailChances();
+		String[] gaitIds = {"halt", "walk", "trot", "canter", "gallop"};
+		gaitRaiseFailChance = new double[gaitIds.length][Loyalty.MAX_LEVEL + 1];
+		for (int gait = 0; gait < gaitIds.length; gait++) {
+			List<Double> byLevel = chances.get(gaitIds[gait]);
+			// A missing level counts as 0; level 0 (untamed) mirrors level 1.
+			for (int level = 1; level <= Loyalty.MAX_LEVEL; level++) {
+				Double percent = byLevel != null && level <= byLevel.size() ? byLevel.get(level - 1) : null;
+				gaitRaiseFailChance[gait][level] = percent == null ? 0 : Math.clamp(percent, 0, 100) / 100.0;
+			}
+			gaitRaiseFailChance[gait][0] = gaitRaiseFailChance[gait][1];
+		}
+		buckOffPersonalities = new ArrayList<>();
+		if (raise.buckOffPersonalities != null) {
+			for (String id : raise.buckOffPersonalities) {
+				// byId falls back to steady for typos; only take ids that really match.
+				Personality match = Personality.byId(id);
+				if (match.id().equals(id)) {
+					buckOffPersonalities.add(match);
+				}
+			}
+		}
+		buckOffChance = Math.clamp(raise.buckOffPercent, 0, 100) / 100.0;
+
+		GallopPushSettings push = gallopPush != null ? gallopPush : new GallopPushSettings();
+		gallopPushEnabled = push.enabled;
+		gallopPushStep = Math.clamp(push.percentPerPush, 0, 100) / 100.0;
+		gallopPushMax = Math.clamp(push.maxPercent - 100, 0, 200) / 100.0;
+		gallopPushHoldTicks = (int) Math.max(1, Math.round(Math.clamp(push.holdSeconds, 0, 60) * 20));
+		// Halves every half-life: x^(20 * seconds) = 0.5. 0.05 s or less is as good as instant.
+		gallopPushSoundVolume = (float) (Math.clamp(push.soundVolumePercent, 0, 100) / 100.0);
+		gallopPushFadePerTick = Math.pow(0.5, 1 / (Math.clamp(push.fadeHalfLifeSeconds, 0.05, 60) * 20));
 
 		List<LevelSettings> defaults = defaultLevels();
 		topSpeedShare = new double[Loyalty.MAX_LEVEL + 1];

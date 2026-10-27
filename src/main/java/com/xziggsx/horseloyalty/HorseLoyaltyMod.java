@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.config.RidingRules;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
@@ -30,9 +31,10 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Hunger.init();
 		Family.init();
 		Personality.init();
-		// Packets: the rider's gait (to the server) and loyalty toasts (to the client).
+		// Packets: the rider's gait (to the server), loyalty toasts and the server's riding rules (to the client).
 		GaitSync.init();
 		LoyaltyChangePayload.init();
+		RidingRules.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }
