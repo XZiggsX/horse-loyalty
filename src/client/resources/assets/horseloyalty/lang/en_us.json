@@ -16,6 +16,9 @@
 	"horseloyalty.gait.gallop": "Gallop",
 	"horseloyalty.gait.reverse": "Backing up",
 	"horseloyalty.gait.dropped": "Your horse eased down to %s",
+	"horseloyalty.gait.unsettled": "%s is still unsettled and won't go faster yet",
+	"horseloyalty.gait.push": "%s, pushing to %s%%",
+	"horseloyalty.gait.push_end": "Your horse eased back to a normal %s",
 	"horseloyalty.foal.born": "A foal is born and trusts you already. Loyalty %s/%s: %s",
 	"horseloyalty.personality.steady": "Steady",
 	"horseloyalty.personality.brave": "Brave",
@@ -28,5 +31,9 @@
 	"horseloyalty.toast.level_up": "Loyalty %s/%s: %s",
 	"horseloyalty.toast.level_down.title": "%s is hungry",
 	"horseloyalty.toast.level_down": "Loyalty fell to %s/%s: %s",
-	"horseloyalty.toast.your_horse": "Your horse"
+	"horseloyalty.toast.your_horse": "Your horse",
+	"horseloyalty.toast.prance.title": "%s balks and prances",
+	"horseloyalty.toast.prance": "Won't go faster. Try again in %ss",
+	"horseloyalty.toast.buck.title": "%s throws you off!",
+	"horseloyalty.toast.buck": "It wasn't ready to go faster"
 }

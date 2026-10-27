@@ -7,7 +7,7 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Gait speed, steering and gait drop numbers for a rider, scaled by their loyalty level.
+ * Gait speed, steering, gait drop and gallop push numbers for a rider, scaled by their loyalty level.
  * The numbers per level come from the user config, see {@link HorseLoyaltyConfig}.
  * Client side only: riding runs on the rider's client.
  */
@@ -67,6 +67,17 @@ public final class Riding {
 			ticks = (int) Math.max(20, Math.round(ticks * config.lazyGaitDropTimeMultiplier()));
 		}
 		return ticks;
+	}
+
+	/**
+	 * How long a gallop push holds after the rider's last W tap, in ticks. Each tap restarts it;
+	 * when it runs out the extra speed fades back to a normal gallop.
+	 * <p>
+	 * TODO: base this on loyalty, personality or a stamina system instead of one config value
+	 * (a more loyal horse keeps up the effort longer). The riding mixin only reads it from here.
+	 */
+	public static int gallopPushTicks(AbstractHorse horse, Player player) {
+		return HorseLoyaltyConfig.get().gallopPushHoldTicks();
 	}
 
 	/**

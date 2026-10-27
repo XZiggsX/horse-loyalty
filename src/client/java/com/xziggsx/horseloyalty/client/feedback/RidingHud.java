@@ -3,6 +3,7 @@ package com.xziggsx.horseloyalty.client.feedback;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.client.riding.ClientGait;
 import com.xziggsx.horseloyalty.client.riding.Gait;
+import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
@@ -13,12 +14,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 
 /**
  * While riding: five horseshoes for your loyalty with the horse and a four-step gait bar, in a
- * row right above the horse's health hearts. The horseshoes are GUI sprites under
+ * row right above the horse's health hearts. While you push a gallop, the bar warms up and glows,
+ * stronger the harder you push, and fades with the push. The horseshoes are GUI sprites under
  * {@code textures/gui/sprites/hud/}, so resource packs can restyle them. Turn it off with
  * {@code feedback.ridingHud} in the config.
  */
@@ -38,6 +41,10 @@ public final class RidingHud implements HudElement {
 	private static final int BAR_ON_COLOR = 0xFFF3E3B4;
 	private static final int BAR_OFF_COLOR = 0x50FFFFFF;
 	private static final int OUTLINE_COLOR = 0xA0000000;
+	/** Lit bars turn this color at the full gallop push. */
+	private static final int BAR_PUSH_COLOR = 0xFFFF9A3C;
+	/** Glow around the bars at the full gallop push. */
+	private static final int PUSH_GLOW_COLOR = 0x90FF7A1A;
 
 	private RidingHud() {
 	}
@@ -64,7 +71,10 @@ public final class RidingHud implements HudElement {
 
 		int barsWidth = BAR_COUNT * (BAR_WIDTH + BAR_GAP) - BAR_GAP;
 		int barsLeft = right - barsWidth;
-		extractGaitBars(graphics, ClientGait.of(horse), barsLeft, top + ICON_SIZE);
+		// Only the rider knows the push; it isn't synced.
+		float push = horse.getControllingPassenger() == player
+				? (float) ((GaitHolder) horse).horseloyalty$getGallopPush().effort() : 0;
+		extractGaitBars(graphics, ClientGait.of(horse), push, barsLeft, top + ICON_SIZE);
 
 		// Untamed horses have no loyalty to show yet.
 		if (horse.isTamed()) {
@@ -77,14 +87,26 @@ public final class RidingHud implements HudElement {
 		}
 	}
 
-	/** Four bars, each taller than the last, lit up to the current gait. {@code bottom} is exclusive. */
-	private static void extractGaitBars(GuiGraphicsExtractor graphics, Gait gait, int left, int bottom) {
+	/**
+	 * Four bars, each taller than the last, lit up to the current gait. {@code push} (0 to 1) is how
+	 * hard a gallop is pushed: it tints the lit bars and puts a halo around them. {@code bottom} is exclusive.
+	 */
+	private static void extractGaitBars(GuiGraphicsExtractor graphics, Gait gait, float push, int left, int bottom) {
+		if (push > 0) {
+			// A halo one pixel outside each lit bar's outline, all drawn before any bar.
+			int glow = ARGB.color(Math.round(ARGB.alpha(PUSH_GLOW_COLOR) * push), PUSH_GLOW_COLOR);
+			for (int i = 0; i < Math.min(BAR_COUNT, gait.ordinal()); i++) {
+				int x = left + i * (BAR_WIDTH + BAR_GAP);
+				graphics.fill(x - 2, bottom - (3 + i * 2) - 2, x + BAR_WIDTH + 2, bottom + 2, glow);
+			}
+		}
+		int lit = ARGB.srgbLerp(push, BAR_ON_COLOR, BAR_PUSH_COLOR);
 		for (int i = 0; i < BAR_COUNT; i++) {
 			int x = left + i * (BAR_WIDTH + BAR_GAP);
 			int height = 3 + i * 2;
 			int y = bottom - height;
 			graphics.fill(x - 1, y - 1, x + BAR_WIDTH + 1, bottom + 1, OUTLINE_COLOR);
-			graphics.fill(x, y, x + BAR_WIDTH, bottom, i < gait.ordinal() ? BAR_ON_COLOR : BAR_OFF_COLOR);
+			graphics.fill(x, y, x + BAR_WIDTH, bottom, i < gait.ordinal() ? lit : BAR_OFF_COLOR);
 		}
 	}
 }

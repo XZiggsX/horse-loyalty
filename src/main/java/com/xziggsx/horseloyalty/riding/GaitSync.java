@@ -21,9 +21,10 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
  * <p>
  * Riding runs on the rider's client (see {@code AbstractHorseRidingMixin}), so only that client
  * knows the gait. It sends a {@link GaitPayload} whenever the gait changes or the horse drops a
- * gait or bolts. The server keeps the gait in {@link #GAIT}, which is synced to everyone, so other
- * clients can show gait dust and every side can pick the right hoof sound. Drops and bolts also
- * play the horse's angry sound for everyone but the rider, who already heard it on their own client.
+ * gait, bolts or balks at a shift up. The server keeps the gait in {@link #GAIT}, which is synced to
+ * everyone, so other clients can show gait dust and every side can pick the right hoof sound. Those
+ * events also play the horse's angry sound for everyone but the rider, who already heard it on their
+ * own client. A balking horse rears up on the server, and one that bucks throws its rider off there.
  */
 public final class GaitSync {
 	/** Gaits are sent as their index: 0 halt, 1 walk, 2 trot, 3 canter, 4 gallop. */
@@ -54,7 +55,11 @@ public final class GaitSync {
 		/** The horse dropped a gait on its own. */
 		DROPPED,
 		/** A skittish horse spooked and bolted. */
-		BOLTED;
+		BOLTED,
+		/** The rider asked for more speed and the horse refused, rearing up instead. */
+		PRANCED,
+		/** As PRANCED, but the horse threw its rider off. */
+		BUCKED;
 
 		private static final Event[] VALUES = values();
 
@@ -114,6 +119,13 @@ public final class GaitSync {
 		}
 		if (payload.event() == Event.SHIFT) {
 			return;
+		}
+		if (payload.event() == Event.PRANCED || payload.event() == Event.BUCKED) {
+			// Rearing is synced to every client, and stops the horse for its rider too.
+			horse.standIfPossible();
+			if (payload.event() == Event.BUCKED) {
+				player.stopRiding();
+			}
 		}
 		long now = horse.level().getGameTime();
 		Long last = horse.getAttached(LAST_SOUND_TICK);
