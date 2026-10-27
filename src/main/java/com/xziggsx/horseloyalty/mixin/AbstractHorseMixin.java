@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.mixin;
 
+import com.xziggsx.horseloyalty.ai.ComeWhenCalledGoal;
 import com.xziggsx.horseloyalty.ai.CuriousWanderGoal;
 import com.xziggsx.horseloyalty.ai.FollowBreederGoal;
 import com.xziggsx.horseloyalty.ai.FollowChosenParentGoal;
@@ -169,7 +170,8 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	}
 
 	/**
-	 * Adds our goals. The foal goals (priority 3) only run for foals with a {@link Family}, ahead
+	 * Adds our goals. Answering a horn call (1) only runs for a called horse, level with panicking.
+	 * The foal goals (priority 3) only run for foals with a {@link Family}, ahead
 	 * of vanilla's FollowParentGoal (4) and random strolling (6). The personality goals only run
 	 * for that personality: skittish fleeing (2) just below panicking, curious wandering (6)
 	 * alongside random strolling.
@@ -178,6 +180,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	private void horseloyalty$addGoals(CallbackInfo ci) {
 		AbstractHorse horse = horseloyalty$self();
 		GoalSelector goals = ((MobAccessor) horse).horseloyalty$getGoalSelector();
+		goals.addGoal(1, new ComeWhenCalledGoal(horse));
 		goals.addGoal(2, new SkittishAvoidGoal(horse));
 		goals.addGoal(3, new FollowChosenParentGoal(horse));
 		goals.addGoal(3, new FollowBreederGoal(horse));

@@ -5,6 +5,7 @@
 	"mixins": [
 		"AbstractHorseMixin",
 		"AnimalBreedingMixin",
+		"InstrumentItemMixin",
 		"MobAccessor",
 		"PanicGoalMixin",
 		"RandomStrollGoalMixin"

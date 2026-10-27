@@ -32,6 +32,12 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
   creepers, and bolts from them while ridden unless loyalty is high), Curious (wanders toward
   villages when loose) or Lazy (drops gaits more often). Shown in the horse inventory from
   loyalty 2. Foals take after their parents, so you can breed for a personality.
+- **Calling with a goat horn**: sneak and use a goat horn on a tamed horse you have loyalty 2
+  (Wary) with to bind it. The horn shines, takes the horse's name if it has one, and says
+  "Calls <name>". Blowing it calls the horse if it is loaded: within 24 blocks it runs to you,
+  further away it is moved to open ground behind you, out of sight, and runs to you from there.
+  Not in the Nether or underground (below sea level or deep under the surface). A horse that is
+  ridden, leashed or in a boat can't come, and one in another dimension only comes at loyalty 5.
 - **Visual and sound feedback**: while riding, five horseshoes above the horse's hearts show your
   loyalty and a four-step bar shows the gait. Hoofbeats change with the gait, cantering and
   galloping horses kick up dust (splashes in water), and in snowy places they breathe out little
@@ -70,13 +76,17 @@ client; `client` is only loaded on the client and never on a dedicated server.
       loyalty/LoyaltyChangePayload.java  tells a player their level changed (for the toast)
       personality/Personality.java    personalities, rolling and inheritance (saved, synced)
       riding/GaitSync.java            the rider's gait, sent to the server and synced to everyone
-      ai/                             goals: foal following, skittish fleeing, curious wandering
+      horn/HornBinding.java           binding a goat horn to a horse (sneak + use)
+      horn/HornCall.java              blowing a bound horn: finds the horse, moves it if needed
+      ai/                             goals: foal following, skittish fleeing, curious wandering,
+                                      answering a horn call
       mixin/AbstractHorseMixin.java   server hooks: feeding, riding time, hunger, mount status, goals,
                                       hoofbeats per gait
       mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, personality)
       mixin/RandomStrollGoalMixin.java  foals stroll less and stay near family
       mixin/PanicGoalMixin.java       brave horses don't panic when hit
       mixin/MobAccessor.java          access to a mob's goals
+      mixin/InstrumentItemMixin.java  blowing a bound goat horn calls its horse
     src/main/resources/
       data/horseloyalty/tags/block/grazing_blocks.json   blocks a horse can graze on
 

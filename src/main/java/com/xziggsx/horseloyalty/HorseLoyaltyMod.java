@@ -2,6 +2,8 @@ package com.xziggsx.horseloyalty;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.config.RidingRules;
+import com.xziggsx.horseloyalty.horn.HornBinding;
+import com.xziggsx.horseloyalty.horn.HornCall;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
@@ -31,6 +33,9 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Hunger.init();
 		Family.init();
 		Personality.init();
+		// Goat horns bound to a horse: the item data, the sneak-click to bind and the call.
+		HornBinding.init();
+		HornCall.init();
 		// Packets: the rider's gait (to the server), loyalty toasts and the server's riding rules (to the client).
 		GaitSync.init();
 		LoyaltyChangePayload.init();

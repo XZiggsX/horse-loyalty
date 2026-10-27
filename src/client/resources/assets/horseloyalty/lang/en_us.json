@@ -35,5 +35,17 @@
 	"horseloyalty.toast.prance.title": "%s balks and prances",
 	"horseloyalty.toast.prance": "Won't go faster. Try again in %ss",
 	"horseloyalty.toast.buck.title": "%s throws you off!",
-	"horseloyalty.toast.buck": "It wasn't ready to go faster"
+	"horseloyalty.toast.buck": "It wasn't ready to go faster",
+	"horseloyalty.horn.name": "%s",
+	"horseloyalty.horn.lore": "Calls %s",
+	"horseloyalty.horn.bound": "This horn now calls %s",
+	"horseloyalty.horn.not_trusted": "%s doesn't trust you enough yet. Needs loyalty %s/%s: %s",
+	"horseloyalty.horn.no_answer": "No answer. Your horse is too far away to hear you",
+	"horseloyalty.horn.coming": "%s heard you and is on the way",
+	"horseloyalty.horn.ridden": "%s is carrying someone else",
+	"horseloyalty.horn.tied": "%s is tied up and can't come",
+	"horseloyalty.horn.nether": "%s can't reach you in the Nether",
+	"horseloyalty.horn.underground": "%s can't reach you underground",
+	"horseloyalty.horn.other_dimension": "%s is in another dimension and can't hear you",
+	"horseloyalty.horn.no_room": "There's no open ground behind you for %s"
 }
