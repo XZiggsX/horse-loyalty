@@ -4,7 +4,9 @@ import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.loyalty.LoyaltyChangePayload;
 import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.riding.GaitSync;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,9 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Hunger.init();
 		Family.init();
 		Personality.init();
+		// Packets: the rider's gait (to the server) and loyalty toasts (to the client).
+		GaitSync.init();
+		LoyaltyChangePayload.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }
