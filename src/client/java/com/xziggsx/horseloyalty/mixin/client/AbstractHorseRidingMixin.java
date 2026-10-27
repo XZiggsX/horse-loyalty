@@ -2,6 +2,8 @@ package com.xziggsx.horseloyalty.mixin.client;
 
 import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
+import com.xziggsx.horseloyalty.client.riding.GaitRaise;
+import com.xziggsx.horseloyalty.client.riding.GallopPush;
 import com.xziggsx.horseloyalty.client.riding.Riding;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
@@ -28,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Client-side riding controls: gaits (W/S taps), backing up, gait speeds, boat-style A/D steering,
- * sidestepping (sprint key + A/D),
+ * sidestepping (sprint key + A/D), pushing at a gallop (W taps), the horse refusing to go faster,
  * random gait drops, and skittish horses bolting from creepers. The gait is sent to the server
  * whenever it changes (see {@link GaitSync}), so other players can see and hear it.
  * <p>
@@ -86,9 +88,17 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Unique
 	private int horseloyalty$sentGait = -1;
 
-	/** A drop or bolt still to be sent to the server with the gait, or null. */
+	/** A drop, bolt or refusal still to be sent to the server with the gait, or null. */
 	@Unique
 	private GaitSync.Event horseloyalty$pendingEvent;
+
+	/** Pushing at a gallop with W taps. */
+	@Unique
+	private final GallopPush horseloyalty$push = new GallopPush();
+
+	/** Whether the horse goes along with more speed, and its cooldown after refusing. Kept between rides. */
+	@Unique
+	private final GaitRaise horseloyalty$raise = new GaitRaise();
 
 	@Override
 	public Gait horseloyalty$getGait() {
@@ -98,6 +108,16 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Override
 	public int horseloyalty$getGaitDropTimer() {
 		return horseloyalty$gaitDropTimer;
+	}
+
+	@Override
+	public GallopPush horseloyalty$getGallopPush() {
+		return horseloyalty$push;
+	}
+
+	@Override
+	public int horseloyalty$getRaiseCooldown() {
+		return horseloyalty$raise.cooldownLeft(horseloyalty$self());
 	}
 
 	@Unique
@@ -120,12 +140,14 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$boltTurn = 0;
 		horseloyalty$sentGait = -1;
 		horseloyalty$pendingEvent = null;
+		horseloyalty$push.reset();
 	}
 
 	/**
 	 * Gait control: W taps shift up, S taps shift down, and the horse keeps going at
 	 * its gait without holding a key. Pressing S again at a halt and holding it backs up. A and D steer (see getRiddenRotation), so they
-	 * no longer strafe. Also rolls the random gait drop.
+	 * no longer strafe. W taps at a gallop push the horse faster. A shift up or push can fail (see
+	 * askForMore). Also rolls the random gait drop.
 	 */
 	@Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$gaitInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
@@ -141,7 +163,14 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 			horseloyalty$gait = Gait.GALLOP;
 			horseloyalty$reversing = false;
 		} else if (forward > 0 && horseloyalty$lastForward <= 0) {
-			horseloyalty$gait = horseloyalty$gait.up();
+			if (horseloyalty$gait == Gait.GALLOP) {
+				if (horseloyalty$push.tap(horse, player, () -> horseloyalty$askForMore(horse, player, Gait.GALLOP))) {
+					// Pushing shows the rider is paying attention, like a shift.
+					horseloyalty$gaitDropTimer = 0;
+				}
+			} else if (horseloyalty$askForMore(horse, player, horseloyalty$gait)) {
+				horseloyalty$gait = horseloyalty$gait.up();
+			}
 		} else if (forward < 0 && horseloyalty$lastForward >= 0) {
 			if (horseloyalty$gait == Gait.HALT) {
 				// A fresh S press while already halted: back up for as long as it's held.
@@ -164,7 +193,10 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 			horseloyalty$gaitDropTimer = 0;
 		} else if (horseloyalty$gait != before) {
 			// Only the rider's own client runs this, so this shows on their screen only.
-			player.sendOverlayMessage(horseloyalty$gait.displayName());
+			// A buck has its own toast; "Halt" on top of it would only confuse.
+			if (horseloyalty$pendingEvent != GaitSync.Event.BUCKED) {
+				player.sendOverlayMessage(horseloyalty$gait.displayName());
+			}
 			// Shifting gait shows the rider is paying attention, so the drop timer restarts.
 			horseloyalty$gaitDropTimer = 0;
 		} else if (horseloyalty$gait != Gait.HALT && ++horseloyalty$gaitDropTimer >= Riding.gaitDropTicks(horse, player)) {
@@ -180,6 +212,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 				horseloyalty$pendingEvent = GaitSync.Event.DROPPED;
 			}
 		}
+		horseloyalty$push.tick(horse, player, !bolting && horseloyalty$gait == Gait.GALLOP);
 		horseloyalty$syncGait();
 
 		// Vanilla returns the Vec3.ZERO constant itself while the horse is rearing. Keep that.
@@ -196,6 +229,31 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		}
 		// Vanilla scales an input longer than 1 back down to 1, so moving diagonally keeps the gait's speed.
 		cir.setReturnValue(new Vec3(sideInput, 0, forwardInput));
+	}
+
+	/**
+	 * Asks the horse for more speed from {@code from}: a shift up, or a push at a gallop. Returns
+	 * whether it goes along. Every "go faster" goes through here, so a new one gets the same
+	 * chance to refuse (see {@link GaitRaise}). A refusing horse snorts and rears up, or throws its
+	 * rider off; the server makes that happen for everyone (see {@link GaitSync}).
+	 */
+	@Unique
+	private boolean horseloyalty$askForMore(AbstractHorse horse, Player player, Gait from) {
+		GaitRaise.Outcome outcome = horseloyalty$raise.ask(horse, player, from);
+		if (outcome == GaitRaise.Outcome.OK || outcome == GaitRaise.Outcome.UNSETTLED) {
+			return outcome == GaitRaise.Outcome.OK;
+		}
+		horseloyalty$playAngrySound(horse);
+		// Asking counts as paying attention, like a shift, so the drop timer restarts.
+		horseloyalty$gaitDropTimer = 0;
+		if (outcome == GaitRaise.Outcome.BUCK) {
+			// The server throws the rider off; stop here in the meantime.
+			horseloyalty$gait = Gait.HALT;
+			horseloyalty$pendingEvent = GaitSync.Event.BUCKED;
+		} else {
+			horseloyalty$pendingEvent = GaitSync.Event.PRANCED;
+		}
+		return false;
 	}
 
 	/**
@@ -236,7 +294,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	}
 
 	/**
-	 * Sends the gait to the server when it changed, or a drop or bolt happened, since the last send.
+	 * Sends the gait to the server when it changed, or a drop, bolt or refusal happened, since the last send.
 	 * A few packets a minute at most: nothing is sent while the rider holds a gait.
 	 */
 	@Unique
@@ -265,7 +323,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		}
 	}
 
-	/** Replaces the horse's speed with the current gait's speed, scaled by the rider's loyalty. */
+	/** Replaces the horse's speed with the current gait's speed, scaled by the rider's loyalty and any gallop push. */
 	@Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$gaitSpeed(Player player, CallbackInfoReturnable<Float> cir) {
 		if (!Loyalty.appliesTo(horseloyalty$self())) {
@@ -277,7 +335,8 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 			// Stepping sideways from a halt goes at walking pace.
 			cir.setReturnValue((float) Riding.gaitSpeed(Gait.WALK, cir.getReturnValueF(), horseloyalty$self(), player));
 		} else if (horseloyalty$gait != Gait.HALT) {
-			cir.setReturnValue((float) Riding.gaitSpeed(horseloyalty$gait, cir.getReturnValueF(), horseloyalty$self(), player));
+			double speed = Riding.gaitSpeed(horseloyalty$gait, cir.getReturnValueF(), horseloyalty$self(), player);
+			cir.setReturnValue((float) (speed * (1 + horseloyalty$push.extra())));
 		}
 	}
 

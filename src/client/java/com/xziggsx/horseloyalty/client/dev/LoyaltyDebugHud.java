@@ -7,6 +7,7 @@ import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
 import com.xziggsx.horseloyalty.personality.Personality;
 import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
+import com.xziggsx.horseloyalty.client.riding.GaitRaise;
 import com.xziggsx.horseloyalty.client.riding.Riding;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,8 +134,11 @@ public final class LoyaltyDebugHud {
 		// Distance actually covered last tick. Not getDeltaMovement(): that is stored after
 		// ground friction is applied, so it reads only about 55% of the real speed.
 		double actual = Math.hypot(horse.getX() - horse.xo, horse.getZ() - horse.zo) * 20;
-		lines.add(String.format("Gait: %d %s  target: %.1f b/s (%.0f%%)",
-				gait.ordinal(), gait.displayName().getString(), target, target / top * 100));
+		double push = ((GaitHolder) horse).horseloyalty$getGallopPush().extra();
+		target *= 1 + push;
+		lines.add(String.format("Gait: %d %s  target: %.1f b/s (%.0f%%)%s",
+				gait.ordinal(), gait.displayName().getString(), target, target / top * 100,
+				push > 0 ? String.format("  push +%.0f%%", push * 100) : ""));
 		lines.add(String.format("Actual: %.1f b/s (%.0f%% of max)",
 				actual, actual / top * 100));
 		float turnRate = Riding.turnRate(horse, player);
@@ -145,6 +149,10 @@ public final class LoyaltyDebugHud {
 		int dropIn = Math.max(0, dropTicks - ((GaitHolder) horse).horseloyalty$getGaitDropTimer());
 		lines.add(String.format("Gait drop: %.0f%% chance every %ds without shifting, next roll in %ds",
 				Riding.gaitDropChance(horse, player) * 100, dropTicks / 20, dropIn / 20));
+		int raiseCooldown = ((GaitHolder) horse).horseloyalty$getRaiseCooldown();
+		lines.add(String.format("Shift up from here: %.1f%% to balk%s",
+				GaitRaise.failChance(horse, player, gait) * 100,
+				raiseCooldown > 0 ? ", unsettled for " + (raiseCooldown + 19) / 20 + "s" : ""));
 		return lines;
 	}
 

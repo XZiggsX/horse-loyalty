@@ -9,4 +9,10 @@ public interface GaitHolder {
 
 	/** Ticks the horse has been moving since the rider last shifted gait (or the last drop roll). */
 	int horseloyalty$getGaitDropTimer();
+
+	/** The horse's gallop push, to read how hard it's pushed. */
+	GallopPush horseloyalty$getGallopPush();
+
+	/** Ticks until the horse will go faster again after refusing, 0 if it will now. */
+	int horseloyalty$getRaiseCooldown();
 }
