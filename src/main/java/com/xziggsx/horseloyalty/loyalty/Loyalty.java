@@ -10,12 +10,14 @@ import java.util.UUID;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.equine.Llama;
@@ -173,15 +175,23 @@ public final class Loyalty {
 		}
 		horse.setAttached(EARNED_LEVELS, after);
 		if (horse.level() instanceof ServerLevel serverLevel) {
-			after.forEach((id, level) -> {
-				// Above the hotbar, not in chat, and only for the rider currently on this horse,
-				// so nobody gets messages about a horse they aren't with.
-				ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(id);
-				if (player != null && player.getVehicle() == horse && level < before.getOrDefault(id, 1)) {
-					player.sendOverlayMessage(Component.translatable("horseloyalty.loyalty.level_down",
-							horse.getName(), level, MAX_LEVEL, levelName(level)));
+			boolean anyDropped = false;
+			for (Map.Entry<UUID, Integer> entry : after.entrySet()) {
+				int level = entry.getValue();
+				if (level >= before.getOrDefault(entry.getKey(), 1)) {
+					continue;
 				}
-			});
+				anyDropped = true;
+				// Only for the rider currently on this horse, so nobody gets messages about a horse they aren't with.
+				ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
+				if (player != null && player.getVehicle() == horse) {
+					notifyChange(horse, player, level, false);
+				}
+			}
+			if (anyDropped) {
+				// A low, unhappy snort for everyone nearby.
+				serverLevel.playSound(null, horse, SoundEvents.HORSE_BREATHE, horse.getSoundSource(), 0.8F, 0.6F);
+			}
 		}
 	}
 
@@ -195,15 +205,28 @@ public final class Loyalty {
 		}
 	}
 
-	/** Heart particles for everyone nearby, and a message above the player's hotbar. */
+	/** Heart particles and a happy whinny for everyone nearby, and a toast for the player. */
 	private static void onLevelUp(AbstractHorse horse, Player player, int level) {
 		if (horse.level() instanceof ServerLevel serverLevel) {
 			// Entity event 7 is the vanilla "tamed" heart burst.
 			serverLevel.broadcastEntityEvent(horse, (byte) 7);
+			// The horse's own voice, so donkeys bray and mules sound like mules.
+			horse.playAmbientSound();
 		}
 		if (player instanceof ServerPlayer serverPlayer) {
-			// Above the hotbar rather than in chat.
-			serverPlayer.sendOverlayMessage(Component.translatable("horseloyalty.loyalty.level_up",
+			notifyChange(horse, serverPlayer, level, true);
+		}
+	}
+
+	/**
+	 * Tells a player their level with a horse changed: a toast on their client, or a message above
+	 * the hotbar if their client can't show it (it should always have the mod, so this is a fallback).
+	 */
+	private static void notifyChange(AbstractHorse horse, ServerPlayer player, int level, boolean up) {
+		if (ServerPlayNetworking.canSend(player, LoyaltyChangePayload.TYPE)) {
+			ServerPlayNetworking.send(player, new LoyaltyChangePayload(horse.getId(), level, up));
+		} else {
+			player.sendOverlayMessage(Component.translatable(up ? "horseloyalty.loyalty.level_up" : "horseloyalty.loyalty.level_down",
 					horse.getName(), level, MAX_LEVEL, levelName(level)));
 		}
 	}

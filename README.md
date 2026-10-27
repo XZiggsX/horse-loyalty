@@ -25,6 +25,12 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
   creepers, and bolts from them while ridden unless loyalty is high), Curious (wanders toward
   villages when loose) or Lazy (drops gaits more often). Shown in the horse inventory from
   loyalty 2. Foals take after their parents, so you can breed for a personality.
+- **Visual and sound feedback**: while riding, five horseshoes above the horse's hearts show your
+  loyalty and a four-step bar shows the gait. Hoofbeats change with the gait, cantering and
+  galloping horses kick up dust (splashes in water), and in snowy places they breathe out little
+  puffs. Everyone nearby sees and hears this, and hears a horse snort when it drops a gait or bolts.
+  A loyalty level up gets a whinny and a toast; a level lost to hunger gets a low snort and a toast.
+  Each part can be turned off under `feedback` in the config.
 - **Config** in `config/horseloyalty.json` for all of the numbers above.
 - **Dev panel** (development only) in the top left while riding.
 
@@ -50,9 +56,12 @@ client; `client` is only loaded on the client and never on a dedicated server.
       loyalty/LoyaltyData.java        what a horse remembers about one rider (saved)
       loyalty/Hunger.java             hunger timer, particles and loyalty loss (server)
       loyalty/Family.java             a bred foal's parents and breeder, taming at birth (saved)
+      loyalty/LoyaltyChangePayload.java  tells a player their level changed (for the toast)
       personality/Personality.java    personalities, rolling and inheritance (saved, synced)
+      riding/GaitSync.java            the rider's gait, sent to the server and synced to everyone
       ai/                             goals: foal following, skittish fleeing, curious wandering
-      mixin/AbstractHorseMixin.java   server hooks: feeding, riding time, hunger, mount status, goals
+      mixin/AbstractHorseMixin.java   server hooks: feeding, riding time, hunger, mount status, goals,
+                                      hoofbeats per gait
       mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, personality)
       mixin/RandomStrollGoalMixin.java  foals stroll less and stay near family
       mixin/PanicGoalMixin.java       brave horses don't panic when hit
@@ -65,12 +74,17 @@ client; `client` is only loaded on the client and never on a dedicated server.
       client/riding/Gait.java         gaits and their speeds
       client/riding/Riding.java       speed caps, turn rate and gait drops per loyalty level
       client/riding/GaitHolder.java   lets client code read a horse's gait
+      client/riding/ClientGait.java   a horse's gait on this client: your own, or the synced one
+      client/feedback/RidingHud.java  loyalty horseshoes and gait bar while riding
+      client/feedback/GaitEffects.java    dust, splashes and cold breath
+      client/feedback/LoyaltyToasts.java  toast when your loyalty level changes
       client/dev/LoyaltyDebugHud.java dev panel (off in release builds)
       mixin/client/AbstractHorseRidingMixin.java          gaits, steering, gait drops, skittish bolts
       mixin/client/AbstractMountInventoryScreenMixin.java loyalty label in the horse inventory
       mixin/client/HudMixin.java                          draws the dev panel
     src/client/resources/
       assets/horseloyalty/lang/en_us.json                 all text shown to players
+      assets/horseloyalty/textures/gui/sprites/hud/       the horseshoe icons
 
 Why riding is client code: Minecraft moves a player-ridden horse on that player's own
 client and sends the result to the server, so the gait and steering hooks only ever run
@@ -87,8 +101,10 @@ To remove it completely, delete `client/dev/`, `mixin/client/HudMixin.java` and 
 
 - Speed, turning and gait drops use each player's own config, since riding runs on their
   client. Before a public release the server should send its config to joining players.
-- The gait drop sound is only heard by the rider, and only the rider sees a skittish bolt
-  as a bolt (others see a fast horse).
+- Others hear a gait drop or a bolt and see the gait (dust, hoofbeats), but a bolt has no
+  animation of its own yet: to them it looks like a gallop.
+- `feedback.gaitSounds` is read by the server, since it plays the hoofbeats for everyone. The
+  other `feedback` settings are each player's own.
 
 ## License
 
