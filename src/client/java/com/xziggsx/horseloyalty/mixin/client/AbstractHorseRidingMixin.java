@@ -6,6 +6,8 @@ import com.xziggsx.horseloyalty.client.riding.Riding;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.riding.GaitSync;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
@@ -27,7 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Client-side riding controls: gaits (W/S taps), backing up, gait speeds, boat-style A/D steering,
  * sidestepping (sprint key + A/D),
- * random gait drops, and skittish horses bolting from creepers.
+ * random gait drops, and skittish horses bolting from creepers. The gait is sent to the server
+ * whenever it changes (see {@link GaitSync}), so other players can see and hear it.
  * <p>
  * Minecraft moves a player-ridden horse on that player's own client and sends the
  * result to the server, so vanilla only calls getRiddenInput, getRiddenSpeed and
@@ -79,6 +82,14 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Unique
 	private int horseloyalty$boltTurn;
 
+	/** Gait index last sent to the server, -1 if none yet this ride. */
+	@Unique
+	private int horseloyalty$sentGait = -1;
+
+	/** A drop or bolt still to be sent to the server with the gait, or null. */
+	@Unique
+	private GaitSync.Event horseloyalty$pendingEvent;
+
 	@Override
 	public Gait horseloyalty$getGait() {
 		return horseloyalty$gait;
@@ -107,6 +118,8 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$boltTicks = 0;
 		horseloyalty$boltCheckTimer = 0;
 		horseloyalty$boltTurn = 0;
+		horseloyalty$sentGait = -1;
+		horseloyalty$pendingEvent = null;
 	}
 
 	/**
@@ -164,8 +177,10 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 				player.sendOverlayMessage(Component.translatable("horseloyalty.gait.dropped",
 						horseloyalty$gait.displayName()));
 				horseloyalty$playAngrySound(horse);
+				horseloyalty$pendingEvent = GaitSync.Event.DROPPED;
 			}
 		}
+		horseloyalty$syncGait();
 
 		// Vanilla returns the Vec3.ZERO constant itself while the horse is rearing. Keep that.
 		if (cir.getReturnValue() == Vec3.ZERO) {
@@ -216,10 +231,32 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$boltTurn = horse.getRandom().nextInt(3) - 1;
 		player.sendOverlayMessage(Component.translatable("horseloyalty.personality.bolt", horse.getName()));
 		horseloyalty$playAngrySound(horse);
+		horseloyalty$pendingEvent = GaitSync.Event.BOLTED;
 		return true;
 	}
 
-	/** The vanilla bucking/angry sound, played locally: only the rider hears it for now. */
+	/**
+	 * Sends the gait to the server when it changed, or a drop or bolt happened, since the last send.
+	 * A few packets a minute at most: nothing is sent while the rider holds a gait.
+	 */
+	@Unique
+	private void horseloyalty$syncGait() {
+		int gait = horseloyalty$gait.ordinal();
+		if (gait == horseloyalty$sentGait && horseloyalty$pendingEvent == null) {
+			return;
+		}
+		if (ClientPlayNetworking.canSend(GaitSync.GaitPayload.TYPE)) {
+			GaitSync.Event event = horseloyalty$pendingEvent != null ? horseloyalty$pendingEvent : GaitSync.Event.SHIFT;
+			ClientPlayNetworking.send(new GaitSync.GaitPayload(gait, event));
+		}
+		horseloyalty$sentGait = gait;
+		horseloyalty$pendingEvent = null;
+	}
+
+	/**
+	 * The vanilla bucking/angry sound, played locally so the rider hears it without delay.
+	 * Everyone else hears it from the server (see {@link GaitSync}).
+	 */
 	@Unique
 	private void horseloyalty$playAngrySound(AbstractHorse horse) {
 		SoundEvent angry = getAngrySound();

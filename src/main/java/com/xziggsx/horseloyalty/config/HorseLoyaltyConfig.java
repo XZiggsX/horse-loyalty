@@ -63,7 +63,10 @@ public final class HorseLoyaltyConfig {
 			+ "every curiousWanderEverySeconds when loose; lazy multiplies the gait drop chance and time by the "
 			+ "lazy multipliers). You see it in the horse screen from revealAtLevel. A foal gets each parent's "
 			+ "personality with inheritPercent chance (the rest is a fresh roll), or sameParentsPercent when both "
-			+ "parents share one. Restart the game after editing.";
+			+ "parents share one. feedback: ridingHud shows loyalty horseshoes and a gait bar above the hotbar while "
+			+ "riding; gaitSounds plays hoofbeats that match the gait; gaitParticles kicks up dust and splashes at a "
+			+ "canter or gallop; coldBreath shows breath puffs in snowy places; loyaltyToasts shows a toast when "
+			+ "loyalty changes. Restart the game after editing.";
 
 	private LoyaltyGain loyaltyGain = new LoyaltyGain();
 
@@ -72,6 +75,8 @@ public final class HorseLoyaltyConfig {
 	private FoalSettings foals = new FoalSettings();
 
 	private PersonalitySettings personality = new PersonalitySettings();
+
+	private FeedbackSettings feedback = new FeedbackSettings();
 
 	private int turnEaseTicks = 4;
 
@@ -137,6 +142,14 @@ public final class HorseLoyaltyConfig {
 		}
 	}
 
+	public static final class FeedbackSettings {
+		private boolean ridingHud = true;
+		private boolean gaitSounds = true;
+		private boolean gaitParticles = true;
+		private boolean coldBreath = true;
+		private boolean loyaltyToasts = true;
+	}
+
 	public static final class LevelSettings {
 		private int level;
 		private int pointsNeeded;
@@ -187,6 +200,7 @@ public final class HorseLoyaltyConfig {
 	private transient int loyaltyPointsLost;
 	private transient FoalSettings resolvedFoals;
 	private transient PersonalitySettings resolvedPersonality;
+	private transient FeedbackSettings resolvedFeedback;
 
 	/** The loaded config. Holds the defaults until {@link #load()} has run. */
 	public static HorseLoyaltyConfig get() {
@@ -368,6 +382,31 @@ public final class HorseLoyaltyConfig {
 		return resolvedPersonality.lazyGaitDropTimeMultiplier;
 	}
 
+	/** Whether loyalty horseshoes and the gait bar show above the hotbar while riding. */
+	public boolean ridingHud() {
+		return resolvedFeedback.ridingHud;
+	}
+
+	/** Whether ridden horses play hoofbeats that match their gait. */
+	public boolean gaitSounds() {
+		return resolvedFeedback.gaitSounds;
+	}
+
+	/** Whether cantering and galloping horses kick up dust and splashes. */
+	public boolean gaitParticles() {
+		return resolvedFeedback.gaitParticles;
+	}
+
+	/** Whether horses moving at a trot or faster show breath puffs in snowy places. */
+	public boolean coldBreath() {
+		return resolvedFeedback.coldBreath;
+	}
+
+	/** Whether a toast shows when your loyalty with a horse changes level. */
+	public boolean loyaltyToasts() {
+		return resolvedFeedback.loyaltyToasts;
+	}
+
 	// --- Loading -----------------------------------------------------------------
 
 	/** A config with only default values, resolved and ready to use. */
@@ -462,6 +501,8 @@ public final class HorseLoyaltyConfig {
 		resolvedPersonality.curiousWanderEverySeconds = Math.clamp(personalitySettings.curiousWanderEverySeconds, 10, 86400);
 		resolvedPersonality.lazyGaitDropChanceMultiplier = Math.clamp(personalitySettings.lazyGaitDropChanceMultiplier, 0, 10);
 		resolvedPersonality.lazyGaitDropTimeMultiplier = Math.clamp(personalitySettings.lazyGaitDropTimeMultiplier, 0.1, 10);
+
+		resolvedFeedback = feedback != null ? feedback : new FeedbackSettings();
 
 		List<LevelSettings> defaults = defaultLevels();
 		topSpeedShare = new double[Loyalty.MAX_LEVEL + 1];

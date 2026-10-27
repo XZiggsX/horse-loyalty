@@ -23,5 +23,10 @@
 	"horseloyalty.personality.curious": "Curious",
 	"horseloyalty.personality.lazy": "Lazy",
 	"horseloyalty.personality.bolt": "%s spooks at a creeper and bolts!",
-	"horseloyalty.personality.bolt_end": "%s calms down. You have the reins again"
+	"horseloyalty.personality.bolt_end": "%s calms down. You have the reins again",
+	"horseloyalty.toast.level_up.title": "%s trusts you more",
+	"horseloyalty.toast.level_up": "Loyalty %s/%s: %s",
+	"horseloyalty.toast.level_down.title": "%s is hungry",
+	"horseloyalty.toast.level_down": "Loyalty fell to %s/%s: %s",
+	"horseloyalty.toast.your_horse": "Your horse"
 }

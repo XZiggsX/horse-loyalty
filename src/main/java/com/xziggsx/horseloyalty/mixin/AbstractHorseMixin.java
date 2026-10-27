@@ -4,10 +4,15 @@ import com.xziggsx.horseloyalty.ai.CuriousWanderGoal;
 import com.xziggsx.horseloyalty.ai.FollowBreederGoal;
 import com.xziggsx.horseloyalty.ai.FollowChosenParentGoal;
 import com.xziggsx.horseloyalty.ai.SkittishAvoidGoal;
+import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.riding.GaitSync;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +21,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,13 +35,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Server-side horse hooks: loyalty from feeding and riding, hunger, the loyalty status
  * shown on mounting, personalities, and the foal and personality goals. Every hook here
- * returns straight away on the client.
+ * returns straight away on the client, except the gait hoof sounds, which use the synced gait
+ * (see {@link GaitSync}) and run wherever vanilla plays step sounds.
  * <p>
  * The riding controls (gaits, steering) run on the rider's client instead, see
  * {@code mixin/client/AbstractHorseRidingMixin} in the client source set.
  */
 @Mixin(AbstractHorse.class)
-public abstract class AbstractHorseMixin {
+public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	@Shadow
 	public abstract boolean isTamed();
 
@@ -42,6 +51,17 @@ public abstract class AbstractHorseMixin {
 
 	@Shadow
 	private void eating() {
+	}
+
+	@Shadow
+	protected abstract SoundEvent getAngrySound();
+
+	@Shadow
+	protected abstract void playGallopSound(SoundType soundType);
+
+	@Shadow
+	private boolean isWoodSoundType(SoundType soundType) {
+		return false;
 	}
 
 	/** Horse position last tick, to tell whether a ridden horse is actually moving. */
@@ -54,6 +74,11 @@ public abstract class AbstractHorseMixin {
 	@Unique
 	private AbstractHorse horseloyalty$self() {
 		return (AbstractHorse) (Object) this;
+	}
+
+	@Override
+	public SoundEvent horseloyalty$getAngrySound() {
+		return getAngrySound();
 	}
 
 	/**
@@ -91,6 +116,7 @@ public abstract class AbstractHorseMixin {
 		}
 		Hunger.tick(horse, serverLevel);
 		Personality.ensureAssigned(horse);
+		GaitSync.tick(horse);
 
 		double dx = horse.getX() - horseloyalty$lastX;
 		double dz = horse.getZ() - horseloyalty$lastZ;
@@ -112,6 +138,33 @@ public abstract class AbstractHorseMixin {
 		AbstractHorse horse = horseloyalty$self();
 		if (passenger instanceof ServerPlayer player && isTamed() && Loyalty.appliesTo(horse)) {
 			player.sendOverlayMessage(Loyalty.describe(horse, player));
+		}
+	}
+
+	/**
+	 * Hoofbeats that match the gait, so you can hear it: a soft step at a walk, a brisker and
+	 * louder step at a trot, a quieter rolling gallop at a canter and the full vanilla gallop
+	 * (with its breathing) at a gallop. Only for a horse whose rider sends a gait; anything else,
+	 * and water, keeps the vanilla sounds. Picks the block's sound the same way vanilla does.
+	 */
+	@Inject(method = "playStepSound", at = @At("HEAD"), cancellable = true)
+	private void horseloyalty$gaitStepSound(BlockPos pos, BlockState state, CallbackInfo ci) {
+		AbstractHorse horse = horseloyalty$self();
+		int gait = GaitSync.gait(horse);
+		if (gait < 0 || state.liquid() || !HorseLoyaltyConfig.get().gaitSounds()) {
+			return;
+		}
+		ci.cancel();
+		BlockState above = horse.level().getBlockState(pos.above());
+		SoundType type = above.is(Blocks.SNOW) ? above.getSoundType() : state.getSoundType();
+		if (gait == GaitSync.GALLOP) {
+			playGallopSound(type);
+		} else if (gait == GaitSync.CANTER) {
+			horse.playSound(SoundEvents.HORSE_GALLOP, type.getVolume() * 0.12F, type.getPitch() * 0.85F);
+		} else {
+			SoundEvent step = isWoodSoundType(type) ? SoundEvents.HORSE_STEP_WOOD : SoundEvents.HORSE_STEP;
+			boolean trot = gait == GaitSync.TROT;
+			horse.playSound(step, type.getVolume() * (trot ? 0.22F : 0.15F), type.getPitch() * (trot ? 1.15F : 1.0F));
 		}
 	}
 
