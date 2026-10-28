@@ -1,6 +1,9 @@
 package com.xziggsx.horseloyalty.client.dev;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.genetics.core.Genome;
+import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
+import com.xziggsx.horseloyalty.genetics.world.Lineage;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
@@ -11,7 +14,9 @@ import com.xziggsx.horseloyalty.client.riding.GaitRaise;
 import com.xziggsx.horseloyalty.client.riding.Riding;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -23,10 +28,12 @@ import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Development-only panel in the top left while riding a horse.
+ * Development-only panel in the top left while riding a horse, or with just the genetics part
+ * while looking at one.
  * <p>
  * On by default in the dev environment ({@code gradlew runClient}), off in a built jar.
  * Override with the JVM flag {@code -Dhorseloyalty.devhud=true} or {@code =false}.
@@ -49,14 +56,27 @@ public final class LoyaltyDebugHud {
 		return flag != null ? Boolean.parseBoolean(flag) : FabricLoader.getInstance().isDevelopmentEnvironment();
 	}
 
-	/** Draws the panel. Called from HudMixin every frame; does nothing unless riding a horse. */
+	/**
+	 * Draws the panel. Called from HudMixin every frame. Riding a horse shows everything;
+	 * only looking at one shows its genetics. Otherwise it draws nothing.
+	 */
 	public static void extract(GuiGraphicsExtractor graphics) {
 		Minecraft minecraft = Minecraft.getInstance();
 		Player player = minecraft.player;
-		if (player == null || !(player.getVehicle() instanceof AbstractHorse horse) || !Loyalty.appliesTo(horse)) {
+		if (player == null) {
 			return;
 		}
-		List<String> lines = buildLines(minecraft, player, horse);
+		List<String> lines;
+		if (player.getVehicle() instanceof AbstractHorse horse && Loyalty.appliesTo(horse)) {
+			lines = buildLines(minecraft, player, horse);
+			lines.addAll(geneticsLines(horse));
+		} else if (minecraft.crosshairPickEntity instanceof AbstractHorse horse && Loyalty.appliesTo(horse)) {
+			lines = new ArrayList<>();
+			lines.add("Horse Genetics [dev]  " + horse.getName().getString());
+			lines.addAll(geneticsLines(horse));
+		} else {
+			return;
+		}
 
 		Font font = minecraft.font;
 		int x = 4;
@@ -153,6 +173,35 @@ public final class LoyaltyDebugHud {
 		lines.add(String.format("Shift up from here: %.1f%% to balk%s",
 				GaitRaise.failChance(horse, player, gait) * 100,
 				raiseCooldown > 0 ? ", unsettled for " + (raiseCooldown + 19) / 20 + "s" : ""));
+		return lines;
+	}
+
+	/**
+	 * The horse's genes in short form, what it shows, and whether its parents are known.
+	 * Genes and lineage are synced, so this works in multiplayer too.
+	 */
+	private static List<String> geneticsLines(AbstractHorse horse) {
+		List<String> lines = new ArrayList<>();
+		Optional<Genome> genome = GeneticsView.genome(horse);
+		if (genome.isEmpty()) {
+			lines.add("Genes: none yet" + (HorseLoyaltyConfig.get().geneticsEnabled() ? "" : " (genetics off)"));
+		} else {
+			// Two loci per line, so the panel stays narrow.
+			List<String> pairs = new ArrayList<>();
+			genome.get().pairs().forEach((locus, pair) -> pairs.add(locus.id() + " " + pair));
+			for (int i = 0; i < pairs.size(); i += 2) {
+				lines.add((i == 0 ? "Genes: " : "       ") + String.join("  ", pairs.subList(i, Math.min(i + 2, pairs.size()))));
+			}
+		}
+		StringBuilder shows = new StringBuilder("Shows: ");
+		if (horse instanceof Horse coated) {
+			shows.append("coat ").append(coated.getVariant().getSerializedName())
+					.append("  marking ").append(coated.getMarkings().name().toLowerCase(Locale.ROOT)).append("  ");
+		}
+		Personality personality = horse.getAttached(Personality.DATA);
+		shows.append("temperament ").append(personality == null ? "none" : personality.id());
+		lines.add(shows.toString());
+		lines.add("Lineage parents: " + (GeneticsView.lineage(horse).map(Lineage::hasParents).orElse(false) ? "yes" : "no"));
 		return lines;
 	}
 

@@ -6,6 +6,7 @@ import com.xziggsx.horseloyalty.ai.FollowBreederGoal;
 import com.xziggsx.horseloyalty.ai.FollowChosenParentGoal;
 import com.xziggsx.horseloyalty.ai.SkittishAvoidGoal;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
@@ -35,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Server-side horse hooks: loyalty from feeding and riding, hunger, the loyalty status
- * shown on mounting, personalities, and the foal and personality goals. Every hook here
+ * shown on mounting, personalities and genes, and the foal and personality goals. Every hook here
  * returns straight away on the client, except the gait hoof sounds, which use the synced gait
  * (see {@link GaitSync}) and run wherever vanilla plays step sounds.
  * <p>
@@ -117,6 +118,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 		}
 		Hunger.tick(horse, serverLevel);
 		Personality.ensureAssigned(horse);
+		HorseGenetics.ensureAssigned(horse);
 		GaitSync.tick(horse);
 
 		double dx = horse.getX() - horseloyalty$lastX;

@@ -34,7 +34,7 @@ public final class HorseLoyaltyConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 	private static final String FILE_NAME = HorseLoyaltyMod.MOD_ID + ".json";
 	/** Bump when a default changes in a way old files should pick up, and handle it in {@link #migrate}. */
-	private static final int CURRENT_VERSION = 2;
+	private static final int CURRENT_VERSION = 3;
 
 	/** The config to use: the file's, with the server's riding rules swapped in while connected to one. */
 	private static HorseLoyaltyConfig instance = defaults();
@@ -71,7 +71,12 @@ public final class HorseLoyaltyConfig {
 			+ "every curiousWanderEverySeconds when loose; lazy multiplies the gait drop chance and time by the "
 			+ "lazy multipliers). You see it in the horse screen from revealAtLevel. A foal gets each parent's "
 			+ "personality with inheritPercent chance (the rest is a fresh roll), or sameParentsPercent when both "
-			+ "parents share one. feedback: ridingHud shows loyalty horseshoes and a gait bar above the hotbar while "
+			+ "parents share one. genetics: when enabled, horses carry hidden genes for coat, markings and personality. "
+			+ "A foal gets one random copy of each gene from each parent, and each copy has mutationPercent chance to "
+			+ "become a random version; foals can show colours their parents only carry. Wild herds descend from two "
+			+ "founders, and horses from before get genes that fit their look. While genetics is on, the personality "
+			+ "inheritPercent and sameParentsPercent are not used (the weights still pick the founders' personalities). "
+			+ "Stats are unchanged. feedback: ridingHud shows loyalty horseshoes and a gait bar above the hotbar while "
 			+ "riding; gaitSounds plays hoofbeats that match the gait; gaitParticles kicks up dust and splashes at a "
 			+ "canter or gallop; coldBreath shows breath puffs in snowy places; loyaltyToasts shows a toast when "
 			+ "loyalty changes; ridingToasts shows a toast when the horse balks at a gait change (off: a message "
@@ -92,6 +97,8 @@ public final class HorseLoyaltyConfig {
 	private FoalSettings foals = new FoalSettings();
 
 	private PersonalitySettings personality = new PersonalitySettings();
+
+	private GeneticsSettings genetics = new GeneticsSettings();
 
 	private FeedbackSettings feedback = new FeedbackSettings();
 
@@ -161,6 +168,11 @@ public final class HorseLoyaltyConfig {
 			weights.put("lazy", 15.0);
 			return weights;
 		}
+	}
+
+	public static final class GeneticsSettings {
+		private boolean enabled = true;
+		private double mutationPercent = 1;
 	}
 
 	public static final class FeedbackSettings {
@@ -249,6 +261,7 @@ public final class HorseLoyaltyConfig {
 	private transient int loyaltyPointsLost;
 	private transient FoalSettings resolvedFoals;
 	private transient PersonalitySettings resolvedPersonality;
+	private transient GeneticsSettings resolvedGenetics;
 	private transient FeedbackSettings resolvedFeedback;
 	private transient boolean gaitRaiseEnabled;
 	private transient int gaitRaiseCooldownTicks;
@@ -441,6 +454,16 @@ public final class HorseLoyaltyConfig {
 	/** A lazy horse's time between gait drop rolls is multiplied by this. */
 	public double lazyGaitDropTimeMultiplier() {
 		return resolvedPersonality.lazyGaitDropTimeMultiplier;
+	}
+
+	/** Whether horses have genes for coat, markings and personality. Off: vanilla coats and the personality inherit odds. */
+	public boolean geneticsEnabled() {
+		return resolvedGenetics.enabled;
+	}
+
+	/** Chance (0.01 = 1%) that a gene copy passed to a foal becomes a random version. */
+	public double geneticsMutationChance() {
+		return resolvedGenetics.mutationPercent / 100.0;
 	}
 
 	/** Whether loyalty horseshoes and the gait bar show above the hotbar while riding. */
@@ -671,6 +694,7 @@ public final class HorseLoyaltyConfig {
 				}
 			}
 		}
+		// Version 3 added the genetics section; saving the file below writes it with its defaults.
 		HorseLoyaltyMod.LOGGER.info("Updated config from version {} to {}", configVersion, CURRENT_VERSION);
 		configVersion = CURRENT_VERSION;
 	}
@@ -735,6 +759,11 @@ public final class HorseLoyaltyConfig {
 		resolvedPersonality.curiousWanderEverySeconds = Math.clamp(personalitySettings.curiousWanderEverySeconds, 10, 86400);
 		resolvedPersonality.lazyGaitDropChanceMultiplier = Math.clamp(personalitySettings.lazyGaitDropChanceMultiplier, 0, 10);
 		resolvedPersonality.lazyGaitDropTimeMultiplier = Math.clamp(personalitySettings.lazyGaitDropTimeMultiplier, 0.1, 10);
+
+		GeneticsSettings geneticsSettings = genetics != null ? genetics : new GeneticsSettings();
+		resolvedGenetics = new GeneticsSettings();
+		resolvedGenetics.enabled = geneticsSettings.enabled;
+		resolvedGenetics.mutationPercent = Math.clamp(geneticsSettings.mutationPercent, 0, 100);
 
 		resolvedFeedback = feedback != null ? feedback : new FeedbackSettings();
 

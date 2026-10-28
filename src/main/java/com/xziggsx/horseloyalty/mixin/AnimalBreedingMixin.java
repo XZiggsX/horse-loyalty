@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.mixin;
 
+import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.personality.Personality;
 import net.minecraft.server.level.ServerLevel;
@@ -13,9 +14,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Hooks horse breeding to set up the foal's family (see {@link Family}) and personality
- * (see {@link Personality#inherit}). Horses don't
- * override breeding, so this hooks Animal and checks for horses.
+ * Hooks horse breeding to set up the foal's family (see {@link Family}) and its genes
+ * (see {@link HorseGenetics#onBred}), or with genetics off, its personality
+ * (see {@link Personality#inherit}). Horses don't override breeding, so this hooks Animal
+ * and checks for horses.
  * <p>
  * Runs at the start of finalizeSpawnChildFromBreeding: the foal exists but isn't in the
  * world yet, and the parents still remember who fed them.
@@ -29,7 +31,11 @@ public abstract class AnimalBreedingMixin {
 				&& child instanceof AbstractHorse foal) {
 			// Same order as vanilla's breeding advancement: this parent's feeder, else the partner's.
 			ServerPlayer breeder = self.getLoveCause() != null ? self.getLoveCause() : partner.getLoveCause();
-			Personality.inherit(foal, parentA, parentB);
+			if (HorseGenetics.enabled()) {
+				HorseGenetics.onBred(foal, parentA, parentB);
+			} else {
+				Personality.inherit(foal, parentA, parentB);
+			}
 			Family.onBorn(foal, parentA, parentB, breeder);
 		}
 	}
