@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.personality;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.personality.api.Personality;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -14,7 +13,7 @@ public class SkittishAvoidGoal extends AvoidEntityGoal<Creeper> {
 	private final AbstractHorse horse;
 
 	public SkittishAvoidGoal(AbstractHorse horse) {
-		super(horse, Creeper.class, (float) HorseLoyaltyConfig.get().skittishFleeDistance(), 1.2, 1.6);
+		super(horse, Creeper.class, (float) PersonalitySettings.get().skittishFleeDistance(), 1.2, 1.6);
 		this.horse = horse;
 	}
 

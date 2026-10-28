@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.feedback.client;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.RideView;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -38,7 +38,7 @@ public final class GaitEffects {
 
 	private static void tick(Minecraft minecraft) {
 		ClientLevel level = minecraft.level;
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		FeedbackSettings config = FeedbackSettings.get();
 		if (level == null || minecraft.player == null || minecraft.isPaused()
 				|| !(config.gaitParticles() || config.coldBreath())) {
 			return;
@@ -51,7 +51,7 @@ public final class GaitEffects {
 		}
 	}
 
-	private static void tickHorse(ClientLevel level, AbstractHorse horse, HorseLoyaltyConfig config) {
+	private static void tickHorse(ClientLevel level, AbstractHorse horse, FeedbackSettings config) {
 		Gait gait = RideView.get().gait(horse);
 		double dx = horse.getX() - horse.xo;
 		double dz = horse.getZ() - horse.zo;

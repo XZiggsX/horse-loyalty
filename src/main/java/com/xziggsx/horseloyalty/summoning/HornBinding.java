@@ -70,9 +70,9 @@ public final class HornBinding {
 			return InteractionResult.SUCCESS;
 		}
 		int loyalty = Bond.get().level(horse, serverPlayer);
-		if (loyalty < HornCall.MIN_LEVEL) {
+		if (loyalty < SummoningSettings.get().minLevel()) {
 			serverPlayer.sendOverlayMessage(Component.translatable("horseloyalty.horn.not_trusted",
-					horse.getName(), HornCall.MIN_LEVEL, Bond.MAX_LEVEL, Bond.levelName(HornCall.MIN_LEVEL)));
+					horse.getName(), SummoningSettings.get().minLevel(), Bond.MAX_LEVEL, Bond.levelName(SummoningSettings.get().minLevel())));
 			return InteractionResult.FAIL;
 		}
 		bind(stack, horse);

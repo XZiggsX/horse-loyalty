@@ -1,7 +1,6 @@
 package com.xziggsx.horseloyalty.foals;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.mojang.serialization.Codec;
@@ -62,8 +61,8 @@ public record Family(UUID parentA, UUID parentB, UUID followed, Optional<UUID> b
 	 * @param breeder the player who bred them, or null if nobody online did
 	 */
 	public static void onBorn(AbstractHorse foal, AbstractHorse parentA, AbstractHorse parentB, ServerPlayer breeder) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		if (!config.foalsEnabled() || !HorseScope.inScope(foal)) {
+		FoalSettings config = FoalSettings.get();
+		if (!HorseScope.inScope(foal)) {
 			return;
 		}
 		UUID followed = foal.getRandom().nextBoolean() ? parentA.getUUID() : parentB.getUUID();
@@ -77,7 +76,7 @@ public record Family(UUID parentA, UUID parentB, UUID followed, Optional<UUID> b
 		foal.setTamed(true);
 		// A share of the average of what the breeder built up with each parent.
 		int average = (Bond.get().points(parentA, breeder) + Bond.get().points(parentB, breeder)) / 2;
-		int bonus = (int) Math.round(average * config.foalParentLoyaltyShare());
+		int bonus = (int) Math.round(average * config.parentLoyaltyShare());
 		Bond.get().startWith(foal, breeder, bonus);
 
 		int level = Bond.get().level(foal, breeder);
@@ -113,6 +112,6 @@ public record Family(UUID parentA, UUID parentB, UUID followed, Optional<UUID> b
 	/** A foal our goals look after: a baby with a family, on its own feet and not on a lead. */
 	public static boolean isFamilyFoal(AbstractHorse horse) {
 		return horse.isBaby() && horse.hasAttached(DATA) && !horse.isLeashed() && !horse.isVehicle()
-				&& !horse.isPassenger() && HorseLoyaltyConfig.get().foalsEnabled();
+				&& !horse.isPassenger();
 	}
 }

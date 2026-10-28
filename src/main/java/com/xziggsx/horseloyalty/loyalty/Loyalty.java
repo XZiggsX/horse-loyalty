@@ -1,7 +1,6 @@
 package com.xziggsx.horseloyalty.loyalty;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.mojang.serialization.Codec;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,7 +27,7 @@ import net.minecraft.world.entity.player.Player;
  *   <li>1: tamed, the starting level for every player</li>
  *   <li>2 to 5: earned by feeding and riding</li>
  * </ul>
- * How fast loyalty builds is set in the user config, see {@link HorseLoyaltyConfig}.
+ * How fast loyalty builds is set in the user config, see {@link LoyaltySettings}.
  * Level names live in the lang file under {@code horseloyalty.loyalty.level.N}.
  */
 public final class Loyalty {
@@ -87,7 +86,7 @@ public final class Loyalty {
 	/** The level (1 to 5) these stats are worth, ignoring whether the horse is tamed. */
 	public static int earnedLevel(LoyaltyData data) {
 		int points = data.points();
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		LoyaltySettings config = LoyaltySettings.get();
 		int level = 1;
 		for (int next = 2; next <= MAX_LEVEL; next++) {
 			if (points >= config.pointsNeeded(next)) {
@@ -105,7 +104,7 @@ public final class Loyalty {
 	/** Whether this player's feed cooldown has passed, so the next feed counts for loyalty. */
 	public static boolean canCountFeed(AbstractHorse horse, Player player) {
 		long last = get(horse, player).lastFedTick();
-		return last == 0L || horse.level().getGameTime() - last >= HorseLoyaltyConfig.get().feedCooldownTicks();
+		return last == 0L || horse.level().getGameTime() - last >= LoyaltySettings.get().feedCooldownTicks();
 	}
 
 	/** Adds one counted feed for this player. Server side. */

@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.foals;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -25,9 +24,9 @@ public final class FoalStrolling {
 		if (anchor == null) {
 			return false;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		double maxDistance = config.foalStrollMaxDistance();
-		return foal.getRandom().nextDouble() < config.foalStrollSkipChance()
+		FoalSettings config = FoalSettings.get();
+		double maxDistance = config.strollMaxDistance();
+		return foal.getRandom().nextDouble() < config.strollSkipChance()
 				|| anchor.distanceToSqr(x, y, z) > maxDistance * maxDistance;
 	}
 

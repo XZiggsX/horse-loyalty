@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.riding.client;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
+import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import java.util.function.BooleanSupplier;
 import net.minecraft.network.chat.Component;
@@ -42,7 +43,7 @@ public final class GallopPush {
 
 	/** How hard the horse is pushed, from 0 (not at all) to 1 (the most the config allows). */
 	public double effort() {
-		double max = HorseLoyaltyConfig.get().gallopPushMax();
+		double max = RidingSettings.get().gallopPushMax();
 		return max > 0 ? Math.min(1, push / max) : 0;
 	}
 
@@ -58,7 +59,7 @@ public final class GallopPush {
 	 * caller can count it as the rider paying attention.
 	 */
 	public boolean tap(AbstractHorse horse, Player player, BooleanSupplier askForMore) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		RidingSettings config = RidingSettings.get();
 		if (!config.gallopPushEnabled() || config.gallopPushStep() <= 0 || config.gallopPushMax() <= 0) {
 			return false;
 		}
@@ -74,7 +75,7 @@ public final class GallopPush {
 		if (starting || soundTicks >= SOUND_MIN_GAP) {
 			playSound(horse);
 		}
-		if (!config.ridingHud()) {
+		if (!FeedbackSettings.get().ridingHud()) {
 			player.sendOverlayMessage(Component.translatable("horseloyalty.gait.push",
 					Gait.GALLOP.displayName(), Math.round((1 + push) * 100)));
 		}
@@ -94,10 +95,10 @@ public final class GallopPush {
 			holdTicks--;
 		} else {
 			// Shrinks by the same share every tick: quick at first, then easing into a normal gallop.
-			push *= HorseLoyaltyConfig.get().gallopPushFadePerTick();
+			push *= RidingSettings.get().gallopPushFadePerTick();
 			if (push < MIN_PUSH) {
 				reset();
-				if (!HorseLoyaltyConfig.get().ridingHud()) {
+				if (!FeedbackSettings.get().ridingHud()) {
 					player.sendOverlayMessage(Component.translatable("horseloyalty.gait.push_end", Gait.GALLOP.displayName()));
 				}
 				return;
@@ -116,9 +117,9 @@ public final class GallopPush {
 	 */
 	private void playSound(AbstractHorse horse) {
 		soundTicks = 0;
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		RidingSettings config = RidingSettings.get();
 		float volume = config.gallopPushSoundVolume();
-		if (!config.gaitSounds() || volume <= 0) {
+		if (!FeedbackSettings.get().gaitSounds() || volume <= 0) {
 			return;
 		}
 		float effort = (float) effort();

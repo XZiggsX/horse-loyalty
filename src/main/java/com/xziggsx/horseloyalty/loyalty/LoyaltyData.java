@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.loyalty;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -8,7 +7,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * What a horse remembers about one rider. A horse keeps one of these per player
  * (see {@link Loyalty#DATA}), so a sold or gifted horse starts fresh with its new rider.
  *
- * @param feeds       times this player has fed it (with a cooldown, see {@link HorseLoyaltyConfig})
+ * @param feeds       times this player has fed it (with a cooldown, see {@link LoyaltySettings})
  * @param rideTicks   ticks this player has spent riding it while it was moving
  * @param lastFedTick game time of the last counted feed, 0 if never fed
  * @param lostPoints  points lost to hunger (see {@code Hunger}). Never more than the points earned,
@@ -48,7 +47,7 @@ public record LoyaltyData(int feeds, int rideTicks, long lastFedTick, int lostPo
 
 	/** Points earned from feeding, riding and bonuses, before hunger losses. */
 	public int earnedPoints() {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		LoyaltySettings config = LoyaltySettings.get();
 		return feeds * config.pointsPerFeed() + rideTicks / config.ridingTicksPerPoint() + bonusPoints;
 	}
 

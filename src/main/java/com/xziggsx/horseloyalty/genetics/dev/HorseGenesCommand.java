@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.genetics.dev;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
+import com.xziggsx.horseloyalty.genetics.GeneticsSettings;
 import com.xziggsx.horseloyalty.genetics.core.CrossPredictor;
 import com.xziggsx.horseloyalty.genetics.core.Dice;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
@@ -165,7 +165,7 @@ public final class HorseGenesCommand {
 			return 0;
 		}
 		Map<Trait<?>, Distribution<?>> odds = CrossPredictor.predictAll(HorseGenetics.genomeOf(a), HorseGenetics.genomeOf(b), HorseTraits.ALL,
-				HorseLoyaltyConfig.get().geneticsMutationChance());
+				GeneticsSettings.get().mutationChance());
 		List<String> lines = new ArrayList<>();
 		lines.add("Foal of " + a.getName().getString() + " and " + b.getName().getString() + ":");
 		odds.forEach((trait, distribution) -> lines.add("  " + trait.id() + ": " + percentages(distribution)));
@@ -183,7 +183,7 @@ public final class HorseGenesCommand {
 		int count = IntegerArgumentType.getInteger(context, "count");
 		Genome genomeA = HorseGenetics.genomeOf(a);
 		Genome genomeB = HorseGenetics.genomeOf(b);
-		double mutation = HorseLoyaltyConfig.get().geneticsMutationChance();
+		double mutation = GeneticsSettings.get().mutationChance();
 		Dice dice = HorseGenetics.dice(context.getSource().getLevel().getRandom());
 
 		Map<Trait<?>, Map<Object, Integer>> counts = new LinkedHashMap<>();
@@ -220,10 +220,6 @@ public final class HorseGenesCommand {
 
 	/** The horse the player is looking at, or null with a message saying why not. */
 	private static AbstractHorse target(CommandSourceStack source) {
-		if (!HorseGenetics.enabled()) {
-			source.sendFailure(Component.literal("Genetics is turned off in the config."));
-			return null;
-		}
 		ServerPlayer player = source.getPlayer();
 		if (player == null) {
 			source.sendFailure(Component.literal("Only a player can use this: it acts on the horse you look at."));

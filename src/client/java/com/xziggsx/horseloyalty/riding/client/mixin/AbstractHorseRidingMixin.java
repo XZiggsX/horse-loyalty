@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.riding.client.mixin;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.riding.GaitSync;
+import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.GaitEvent;
 import com.xziggsx.horseloyalty.riding.client.GaitHolder;
@@ -223,7 +223,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (horseloyalty$sidestepping) {
 			// xxa is positive for A, and a positive x input moves left, so the signs match.
 			// Moving, the angle sets the sideways share; halted, it's a pure sidestep.
-			double side = forwardInput == 0 ? 1 : Math.tan(Math.toRadians(HorseLoyaltyConfig.get().sidestepAngleDegrees()));
+			double side = forwardInput == 0 ? 1 : Math.tan(Math.toRadians(RidingSettings.get().sidestepAngleDegrees()));
 			sideInput = Math.signum(player.xxa) * side;
 		}
 		// Vanilla scales an input longer than 1 back down to 1, so moving diagonally keeps the gait's speed.

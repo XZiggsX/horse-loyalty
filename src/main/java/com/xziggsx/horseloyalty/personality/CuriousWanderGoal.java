@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.personality;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.personality.api.Personality;
 import java.util.EnumSet;
 import net.minecraft.core.BlockPos;
@@ -35,7 +34,7 @@ public class CuriousWanderGoal extends Goal {
 		if (Personalities.of(horse) != Personality.CURIOUS || horse.isBaby() || horse.isVehicle() || horse.isLeashed()) {
 			return false;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		PersonalitySettings config = PersonalitySettings.get();
 		// Cheap random check first: the village search below is the expensive part.
 		if (horse.getRandom().nextInt(reducedTickDelay(config.curiousWanderEveryTicks())) != 0) {
 			return false;

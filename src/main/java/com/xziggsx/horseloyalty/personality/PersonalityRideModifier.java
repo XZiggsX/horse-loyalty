@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.personality;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.personality.api.Personality;
 import com.xziggsx.horseloyalty.riding.api.RideModifier;
@@ -20,7 +19,7 @@ final class PersonalityRideModifier implements RideModifier {
 		if (Personalities.of(horse) != Personality.LAZY) {
 			return chance;
 		}
-		return Math.min(1, chance * HorseLoyaltyConfig.get().lazyGaitDropChanceMultiplier());
+		return Math.min(1, chance * PersonalitySettings.get().lazyGaitDropChanceMultiplier());
 	}
 
 	@Override
@@ -28,12 +27,12 @@ final class PersonalityRideModifier implements RideModifier {
 		if (Personalities.of(horse) != Personality.LAZY) {
 			return ticks;
 		}
-		return (int) Math.max(20, Math.round(ticks * HorseLoyaltyConfig.get().lazyGaitDropTimeMultiplier()));
+		return (int) Math.max(20, Math.round(ticks * PersonalitySettings.get().lazyGaitDropTimeMultiplier()));
 	}
 
 	@Override
 	public double buckChance(AbstractHorse horse, Player rider, double chance) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		PersonalitySettings config = PersonalitySettings.get();
 		return config.bucksOff(Personalities.of(horse)) ? Math.max(chance, config.buckOffChance()) : chance;
 	}
 
@@ -46,7 +45,7 @@ final class PersonalityRideModifier implements RideModifier {
 		if (Personalities.of(horse) != Personality.SKITTISH) {
 			return 0;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		PersonalitySettings config = PersonalitySettings.get();
 		int level = Bond.get().level(horse, rider);
 		int ticks = config.boltTicks();
 		ticks = level >= Bond.MAX_LEVEL ? 0 : level == Bond.MAX_LEVEL - 1 ? ticks / 2 : ticks;

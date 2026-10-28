@@ -1,6 +1,6 @@
 package com.xziggsx.horseloyalty.feedback;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -31,7 +31,7 @@ public final class GaitSounds {
 	 */
 	public static boolean play(AbstractHorse horse, Gait gait, BlockPos pos, BlockState state,
 			Consumer<SoundType> gallopSound, Predicate<SoundType> woodSoundType) {
-		if (state.liquid() || !HorseLoyaltyConfig.get().gaitSounds()) {
+		if (state.liquid() || !FeedbackSettings.get().gaitSounds()) {
 			return false;
 		}
 		BlockState above = horse.level().getBlockState(pos.above());

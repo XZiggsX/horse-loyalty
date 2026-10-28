@@ -1,7 +1,6 @@
 package com.xziggsx.horseloyalty.personality;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.personality.api.Personality;
@@ -35,11 +34,10 @@ public final class Personalities {
 	}
 
 	/**
-	 * This horse's personality, as far as behaviour goes. STEADY when personalities are turned
-	 * off, for horses out of scope, and for a horse that hasn't been given one yet. Works on both sides.
+	 * This horse's personality, as far as behaviour goes. STEADY for horses out of scope, and for a horse that hasn't been given one yet. Works on both sides.
 	 */
 	public static Personality of(AbstractHorse horse) {
-		if (!HorseLoyaltyConfig.get().personalityEnabled() || !HorseScope.inScope(horse)) {
+		if (!HorseScope.inScope(horse)) {
 			return Personality.STEADY;
 		}
 		return horse.getAttachedOrElse(DATA, Personality.STEADY);
@@ -52,8 +50,8 @@ public final class Personalities {
 
 	/** Whether this player knows the horse well enough to see its personality. */
 	public static boolean isRevealedTo(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().personalityEnabled() && horse.hasAttached(DATA)
-				&& Bond.get().level(horse, player) >= HorseLoyaltyConfig.get().personalityRevealLevel();
+		return horse.hasAttached(DATA)
+				&& Bond.get().level(horse, player) >= PersonalitySettings.get().revealLevel();
 	}
 
 	/**
@@ -75,17 +73,17 @@ public final class Personalities {
 		if (!HorseScope.inScope(foal)) {
 			return;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		PersonalitySettings config = PersonalitySettings.get();
 		RandomSource random = foal.getRandom();
 		Personality a = parentOrRoll(parentA, random);
 		Personality b = parentOrRoll(parentB, random);
 		double chance = random.nextDouble();
 		Personality result;
 		if (a == b) {
-			result = chance < config.personalitySameParentsChance() ? a : roll(random);
-		} else if (chance < config.personalityInheritChance()) {
+			result = chance < config.sameParentsChance() ? a : roll(random);
+		} else if (chance < config.inheritChance()) {
 			result = a;
-		} else if (chance < config.personalityInheritChance() * 2) {
+		} else if (chance < config.inheritChance() * 2) {
 			result = b;
 		} else {
 			result = roll(random);
@@ -101,18 +99,18 @@ public final class Personalities {
 
 	/** A random personality, weighted by the config. */
 	public static Personality roll(RandomSource random) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		PersonalitySettings config = PersonalitySettings.get();
 		Personality[] all = Personality.values();
 		double total = 0;
 		for (Personality personality : all) {
-			total += config.personalityWeight(personality);
+			total += config.weight(personality);
 		}
 		if (total <= 0) {
 			return Personality.STEADY;
 		}
 		double pick = random.nextDouble() * total;
 		for (Personality personality : all) {
-			pick -= config.personalityWeight(personality);
+			pick -= config.weight(personality);
 			if (pick < 0) {
 				return personality;
 			}

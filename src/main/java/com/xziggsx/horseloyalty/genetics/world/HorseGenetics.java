@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.genetics.world;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.genetics.GeneticsSettings;
 import com.xziggsx.horseloyalty.genetics.core.Dice;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.GenomeFactory;
@@ -18,18 +18,12 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 /**
  * Hidden genes behind a horse's coat, markings and personality. The only way in, through the horse events:
  * breeding ({@link #onBred}), wild spawns ({@link #onSpawn}) and the once-a-second check
- * ({@link #ensureAssigned}). Everything here does nothing while genetics is off in the config,
- * and only runs on the server.
+ * ({@link #ensureAssigned}). It only runs while genetics is on (the horse events are gated by its switch), and only on the server.
  * <p>
  * Genes don't touch stats: health, speed and jump still average the parents as in vanilla.
  */
 public final class HorseGenetics {
 	private HorseGenetics() {
-	}
-
-	/** Whether genetics is on in the config. */
-	public static boolean enabled() {
-		return HorseLoyaltyConfig.get().geneticsEnabled();
 	}
 
 	/** Game randomness as genetics {@link Dice}. */
@@ -43,14 +37,14 @@ public final class HorseGenetics {
 	 * that fit their look first. Called on the server before the foal is added to the world.
 	 */
 	public static void onBred(AbstractHorse foal, AbstractHorse parentA, AbstractHorse parentB) {
-		if (!enabled() || !HorseScope.inScope(foal) || !HorseScope.inScope(parentA) || !HorseScope.inScope(parentB)) {
+		if (!HorseScope.inScope(foal) || !HorseScope.inScope(parentA) || !HorseScope.inScope(parentB)) {
 			return;
 		}
 		Dice dice = dice(foal.getRandom());
 		Genome a = genomeOf(parentA);
 		Genome b = genomeOf(parentB);
 		Genome genome = GenomeFactory.fillMissing(
-				Inheritance.cross(a, b, HorseLoyaltyConfig.get().geneticsMutationChance(), dice), dice);
+				Inheritance.cross(a, b, GeneticsSettings.get().mutationChance(), dice), dice);
 		foal.setAttached(GeneticsData.GENOME, genome);
 		foal.setAttached(GeneticsData.LINEAGE, new Lineage(Optional.of(a), Optional.of(b), customName(parentA), customName(parentB)));
 		express(foal, genome, dice);
@@ -63,14 +57,14 @@ public final class HorseGenetics {
 	 * @param groupData the spawn group data shared by the herd, or null
 	 */
 	public static void onSpawn(AbstractHorse horse, SpawnGroupData groupData) {
-		if (!enabled() || !HorseScope.inScope(horse) || horse.level().isClientSide()) {
+		if (!HorseScope.inScope(horse) || horse.level().isClientSide()) {
 			return;
 		}
 		RandomSource random = horse.getRandom();
 		Dice dice = dice(random);
 		HerdFounders founders = HerdFounders.of(groupData, random, dice);
 		Genome genome = GenomeFactory.fillMissing(
-				Inheritance.cross(founders.a(), founders.b(), HorseLoyaltyConfig.get().geneticsMutationChance(), dice), dice);
+				Inheritance.cross(founders.a(), founders.b(), GeneticsSettings.get().mutationChance(), dice), dice);
 		horse.setAttached(GeneticsData.GENOME, genome);
 		horse.setAttached(GeneticsData.LINEAGE,
 				new Lineage(Optional.of(founders.a()), Optional.of(founders.b()), Optional.empty(), Optional.empty()));
@@ -90,7 +84,7 @@ public final class HorseGenetics {
 	 * Only a change is saved and synced.
 	 */
 	public static void ensureAssigned(AbstractHorse horse) {
-		if (!enabled() || !HorseScope.inScope(horse)) {
+		if (!HorseScope.inScope(horse)) {
 			return;
 		}
 		Genome genome = horse.getAttached(GeneticsData.GENOME);

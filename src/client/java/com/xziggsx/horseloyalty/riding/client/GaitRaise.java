@@ -1,8 +1,9 @@
 package com.xziggsx.horseloyalty.riding.client;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.client.Toasts;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.RideModifiers;
 import java.util.Locale;
@@ -60,9 +61,9 @@ public final class GaitRaise {
 		if (outcome == Outcome.OK) {
 			return outcome;
 		}
-		int cooldown = HorseLoyaltyConfig.get().gaitRaiseCooldownTicks();
+		int cooldown = RidingSettings.get().gaitRaiseCooldownTicks();
 		blockedUntil = now + cooldown;
-		Toasts.show(Toasts.RIDING, HorseLoyaltyConfig.get().ridingToasts(), player,
+		Toasts.show(Toasts.RIDING, FeedbackSettings.get().ridingToasts(), player,
 				Component.translatable("horseloyalty.toast." + outcome.id() + ".title", horse.getName()),
 				Component.translatable("horseloyalty.toast." + outcome.id(), Math.round(cooldown / 20.0F)));
 		return outcome;
@@ -75,8 +76,8 @@ public final class GaitRaise {
 
 	/** Chance (0.06 = 6%) that the horse refuses this rider going faster from {@code from}. 0 when turned off. */
 	public static double failChance(AbstractHorse horse, Player player, Gait from) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		return config.gaitRaiseEnabled() ? config.gaitRaiseFailChance(from.ordinal(), Bond.get().level(horse, player)) : 0;
+		RidingSettings config = RidingSettings.get();
+		return config.gaitRaiseEnabled() ? config.gaitRaiseFailChance(from, Bond.get().level(horse, player)) : 0;
 	}
 
 	/** Rolls whether the horse goes along, prances or bucks. */

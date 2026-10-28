@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.foals;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import java.util.EnumSet;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -34,9 +33,9 @@ public class FollowChosenParentGoal extends Goal {
 		if (found == null) {
 			return false;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		FoalSettings config = FoalSettings.get();
 		double distance = foal.distanceToSqr(found);
-		if (distance < sqr(config.foalFollowParentDistance()) || distance > sqr(config.foalFollowParentMaxDistance())) {
+		if (distance < sqr(config.followParentDistance()) || distance > sqr(config.followParentMaxDistance())) {
 			return false;
 		}
 		parent = found;
@@ -49,7 +48,7 @@ public class FollowChosenParentGoal extends Goal {
 			return false;
 		}
 		double distance = foal.distanceToSqr(parent);
-		return distance >= sqr(STOP_DISTANCE) && distance <= sqr(HorseLoyaltyConfig.get().foalFollowParentMaxDistance());
+		return distance >= sqr(STOP_DISTANCE) && distance <= sqr(FoalSettings.get().followParentMaxDistance());
 	}
 
 	@Override

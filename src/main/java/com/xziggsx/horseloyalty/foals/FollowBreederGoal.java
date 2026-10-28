@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.foals;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import java.util.EnumSet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,9 +35,9 @@ public class FollowBreederGoal extends Goal {
 		if (found == null || parentIsNear(level)) {
 			return false;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		FoalSettings config = FoalSettings.get();
 		double distance = foal.distanceToSqr(found);
-		if (distance < sqr(config.foalFollowPlayerDistance()) || distance > sqr(config.foalFollowPlayerMaxDistance())) {
+		if (distance < sqr(config.followPlayerDistance()) || distance > sqr(config.followPlayerMaxDistance())) {
 			return false;
 		}
 		breeder = found;
@@ -52,7 +51,7 @@ public class FollowBreederGoal extends Goal {
 			return false;
 		}
 		double distance = foal.distanceToSqr(breeder);
-		return distance >= sqr(STOP_DISTANCE) && distance <= sqr(HorseLoyaltyConfig.get().foalFollowPlayerMaxDistance());
+		return distance >= sqr(STOP_DISTANCE) && distance <= sqr(FoalSettings.get().followPlayerMaxDistance());
 	}
 
 	@Override

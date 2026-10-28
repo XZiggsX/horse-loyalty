@@ -1,9 +1,11 @@
 package com.xziggsx.horseloyalty;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.config.RidingRules;
+import com.xziggsx.horseloyalty.core.config.ClientPrefs;
+import com.xziggsx.horseloyalty.core.config.ConfigFile;
+import com.xziggsx.horseloyalty.core.config.SettingsSync;
 import com.xziggsx.horseloyalty.core.feature.Features;
 import com.xziggsx.horseloyalty.dev.DevToolsFeature;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
 import com.xziggsx.horseloyalty.foals.FoalsFeature;
 import com.xziggsx.horseloyalty.genetics.GeneticsFeature;
 import com.xziggsx.horseloyalty.horseinfo.HorseInfoFeature;
@@ -28,8 +30,6 @@ public class HorseLoyaltyMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// Config first: the attachments and all game logic read their numbers from it.
-		HorseLoyaltyConfig.load();
 		// Personality before genetics: genetics builds genes around a horse's personality.
 		Features.register(new RidingFeature());
 		Features.register(new LoyaltyFeature());
@@ -40,10 +40,16 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Features.register(new SummoningFeature());
 		Features.register(new HorseInfoFeature());
 		Features.register(new DevToolsFeature());
+		// The config next: each feature's section and the switches. The client prefs come after, since
+		// an old config hands its feedback settings over to them.
+		ConfigFile.registerSections();
+		ClientPrefs.register(new FeedbackSettings());
+		ConfigFile.load();
+		ClientPrefs.load();
 		// registerData() and wire() for all of them; the switches decide what actually runs.
 		Features.wireAll();
-		// The server's riding rules, sent to every player who joins.
-		RidingRules.init();
+		// The server's switches and synced settings, sent to every player who joins.
+		SettingsSync.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }

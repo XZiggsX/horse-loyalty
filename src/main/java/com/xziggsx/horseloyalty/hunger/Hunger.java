@@ -1,7 +1,6 @@
 package com.xziggsx.horseloyalty.hunger;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.mojang.serialization.Codec;
@@ -22,7 +21,7 @@ import net.minecraft.world.level.block.Block;
  * them and they slowly lose loyalty with every rider, down to level 1 at worst.
  * <p>
  * Grazing blocks are the block tag {@code horseloyalty:grazing_blocks}, so datapacks can
- * change them. Timings are in the user config, see {@link HorseLoyaltyConfig}.
+ * change them. Timings are in the user config, see {@link HungerSettings}.
  */
 public final class Hunger {
 	public static final TagKey<Block> GRAZING_BLOCKS = TagKey.create(Registries.BLOCK,
@@ -54,8 +53,8 @@ public final class Hunger {
 
 	/** Called once a second for every horse in scope (see {@code HorseEvents.SERVER_SECOND}). */
 	public static void tick(AbstractHorse horse, ServerLevel level) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		if (!config.hungerEnabled() || !horse.isTamed() || !HorseScope.inScope(horse)) {
+		HungerSettings config = HungerSettings.get();
+		if (!horse.isTamed() || !HorseScope.inScope(horse)) {
 			return;
 		}
 		long now = level.getGameTime();
@@ -93,7 +92,7 @@ public final class Hunger {
 
 	/** True once the horse has gone longer than the configured time without eating or grazing. */
 	public static boolean isHungry(AbstractHorse horse) {
-		return ticksSinceFed(horse) >= HorseLoyaltyConfig.get().ticksUntilHungry();
+		return ticksSinceFed(horse) >= HungerSettings.get().ticksUntilHungry();
 	}
 
 	/** Ticks since the horse last ate or grazed, 0 if not tracked yet. */
@@ -108,7 +107,7 @@ public final class Hunger {
 		if (state == null) {
 			return 0;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		HungerSettings config = HungerSettings.get();
 		long lossFrom = Math.max(state.lastLossTick(), state.lastFedTick() + config.ticksUntilHungry());
 		return Math.max(0, lossFrom + config.loyaltyLossIntervalTicks() - horse.level().getGameTime());
 	}

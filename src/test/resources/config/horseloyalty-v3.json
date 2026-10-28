@@ -1,0 +1,133 @@
+{
+  "_readme": "loyaltyGain: how fast loyalty builds. Each feed gives pointsPerFeed, but only once per feedCooldownSeconds per player. Riding a moving horse gives 1 point per ridingSecondsPerPoint. loyaltyLevels (1 Unruly to 5 Partners): pointsNeeded is the total points to reach that level (level 1 is just tamed). topSpeedPercent is the most of the horse's normal speed it will run for you; every gait is scaled by it. gaitSpeedPercent: each gait's share of the horse's top speed, before the loyalty scaling. turnDegreesPerTick is how fast A/D turn it; double it to halve the turn circle. turnEaseTicks is how long it takes to reach full turn rate. While moving, every gaitDropEverySeconds without the rider shifting gait, the horse has gaitDropChancePercent chance to drop one gait on its own (down to a halt), so riders can't go AFK. Use 100 for a fixed timer, 0 to never drop. hunger: a tamed horse that hasn't been fed or left to graze (unridden, on grass, mycelium or podzol) for secondsUntilHungry shows dark particles at its hooves and loses loyaltyPointsLost points with every rider each loyaltyLossEverySeconds. It never drops below level 1 or becomes untamed. foals: a foal bred by a player is born tamed to them, with parentLoyaltyPercent of the average of their points with the two parents. It picks one parent at random to follow (roleplay it as mother or father) once more than followParentDistance blocks away, up to followParentMaxDistance. Without that parent near, it follows its breeder the same way. It skips strollSkipPercent of its random strolls and never strolls further than strollMaxDistance from that parent or player. Foals that spawn in the wild act as in vanilla. personality: every horse gets one, rolled with the weights (steady has no quirk; brave only panics when burning; skittish flees creepers within skittishFleeDistance and, ridden, bolts at a gallop for boltSeconds when one is within boltCreeperDistance, half as long at loyalty 4 and never at 5; curious wanders toward a village bell within curiousSearchRadius about every curiousWanderEverySeconds when loose; lazy multiplies the gait drop chance and time by the lazy multipliers). You see it in the horse screen from revealAtLevel. A foal gets each parent's personality with inheritPercent chance (the rest is a fresh roll), or sameParentsPercent when both parents share one. Restart the game after editing.",
+  "configVersion": 3,
+  "loyaltyGain": {
+    "pointsPerFeed": 3,
+    "feedCooldownSeconds": 30.0,
+    "ridingSecondsPerPoint": 60.0
+  },
+  "hunger": {
+    "enabled": false,
+    "secondsUntilHungry": 600.0,
+    "loyaltyLossEverySeconds": 120.0,
+    "loyaltyPointsLost": 1
+  },
+  "foals": {
+    "enabled": false,
+    "parentLoyaltyPercent": 25.0,
+    "followParentDistance": 5.0,
+    "followParentMaxDistance": 24.0,
+    "followPlayerDistance": 4.0,
+    "followPlayerMaxDistance": 16.0,
+    "strollSkipPercent": 50.0,
+    "strollMaxDistance": 6.0
+  },
+  "personality": {
+    "enabled": true,
+    "revealAtLevel": 2,
+    "weights": {
+      "steady": 40.0,
+      "brave": 15.0,
+      "skittish": 15.0,
+      "curious": 15.0,
+      "lazy": 15.0
+    },
+    "inheritPercent": 40.0,
+    "sameParentsPercent": 70.0,
+    "skittishFleeDistance": 8.0,
+    "boltCreeperDistance": 6.0,
+    "boltSeconds": 2.5,
+    "curiousSearchRadius": 48,
+    "curiousWanderEverySeconds": 300.0,
+    "lazyGaitDropChanceMultiplier": 1.5,
+    "lazyGaitDropTimeMultiplier": 0.7
+  },
+  "genetics": {
+    "enabled": true,
+    "mutationPercent": 2.5
+  },
+  "feedback": {
+    "ridingHud": true,
+    "gaitSounds": false,
+    "gaitParticles": true,
+    "coldBreath": true,
+    "loyaltyToasts": true,
+    "ridingToasts": true
+  },
+  "gaitRaise": {
+    "enabled": true,
+    "cooldownSeconds": 10.0,
+    "failChancePercent": {
+      "walk": [
+        6.0,
+        3.0,
+        0.5,
+        0.0,
+        0.0
+      ]
+    },
+    "buckOffPersonalities": [
+      "skittish",
+      "lazy"
+    ],
+    "buckOffPercent": 50.0
+  },
+  "gallopPush": {
+    "enabled": true,
+    "percentPerPush": 2.0,
+    "maxPercent": 120.0,
+    "holdSeconds": 1.5,
+    "fadeHalfLifeSeconds": 1.0,
+    "soundVolumePercent": 40.0
+  },
+  "turnEaseTicks": 6,
+  "sidestepAngleDegrees": 45.0,
+  "gaitSpeedPercent": {
+    "walk": 30.0,
+    "trot": 50.0,
+    "canter": 75.0,
+    "gallop": 100.0
+  },
+  "loyaltyLevels": [
+    {
+      "level": 1,
+      "pointsNeeded": 0,
+      "topSpeedPercent": 60.0,
+      "turnDegreesPerTick": 4.0,
+      "gaitDropEverySeconds": 45.0,
+      "gaitDropChancePercent": 40.0
+    },
+    {
+      "level": 2,
+      "pointsNeeded": 10,
+      "topSpeedPercent": 70.0,
+      "turnDegreesPerTick": 5.0,
+      "gaitDropEverySeconds": 45.0,
+      "gaitDropChancePercent": 25.0
+    },
+    {
+      "level": 3,
+      "pointsNeeded": 50,
+      "topSpeedPercent": 85.0,
+      "turnDegreesPerTick": 6.0,
+      "gaitDropEverySeconds": 45.0,
+      "gaitDropChancePercent": 15.0
+    },
+    {
+      "level": 4,
+      "pointsNeeded": 100,
+      "topSpeedPercent": 90.0,
+      "turnDegreesPerTick": 7.0,
+      "gaitDropEverySeconds": 45.0,
+      "gaitDropChancePercent": 8.0
+    },
+    {
+      "level": 5,
+      "pointsNeeded": 200,
+      "topSpeedPercent": 100.0,
+      "turnDegreesPerTick": 8.0,
+      "gaitDropEverySeconds": 600.0,
+      "gaitDropChancePercent": 100.0
+    }
+  ]
+}

@@ -1,16 +1,18 @@
 package com.xziggsx.horseloyalty.dev.client;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.HorseUnits;
+import com.xziggsx.horseloyalty.core.feature.Features;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
 import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
 import com.xziggsx.horseloyalty.genetics.view.ShownTrait;
 import com.xziggsx.horseloyalty.genetics.world.Lineage;
 import com.xziggsx.horseloyalty.hunger.Hunger;
+import com.xziggsx.horseloyalty.hunger.HungerSettings;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
+import com.xziggsx.horseloyalty.loyalty.LoyaltySettings;
 import com.xziggsx.horseloyalty.personality.api.PersonalityView;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.client.GaitHolder;
@@ -166,7 +168,7 @@ public final class LoyaltyDebugHud {
 		if (!horse.isTamed()) {
 			return null;
 		}
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		LoyaltySettings config = LoyaltySettings.get();
 		Section section = new Section("Loyalty");
 		int level = Loyalty.level(horse, player);
 		section.add("Level", level + "/" + Loyalty.MAX_LEVEL + "  " + Loyalty.levelName(level).getString());
@@ -196,7 +198,7 @@ public final class LoyaltyDebugHud {
 			section.add("Hunger", "HUNGRY, loses points in " + seconds(Hunger.ticksToNextLoss(serverHorse)), WARN_COLOR);
 		} else {
 			section.add("Hunger", "fed " + seconds(sinceAte) + " ago, hungry in "
-					+ seconds(Math.max(0, config.ticksUntilHungry() - sinceAte)));
+					+ seconds(Math.max(0, HungerSettings.get().ticksUntilHungry() - sinceAte)));
 		}
 		return section;
 	}
@@ -251,7 +253,7 @@ public final class LoyaltyDebugHud {
 
 		Optional<Genome> genome = GeneticsView.genome(horse);
 		if (genome.isEmpty()) {
-			section.add("Genes", HorseLoyaltyConfig.get().geneticsEnabled() ? "none yet" : "off in config", DIM_COLOR);
+			section.add("Genes", Features.isOn("genetics") ? "none yet" : "genetics is off", DIM_COLOR);
 		} else {
 			genome.get().pairs().forEach((locus, pair) -> section.add(locus.id(), geneText(pair.first(), pair.second()), DIM_COLOR));
 		}

@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.core.feature;
 
+import com.xziggsx.horseloyalty.core.config.SettingsSection;
 import java.util.Set;
 
 /**
@@ -23,4 +24,9 @@ public interface Feature {
 
 	/** Always runs once: hooks the feature up through the context, which gates everything by the switch. */
 	void wire(FeatureContext context);
+
+	/** A fresh default instance of this feature's config section, or null if it has none. */
+	default SettingsSection settings() {
+		return null;
+	}
 }

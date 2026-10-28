@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.horseinfo;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.HorseUnits;
+import com.xziggsx.horseloyalty.core.feature.Features;
 import com.xziggsx.horseloyalty.genetics.core.CopyRole;
 import com.xziggsx.horseloyalty.genetics.core.GenePair;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
@@ -41,7 +41,7 @@ public final class HorseProfiles {
 
 	/** Whether this horse has an info screen: genetics is on (the server's setting) and it has genes. */
 	public static boolean available(AbstractHorse horse) {
-		return HorseLoyaltyConfig.get().geneticsEnabled() && HorseScope.inScope(horse) && GeneticsView.genome(horse).isPresent();
+		return Features.isOn("genetics") && HorseScope.inScope(horse) && GeneticsView.genome(horse).isPresent();
 	}
 
 	/** The profile of this horse as the player may see it. Call only when {@link #available}. */

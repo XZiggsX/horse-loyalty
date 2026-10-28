@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.loyalty;
 
+import com.xziggsx.horseloyalty.core.config.SettingsSection;
 import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
@@ -12,6 +13,11 @@ public final class LoyaltyFeature implements Feature {
 	@Override
 	public String id() {
 		return ID;
+	}
+
+	@Override
+	public SettingsSection settings() {
+		return new LoyaltySettings();
 	}
 
 	@Override

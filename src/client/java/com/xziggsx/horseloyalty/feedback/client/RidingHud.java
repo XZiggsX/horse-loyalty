@@ -1,9 +1,9 @@
 package com.xziggsx.horseloyalty.feedback.client;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.feature.Features;
+import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.RideView;
@@ -60,7 +60,7 @@ public final class RidingHud implements HudElement {
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft minecraft = Minecraft.getInstance();
 		Player player = minecraft.player;
-		if (player == null || !HorseLoyaltyConfig.get().ridingHud()
+		if (player == null || !FeedbackSettings.get().ridingHud()
 				|| !(player.getVehicle() instanceof AbstractHorse horse) || !HorseScope.inScope(horse)) {
 			return;
 		}

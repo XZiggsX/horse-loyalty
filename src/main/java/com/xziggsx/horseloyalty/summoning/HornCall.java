@@ -34,15 +34,6 @@ import net.minecraft.world.phys.Vec3;
  * and a horse is only ever placed where it fits, on solid ground, out of water.
  */
 public final class HornCall {
-	/** Loyalty level a player needs with a horse to bind a horn to it and to call it. */
-	public static final int MIN_LEVEL = 2;
-	/** Loyalty level at which a horse answers from another dimension. */
-	public static final int CROSS_DIMENSION_LEVEL = Bond.MAX_LEVEL;
-	/** A called horse gives up after this many ticks if it still hasn't reached the player. */
-	public static final int CALL_TICKS = 600;
-
-	/** A horse this close just runs over, without being moved. */
-	private static final double RUN_OVER_DISTANCE = 24;
 	/** Blocks behind the player to try placing the horse, furthest first. */
 	private static final int[] SPOT_DISTANCES = {16, 13, 10, 7};
 	/** Degrees off straight behind the player to try, at each distance. All are well outside the view. */
@@ -76,9 +67,10 @@ public final class HornCall {
 			return;
 		}
 		Component name = horse.getName();
+		SummoningSettings settings = SummoningSettings.get();
 		int loyalty = Bond.get().level(horse, player);
-		if (loyalty < MIN_LEVEL) {
-			say(player, "horseloyalty.horn.not_trusted", name, MIN_LEVEL, Bond.MAX_LEVEL, Bond.levelName(MIN_LEVEL));
+		if (loyalty < settings.minLevel()) {
+			say(player, "horseloyalty.horn.not_trusted", name, settings.minLevel(), Bond.MAX_LEVEL, Bond.levelName(settings.minLevel()));
 			return;
 		}
 		if (horse.isVehicle()) {
@@ -90,7 +82,7 @@ public final class HornCall {
 			return;
 		}
 		boolean sameLevel = horse.level() == level;
-		if (sameLevel && horse.distanceToSqr(player) <= RUN_OVER_DISTANCE * RUN_OVER_DISTANCE) {
+		if (sameLevel && horse.distanceToSqr(player) <= settings.runOverDistance() * settings.runOverDistance()) {
 			comeTo(horse, player);
 			say(player, "horseloyalty.horn.coming", name);
 			return;
@@ -103,7 +95,7 @@ public final class HornCall {
 			say(player, "horseloyalty.horn.underground", name);
 			return;
 		}
-		if (!sameLevel && loyalty < CROSS_DIMENSION_LEVEL) {
+		if (!sameLevel && loyalty < settings.crossDimensionLevel()) {
 			say(player, "horseloyalty.horn.other_dimension", name);
 			return;
 		}
@@ -183,7 +175,7 @@ public final class HornCall {
 	/** Sets the horse running to the player, see {@link ComeWhenCalledGoal}. */
 	private static void comeTo(AbstractHorse horse, ServerPlayer player) {
 		horse.setEating(false);
-		horse.setAttached(CALL, new Call(player.getUUID(), horse.level().getGameTime() + CALL_TICKS));
+		horse.setAttached(CALL, new Call(player.getUUID(), horse.level().getGameTime() + SummoningSettings.get().callTicks()));
 	}
 
 	private static void say(ServerPlayer player, String key, Object... args) {

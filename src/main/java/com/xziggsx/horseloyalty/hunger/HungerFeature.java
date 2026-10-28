@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.hunger;
 
+import com.xziggsx.horseloyalty.core.config.SettingsSection;
 import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
@@ -17,6 +18,11 @@ public final class HungerFeature implements Feature {
 	@Override
 	public Set<String> requires() {
 		return Set.of("loyalty");
+	}
+
+	@Override
+	public SettingsSection settings() {
+		return new HungerSettings();
 	}
 
 	@Override

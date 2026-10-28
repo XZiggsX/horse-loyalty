@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.riding;
 
+import com.xziggsx.horseloyalty.core.config.SettingsSection;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.riding.api.RideView;
@@ -15,6 +16,11 @@ public final class RidingFeature implements Feature {
 	@Override
 	public String id() {
 		return ID;
+	}
+
+	@Override
+	public SettingsSection settings() {
+		return new RidingSettings();
 	}
 
 	@Override

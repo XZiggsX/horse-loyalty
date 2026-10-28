@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.summoning;
 
+import com.xziggsx.horseloyalty.core.config.SettingsSection;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 
@@ -10,6 +11,11 @@ public final class SummoningFeature implements Feature {
 	@Override
 	public String id() {
 		return ID;
+	}
+
+	@Override
+	public SettingsSection settings() {
+		return new SummoningSettings();
 	}
 
 	@Override
