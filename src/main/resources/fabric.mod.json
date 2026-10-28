@@ -3,7 +3,7 @@
 	"id": "horseloyalty",
 	"version": "${version}",
 	"name": "Horse Loyalty",
-	"description": "Horses bond with their riders: loyalty levels, gaits, boat-style steering, hunger, foals and personalities.",
+	"description": "Horses bond with their riders: loyalty levels, gaits, boat-style steering, hunger, foals, personalities and genetics.",
 	"authors": [
 		"XZiggsX"
 	],

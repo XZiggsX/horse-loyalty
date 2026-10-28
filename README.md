@@ -48,7 +48,35 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
 - **Config** in `config/horseloyalty.json` for all of the numbers above. On a server, the server's
   riding numbers (speeds, turning, gait drops, balking, pushing) apply to everyone, whatever their
   own file says; HUD and sound settings stay each player's own.
-- **Dev panel** (development only) in the top left while riding.
+- **Genetics** (see below): hidden genes decide a horse's coat, markings and personality, so
+  foals can show colours their parents only carry.
+- **Dev panel** (development only) in the top left while riding, and `/horsegenes` for operators.
+
+## Genetics
+
+Every horse carries two copies of 8 genes, one from each parent. A foal gets one random copy
+of each gene from each parent, and each copy has a 1% chance (`genetics.mutationPercent`) to turn
+into a random version. Genes never change stats: health, speed and jump still average the parents.
+
+| Gene | Versions (strongest first) | Effect |
+|---|---|---|
+| red_black | black, red | two red: chestnut base |
+| agouti | bay, seal_brown, black | on black pigment: brown, dark brown or black |
+| cream | cream, none | one copy lightens to creamy (except black), two make white |
+| gray | gray, none | one copy turns any coat gray |
+| pinto | pinto, none | one copy: white patches |
+| leopard | leopard, none | one copy: white dots, two: black dots |
+| socks | none, socks | two copies: white legs |
+| temperament | brave, skittish, curious, lazy, steady | any quirk beats steady; two different quirks are 50/50, picked at birth |
+
+Wild herds descend from two founders that fit the herd's vanilla coat, so herds look related.
+Horses from before genetics (or with it just turned on) get genes that fit how they already look.
+Donkeys and mules only use the temperament gene. Turn it all off with `genetics.enabled`; then
+coats are vanilla again and personalities use the old inherit odds.
+
+Operators (permission level 2) can test it with `/horsegenes` on the horse they look at:
+`show`, `set <gene> <v1> <v2>`, `mark` (horse A), `predict` (exact foal odds for the marked
+horse and this one) and `simulate <count>` (breeds that many foals on paper).
 
 ## Requirements
 
@@ -82,7 +110,15 @@ client; `client` is only loaded on the client and never on a dedicated server.
                                       answering a horn call
       mixin/AbstractHorseMixin.java   server hooks: feeding, riding time, hunger, mount status, goals,
                                       hoofbeats per gait
-      mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, personality)
+      genetics/core/                  genes, inheritance, odds and genomes that fit a look (no Minecraft code)
+      genetics/trait/                 how genes become a coat, markings and a personality
+      genetics/world/                 genes saved on horses, herd founders, HorseGenetics (the entry point)
+      genetics/view/GeneticsView.java read-only genetics, for the dev tools and a future screen
+      dev/HorseGenesCommand.java      /horsegenes, operator-only genetics testing
+      mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, genes or personality)
+      mixin/HorseSpawnMixin.java      gives wild and summoned horses genes from their herd's founders
+      mixin/HorseGroupDataMixin.java  lets a spawn group hold its herd's founders
+      mixin/HorseInvoker.java         access to a horse's coat and markings setter
       mixin/RandomStrollGoalMixin.java  foals stroll less and stay near family
       mixin/PanicGoalMixin.java       brave horses don't panic when hit
       mixin/MobAccessor.java          access to a mob's goals
@@ -116,7 +152,8 @@ there. Loyalty, feeding and hunger are decided by the server.
 
 ## Dev panel
 
-Shows loyalty, points, hunger, gait and speed while riding. It is on in `runClient` and off
+Shows loyalty, points, hunger, gait and speed while riding, plus the horse's genes, what it
+shows and whether its parents are known. Looking at a horse shows just the genetics part. It is on in `runClient` and off
 in a built jar automatically. Force it with `-Dhorseloyalty.devhud=true` or `=false`.
 To remove it completely, delete `client/dev/`, `mixin/client/HudMixin.java` and the
 `"HudMixin"` line in `horseloyalty.client.mixins.json`.
