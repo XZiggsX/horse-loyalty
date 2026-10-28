@@ -3,6 +3,14 @@ package com.xziggsx.horseloyalty.genetics.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.xziggsx.horseloyalty.genetics.core.Loci.Agouti;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Cream;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Gray;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Leopard;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Pinto;
+import com.xziggsx.horseloyalty.genetics.core.Loci.RedBlack;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Socks;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Temperament;
 import com.xziggsx.horseloyalty.genetics.trait.CoatTrait;
 import com.xziggsx.horseloyalty.genetics.trait.MarkingTrait;
 import java.util.HashMap;

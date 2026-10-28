@@ -123,8 +123,10 @@ client; `client` is only loaded on the client and never on a dedicated server.
                                       answering a horn call
       mixin/AbstractHorseMixin.java   server hooks: feeding, riding time, hunger, mount status, goals,
                                       hoofbeats per gait
-      genetics/core/                  genes, inheritance, odds and genomes that fit a look (no Minecraft code)
-      genetics/trait/                 how genes become a coat, markings and a personality
+      genetics/core/                  genes, inheritance, odds and genomes that fit a look (no Minecraft code);
+                                      Loci.java lists every gene and its versions
+      genetics/trait/                 how genes become a coat, markings and a personality;
+                                      LookNames.java has the real coat and pattern names
       genetics/world/                 genes saved on horses, herd founders, HorseGenetics (the entry point)
       genetics/view/GeneticsView.java read-only genetics, for the dev tools and a future screen
       dev/HorseGenesCommand.java      /horsegenes, operator-only genetics testing

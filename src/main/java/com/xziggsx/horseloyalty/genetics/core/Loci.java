@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Every locus a horse has, in a fixed order. */
+/**
+ * Every locus a horse has, in a fixed order, and the versions each can hold (the nested enums,
+ * listed strongest first where one beats another). Which version wins is up to the traits.
+ */
 public final class Loci {
 	private static final List<Locus<?>> REGISTERED = new ArrayList<>();
 	/** Every registered locus, in registration order. */
@@ -39,5 +42,62 @@ public final class Loci {
 			}
 		}
 		return null;
+	}
+
+	// --- Versions of each locus ------------------------------------------------
+
+	/** Versions of the {@code red_black} locus. Black pigment is dominant; two RED copies make a chestnut base. */
+	public enum RedBlack {
+		BLACK,
+		RED
+	}
+
+	/** Versions of the {@code agouti} locus, strongest first: bay beats seal brown, which beats black. */
+	public enum Agouti {
+		BAY,
+		SEAL_BROWN,
+		BLACK
+	}
+
+	/** Versions of the {@code cream} locus. Works by dosage: one CREAM copy lightens, two lighten more (white on a chestnut base). */
+	public enum Cream {
+		CREAM,
+		NONE
+	}
+
+	/** Versions of the {@code gray} locus. One GRAY copy turns any coat gray. */
+	public enum Gray {
+		GRAY,
+		NONE
+	}
+
+	/** Versions of the {@code pinto} locus. One PINTO copy gives white patches. */
+	public enum Pinto {
+		PINTO,
+		NONE
+	}
+
+	/** Versions of the {@code leopard} locus. Works by dosage: one LEOPARD copy gives white dots, two give black dots. */
+	public enum Leopard {
+		LEOPARD,
+		NONE
+	}
+
+	/** Versions of the {@code socks} locus. SOCKS is recessive: only two copies give white legs. */
+	public enum Socks {
+		NONE,
+		SOCKS
+	}
+
+	/**
+	 * Versions of the {@code temperament} locus. Any quirk beats STEADY. A horse with two different
+	 * quirks shows one of them, picked 50/50 once at birth.
+	 */
+	public enum Temperament {
+		BRAVE,
+		SKITTISH,
+		CURIOUS,
+		LAZY,
+		STEADY
 	}
 }

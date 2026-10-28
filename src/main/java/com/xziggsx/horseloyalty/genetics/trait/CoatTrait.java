@@ -1,17 +1,18 @@
 package com.xziggsx.horseloyalty.genetics.trait;
 
-import com.xziggsx.horseloyalty.genetics.core.Agouti;
 import com.xziggsx.horseloyalty.genetics.core.CopyRole;
-import com.xziggsx.horseloyalty.genetics.core.Cream;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
 import com.xziggsx.horseloyalty.genetics.core.GenePair;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
-import com.xziggsx.horseloyalty.genetics.core.Gray;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Agouti;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Cream;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Gray;
+import com.xziggsx.horseloyalty.genetics.core.Loci.RedBlack;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
 import com.xziggsx.horseloyalty.genetics.core.NamedTrait;
-import com.xziggsx.horseloyalty.genetics.core.RedBlack;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
+import com.xziggsx.horseloyalty.genetics.trait.LookNames.CoatColour;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
