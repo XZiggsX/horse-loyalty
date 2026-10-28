@@ -1,6 +1,6 @@
 package com.xziggsx.horseloyalty.mixin.client;
 
-import com.xziggsx.horseloyalty.client.horseinfo.HorseInfoHolder;
+import com.xziggsx.horseloyalty.client.horseinfo.HorseScreenAccess;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ContainerScreenInfoMixin {
 	@Unique
 	private boolean horseloyalty$infoOpen() {
-		return this instanceof HorseInfoHolder holder && holder.horseloyalty$infoOpen();
+		return this instanceof HorseScreenAccess screen && screen.horseloyalty$infoOpen();
 	}
 
 	@Inject(method = "getHoveredSlot", at = @At("HEAD"), cancellable = true)

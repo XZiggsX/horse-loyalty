@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.util.HorseUnits;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 
@@ -23,12 +24,8 @@ public enum Gait {
 	CANTER,
 	GALLOP;
 
-	/** Unenchanted player walking pace, about 4.3 blocks/s. */
-	public static final double PLAYER_WALK_SPEED = 0.1 * 0.98;
-	/** Converts an effective speed to blocks per second on flat ground. */
-	public static final double SPEED_TO_BLOCKS_PER_SECOND = 4.317 / PLAYER_WALK_SPEED;
 	/** Backing up, about 1.5 blocks/s whatever the horse or loyalty. */
-	public static final double REVERSE_SPEED = 1.5 / SPEED_TO_BLOCKS_PER_SECOND;
+	public static final double REVERSE_SPEED = 1.5 / HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
 
 	/** The next faster gait, or GALLOP if already galloping. */
 	public Gait up() {

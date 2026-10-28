@@ -17,6 +17,7 @@ import com.xziggsx.horseloyalty.horseinfo.HorseProfile.StatLine;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile.TraitLine;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.util.HorseUnits;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public final class HorseProfiles {
 	 * profile only when this changes. Cheap, no gene reading.
 	 */
 	public static Object changeKey(AbstractHorse horse, Player player) {
-		return List.of(horse.getName().getString(), horse.getHealth(), horse.getMaxHealth(),
+		return List.of(horse.getHealth(), horse.getMaxHealth(),
 				horse.getAttributeValue(Attributes.MOVEMENT_SPEED), horse.getAttributeValue(Attributes.JUMP_STRENGTH),
 				Loyalty.level(horse, player), Personality.of(horse),
 				GeneticsView.genome(horse).map(Object.class::cast).orElse(""),
@@ -74,7 +75,7 @@ public final class HorseProfiles {
 	}
 
 	private static Identity identity(AbstractHorse horse) {
-		return new Identity(horse.getName(), horse.getType().getDescription(), Personality.of(horse));
+		return new Identity(horse.getType().getDescription(), Personality.of(horse));
 	}
 
 	private static LoyaltyLine loyalty(AbstractHorse horse, Player player) {
@@ -88,11 +89,11 @@ public final class HorseProfiles {
 		double jump = horse.getAttributeValue(Attributes.JUMP_STRENGTH);
 		return List.of(
 				new StatLine("health", horse.getHealth(), horse.getMaxHealth(),
-						StatUnits.fill(horse.getHealth(), 0, horse.getMaxHealth())),
-				new StatLine("speed", StatUnits.blocksPerSecond(speed), StatUnits.blocksPerSecond(StatUnits.MAX_SPEED),
-						StatUnits.fill(speed, StatUnits.MIN_SPEED, StatUnits.MAX_SPEED)),
-				new StatLine("jump", StatUnits.jumpBlocks(jump), StatUnits.jumpBlocks(StatUnits.MAX_JUMP),
-						StatUnits.fill(jump, StatUnits.MIN_JUMP, StatUnits.MAX_JUMP)));
+						HorseUnits.fill(horse.getHealth(), 0, horse.getMaxHealth())),
+				new StatLine("speed", HorseUnits.blocksPerSecond(speed), HorseUnits.blocksPerSecond(HorseUnits.MAX_SPEED),
+						HorseUnits.fill(speed, HorseUnits.MIN_SPEED, HorseUnits.MAX_SPEED)),
+				new StatLine("jump", HorseUnits.jumpBlocks(jump), HorseUnits.jumpBlocks(HorseUnits.MAX_JUMP),
+						HorseUnits.fill(jump, HorseUnits.MIN_JUMP, HorseUnits.MAX_JUMP)));
 	}
 
 	private static Parents parents(AbstractHorse horse) {

@@ -3,7 +3,6 @@ package com.xziggsx.horseloyalty;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.config.RidingRules;
 import com.xziggsx.horseloyalty.dev.HorseGenesCommand;
-import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
 import com.xziggsx.horseloyalty.genetics.world.GeneticsData;
 import com.xziggsx.horseloyalty.horn.HornBinding;
 import com.xziggsx.horseloyalty.horn.HornCall;
@@ -36,8 +35,7 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Hunger.init();
 		Family.init();
 		Personality.init();
-		// Genetics: the traits genes can show, and the genome and lineage saved on horses.
-		HorseTraits.init();
+		// Genetics: the genome and lineage saved on horses.
 		GeneticsData.init();
 		// Goat horns bound to a horse: the item data, the sneak-click to bind and the call.
 		HornBinding.init();

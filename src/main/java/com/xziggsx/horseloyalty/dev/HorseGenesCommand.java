@@ -8,14 +8,13 @@ import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Inheritance;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
-import com.xziggsx.horseloyalty.genetics.core.Trait;
-import com.xziggsx.horseloyalty.genetics.core.Traits;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.genetics.core.Trait;
+import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
 import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
-import com.xziggsx.horseloyalty.genetics.world.Bindings;
+import com.xziggsx.horseloyalty.genetics.view.ShownTrait;
 import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.genetics.world.Lineage;
-import com.xziggsx.horseloyalty.genetics.world.TraitBinding;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -162,7 +161,7 @@ public final class HorseGenesCommand {
 		if (b == null) {
 			return 0;
 		}
-		Map<Trait<?>, Distribution<?>> odds = CrossPredictor.predictAll(HorseGenetics.genomeOf(a), HorseGenetics.genomeOf(b),
+		Map<Trait<?>, Distribution<?>> odds = CrossPredictor.predictAll(HorseGenetics.genomeOf(a), HorseGenetics.genomeOf(b), HorseTraits.ALL,
 				HorseLoyaltyConfig.get().geneticsMutationChance());
 		List<String> lines = new ArrayList<>();
 		lines.add("Foal of " + a.getName().getString() + " and " + b.getName().getString() + ":");
@@ -185,19 +184,19 @@ public final class HorseGenesCommand {
 		Dice dice = HorseGenetics.dice(context.getSource().getLevel().getRandom());
 
 		Map<Trait<?>, Map<Object, Integer>> counts = new LinkedHashMap<>();
-		for (Trait<?> trait : Traits.ALL) {
+		for (Trait<?> trait : HorseTraits.ALL) {
 			counts.put(trait, new LinkedHashMap<>());
 		}
 		for (int i = 0; i < count; i++) {
 			Genome foal = Inheritance.cross(genomeA, genomeB, mutation, dice);
-			for (Trait<?> trait : Traits.ALL) {
+			for (Trait<?> trait : HorseTraits.ALL) {
 				counts.get(trait).merge(trait.express(foal).sample(dice), 1, Integer::sum);
 			}
 		}
 
 		List<String> lines = new ArrayList<>();
 		lines.add(count + " foals of " + a.getName().getString() + " and " + b.getName().getString() + " (count, then predicted):");
-		for (Trait<?> trait : Traits.ALL) {
+		for (Trait<?> trait : HorseTraits.ALL) {
 			Map<Object, Integer> byValue = counts.get(trait);
 			Distribution<?> predicted = CrossPredictor.predict(genomeA, genomeB, trait, mutation);
 			// Also list values the prediction allows that never came up.
@@ -264,8 +263,8 @@ public final class HorseGenesCommand {
 	/** What the horse shows now for each trait it has, such as "coat brown, marking none". */
 	private static String shown(AbstractHorse horse) {
 		List<String> parts = new ArrayList<>();
-		for (TraitBinding<?> binding : Bindings.applicable(horse)) {
-			parts.add(binding.trait().id() + " " + name(binding.current(horse)));
+		for (ShownTrait<?> shown : GeneticsView.shownTraits(horse)) {
+			parts.add(shown.trait().id() + " " + name(shown.current()));
 		}
 		return String.join(", ", parts);
 	}

@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.client.horseinfo.section;
 
+import com.xziggsx.horseloyalty.client.horseinfo.InfoLayout;
 import com.xziggsx.horseloyalty.client.horseinfo.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.client.horseinfo.InfoPalette;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
@@ -12,7 +13,6 @@ import net.minecraft.network.chat.Component;
 /** A bar per stat line, with its name on the left and its value on the right. Driven by the profile's list. */
 public final class StatsSection implements InfoSection {
 	private static final int ROW_HEIGHT = 10;
-	private static final int LABEL_WIDTH = 42;
 	private static final int VALUE_WIDTH = 52;
 	private static final int BAR_HEIGHT = 5;
 
@@ -37,8 +37,8 @@ public final class StatsSection implements InfoSection {
 
 	private static void drawLine(InfoContext context, StatLine line, int x, int y, int width) {
 		context.text(Component.translatable("horseloyalty.info.stat." + line.id()), x, y, InfoPalette.DIM);
-		int barX = x + LABEL_WIDTH;
-		int barWidth = Math.max(10, width - LABEL_WIDTH - VALUE_WIDTH - 4);
+		int barX = x + InfoLayout.LABEL_WIDTH;
+		int barWidth = Math.max(10, width - InfoLayout.LABEL_WIDTH - VALUE_WIDTH - 4);
 		context.fill(barX, y + 1, barWidth, BAR_HEIGHT + 2, InfoPalette.SLOT_SHADOW);
 		context.fill(barX + 1, y + 2, barWidth - 2, BAR_HEIGHT, InfoPalette.BAR_BACK);
 		context.fill(barX + 1, y + 2, (int) Math.round((barWidth - 2) * line.fill()), BAR_HEIGHT, InfoPalette.bar(line.id()));

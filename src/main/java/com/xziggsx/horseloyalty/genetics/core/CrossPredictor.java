@@ -30,10 +30,10 @@ public final class CrossPredictor {
 		return Distribution.of(totals);
 	}
 
-	/** {@link #predict} for every registered trait, in {@link Traits#ALL} order. */
-	public static Map<Trait<?>, Distribution<?>> predictAll(Genome a, Genome b, double mutationChance) {
+	/** {@link #predict} for each of these traits, in their order. */
+	public static Map<Trait<?>, Distribution<?>> predictAll(Genome a, Genome b, List<Trait<?>> traits, double mutationChance) {
 		Map<Trait<?>, Distribution<?>> result = new LinkedHashMap<>();
-		for (Trait<?> trait : Traits.ALL) {
+		for (Trait<?> trait : traits) {
 			result.put(trait, predict(a, b, trait, mutationChance));
 		}
 		return result;

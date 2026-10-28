@@ -35,4 +35,7 @@ public interface HorseScreenAccess {
 
 	/** Whether an item is on the cursor. */
 	boolean horseloyalty$carrying();
+
+	/** Whether the info view is showing; container-screen hooks use this to block the slots. */
+	boolean horseloyalty$infoOpen();
 }

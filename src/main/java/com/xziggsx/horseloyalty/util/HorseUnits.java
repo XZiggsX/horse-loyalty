@@ -1,19 +1,23 @@
-package com.xziggsx.horseloyalty.horseinfo;
+package com.xziggsx.horseloyalty.util;
 
 /**
- * Horse attributes as numbers players understand, and where they sit in vanilla's range for a
- * wild horse (for the stat bars).
+ * Horse numbers in units players understand, and vanilla's ranges for them. The one place for
+ * these conversions: riding, the dev panel and the horse info screen all use it, on both sides.
  */
-public final class StatUnits {
-	/** Movement speed attribute to blocks per second on flat ground (player walk speed is 4.317 b/s at 0.098). */
-	private static final double SPEED_TO_BLOCKS_PER_SECOND = 4.317 / (0.1 * 0.98);
+public final class HorseUnits {
+	/** Unenchanted player walking pace as an effective speed (0.1 speed, 0.98 input), about 4.3 blocks/s. */
+	public static final double PLAYER_WALK_SPEED = 0.1 * 0.98;
+	/** Converts an effective speed or movement speed attribute to blocks per second on flat ground. */
+	public static final double SPEED_TO_BLOCKS_PER_SECOND = 4.317 / PLAYER_WALK_SPEED;
 
+	/** Vanilla's range for a horse's movement speed attribute. */
 	public static final double MIN_SPEED = 0.1125;
 	public static final double MAX_SPEED = 0.3375;
+	/** Vanilla's range for a horse's jump strength attribute. */
 	public static final double MIN_JUMP = 0.4;
 	public static final double MAX_JUMP = 1.0;
 
-	private StatUnits() {
+	private HorseUnits() {
 	}
 
 	/** Top speed in blocks per second for a movement speed attribute. */

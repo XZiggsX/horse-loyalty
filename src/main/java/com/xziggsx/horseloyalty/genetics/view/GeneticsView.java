@@ -1,22 +1,17 @@
 package com.xziggsx.horseloyalty.genetics.view;
 
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.genetics.core.CrossPredictor;
-import com.xziggsx.horseloyalty.genetics.core.Distribution;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
-import com.xziggsx.horseloyalty.genetics.core.Trait;
 import com.xziggsx.horseloyalty.genetics.world.Bindings;
 import com.xziggsx.horseloyalty.genetics.world.GeneticsData;
 import com.xziggsx.horseloyalty.genetics.world.Lineage;
 import com.xziggsx.horseloyalty.genetics.world.TraitBinding;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 /**
- * Read-only access to a horse's genetics, for the dev tools and a future breeding screen.
+ * Read-only access to a horse's genetics, for the dev tools and the horse info screen.
  * Works on both sides, since the data is synced to clients. Never changes anything.
  */
 public final class GeneticsView {
@@ -44,20 +39,5 @@ public final class GeneticsView {
 
 	private static <T> ShownTrait<T> shownTrait(TraitBinding<T> binding, AbstractHorse horse) {
 		return new ShownTrait<>(binding.trait(), binding.current(horse));
-	}
-
-	/** The odds of each trait in a foal of these two horses. Empty if either has no genes yet. */
-	public static Map<Trait<?>, Distribution<?>> predict(AbstractHorse a, AbstractHorse b) {
-		Optional<Genome> genomeA = genome(a);
-		Optional<Genome> genomeB = genome(b);
-		if (genomeA.isEmpty() || genomeB.isEmpty()) {
-			return Map.of();
-		}
-		return predict(genomeA.get(), genomeB.get());
-	}
-
-	/** The odds of each trait in a foal of two genomes, with the configured mutation chance. */
-	public static Map<Trait<?>, Distribution<?>> predict(Genome a, Genome b) {
-		return CrossPredictor.predictAll(a, b, HorseLoyaltyConfig.get().geneticsMutationChance());
 	}
 }

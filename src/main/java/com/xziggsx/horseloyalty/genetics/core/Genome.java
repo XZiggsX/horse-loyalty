@@ -36,11 +36,6 @@ public final class Genome {
 		return pairs.containsKey(locus);
 	}
 
-	/** Whether every registered locus is present. */
-	public boolean isComplete() {
-		return pairs.keySet().containsAll(Loci.ALL);
-	}
-
 	/** A copy with this locus set to the pair. */
 	public <A extends Enum<A>> Genome with(Locus<A> locus, GenePair<A> pair) {
 		return withUnchecked(locus, pair);

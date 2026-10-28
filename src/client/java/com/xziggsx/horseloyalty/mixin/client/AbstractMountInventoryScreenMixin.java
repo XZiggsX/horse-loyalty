@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.mixin.client;
 
+import com.xziggsx.horseloyalty.client.horseinfo.InfoPalette;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
 import net.minecraft.client.Minecraft;
@@ -27,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(AbstractMountInventoryScreen.class)
 public abstract class AbstractMountInventoryScreenMixin extends AbstractContainerScreen<AbstractMountInventoryMenu> {
-	private static final int LABEL_COLOR = 0xFF404040;
 
 	@Shadow
 	@Final
@@ -56,10 +56,10 @@ public abstract class AbstractMountInventoryScreenMixin extends AbstractContaine
 		if (inventoryColumns == 0) {
 			int x = leftPos + 82;
 			int y = topPos + 22;
-			graphics.text(font, score, x, y, LABEL_COLOR, false);
-			graphics.text(font, name, x, y + 11, LABEL_COLOR, false);
+			graphics.text(font, score, x, y, InfoPalette.TEXT, false);
+			graphics.text(font, name, x, y + 11, InfoPalette.TEXT, false);
 			if (personality != null) {
-				graphics.text(font, personality, x, y + 22, LABEL_COLOR, false);
+				graphics.text(font, personality, x, y + 22, InfoPalette.TEXT, false);
 			}
 		} else {
 			Component line = Component.empty().append(score).append(" ").append(name);
@@ -67,7 +67,7 @@ public abstract class AbstractMountInventoryScreenMixin extends AbstractContaine
 				line = Component.empty().append(line).append(", ").append(personality);
 			}
 			int x = leftPos + imageWidth - 8 - font.width(line);
-			graphics.text(font, line, x, topPos + 6, LABEL_COLOR, false);
+			graphics.text(font, line, x, topPos + 6, InfoPalette.TEXT, false);
 		}
 	}
 }

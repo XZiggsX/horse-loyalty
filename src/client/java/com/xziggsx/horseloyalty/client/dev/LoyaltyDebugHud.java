@@ -4,11 +4,13 @@ import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
 import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
+import com.xziggsx.horseloyalty.genetics.view.ShownTrait;
 import com.xziggsx.horseloyalty.genetics.world.Lineage;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
 import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.util.HorseUnits;
 import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.client.riding.GaitRaise;
@@ -29,7 +31,6 @@ import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -154,7 +155,7 @@ public final class LoyaltyDebugHud {
 		section.add("Health", String.format(Locale.ROOT, "%.1f / %.1f", horse.getHealth(), horse.getMaxHealth()));
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
 		section.add("Speed", String.format(Locale.ROOT, "%.4f  (gallop ~%.1f b/s)",
-				speed, Gait.GALLOP.speed(speed) * Gait.SPEED_TO_BLOCKS_PER_SECOND));
+				speed, Gait.GALLOP.speed(speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND));
 		section.add("Jump", String.format(Locale.ROOT, "%.3f", horse.getAttributeValue(Attributes.JUMP_STRENGTH)));
 		return section;
 	}
@@ -205,9 +206,9 @@ public final class LoyaltyDebugHud {
 		GaitHolder holder = (GaitHolder) horse;
 		Gait gait = holder.horseloyalty$getGait();
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
-		double top = Gait.GALLOP.speed(speed) * Gait.SPEED_TO_BLOCKS_PER_SECOND;
+		double top = Gait.GALLOP.speed(speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
 		double push = holder.horseloyalty$getGallopPush().extra();
-		double target = Riding.gaitSpeed(gait, speed, horse, player) * Gait.SPEED_TO_BLOCKS_PER_SECOND * (1 + push);
+		double target = Riding.gaitSpeed(gait, speed, horse, player) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND * (1 + push);
 		// Distance actually covered last tick. Not getDeltaMovement(): that is stored after
 		// ground friction is applied, so it reads only about 55% of the real speed.
 		double actual = Math.hypot(horse.getX() - horse.xo, horse.getZ() - horse.zo) * 20;
@@ -241,12 +242,11 @@ public final class LoyaltyDebugHud {
 	 */
 	private static Section geneticsSection(AbstractHorse horse) {
 		Section section = new Section("Genetics");
-		if (horse instanceof Horse coated) {
-			section.add("Coat", coated.getVariant().getSerializedName());
-			section.add("Marking", coated.getMarkings().name().toLowerCase(Locale.ROOT));
+		for (ShownTrait<?> shown : GeneticsView.shownTraits(horse)) {
+			String id = shown.trait().id();
+			section.add(Character.toUpperCase(id.charAt(0)) + id.substring(1),
+					shown.current() instanceof Enum<?> value ? Locus.name(value) : "none");
 		}
-		Personality personality = horse.getAttached(Personality.DATA);
-		section.add("Temperament", personality == null ? "none" : personality.id());
 
 		Optional<Genome> genome = GeneticsView.genome(horse);
 		if (genome.isEmpty()) {

@@ -128,7 +128,8 @@ client; `client` is only loaded on the client and never on a dedicated server.
       genetics/world/                 genes saved on horses, herd founders, HorseGenetics (the entry point)
       genetics/view/GeneticsView.java read-only genetics, for the dev tools and a future screen
       dev/HorseGenesCommand.java      /horsegenes, operator-only genetics testing
-      horseinfo/                      read-only HorseProfile for the info screen, reveal policy, stat units
+      horseinfo/                      read-only HorseProfile for the info screen, reveal policy
+      util/HorseUnits.java            speed and jump in blocks, vanilla stat ranges (riding, dev panel, info screen)
       mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, genes or personality)
       mixin/HorseSpawnMixin.java      gives wild and summoned horses genes from their herd's founders
       mixin/HorseGroupDataMixin.java  lets a spawn group hold its herd's founders

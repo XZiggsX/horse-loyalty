@@ -20,6 +20,9 @@ public final class InfoLayout {
 	/** Room kept free above and below the window, for the tabs and a margin. */
 	static final int SCREEN_MARGIN = TAB_RISE + 4;
 
+	/** Width of the label column beside the model, shared by the stat bars and the parents line. */
+	public static final int LABEL_WIDTH = 42;
+
 	static final int MODEL_SIZE = 54;
 	static final int SIDE_HEIGHT = 64;
 	static final int LOOKS_HEIGHT = 22;

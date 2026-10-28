@@ -2,7 +2,7 @@ package com.xziggsx.horseloyalty.horseinfo;
 
 /** The parts of the horse info screen a {@link RevealPolicy} can show or lock. */
 public enum InfoTopic {
-	/** Name, kind and personality. */
+	/** Kind and personality. */
 	IDENTITY,
 	/** Your loyalty level with the horse. */
 	LOYALTY,

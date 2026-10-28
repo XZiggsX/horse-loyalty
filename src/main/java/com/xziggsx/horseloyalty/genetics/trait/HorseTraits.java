@@ -1,17 +1,17 @@
 package com.xziggsx.horseloyalty.genetics.trait;
 
-import com.xziggsx.horseloyalty.genetics.core.Traits;
+import com.xziggsx.horseloyalty.genetics.core.Trait;
+import java.util.List;
 
-/** The traits a horse has, registered in {@link Traits} when this class loads. */
+/** The traits a horse has. */
 public final class HorseTraits {
-	public static final CoatTrait COAT = Traits.register(new CoatTrait());
-	public static final MarkingTrait MARKING = Traits.register(new MarkingTrait());
-	public static final TemperamentTrait TEMPERAMENT = Traits.register(new TemperamentTrait());
+	public static final CoatTrait COAT = new CoatTrait();
+	public static final MarkingTrait MARKING = new MarkingTrait();
+	public static final TemperamentTrait TEMPERAMENT = new TemperamentTrait();
+
+	/** Every trait, in display order. */
+	public static final List<Trait<?>> ALL = List.of(COAT, MARKING, TEMPERAMENT);
 
 	private HorseTraits() {
-	}
-
-	/** Forces the class to load so the traits are registered. */
-	public static void init() {
 	}
 }

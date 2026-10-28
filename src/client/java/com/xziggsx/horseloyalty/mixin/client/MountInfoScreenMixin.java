@@ -1,7 +1,6 @@
 package com.xziggsx.horseloyalty.mixin.client;
 
 import com.xziggsx.horseloyalty.client.horseinfo.HorseInfoController;
-import com.xziggsx.horseloyalty.client.horseinfo.HorseInfoHolder;
 import com.xziggsx.horseloyalty.client.horseinfo.HorseScreenAccess;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -28,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(AbstractMountInventoryScreen.class)
 public abstract class MountInfoScreenMixin extends AbstractContainerScreen<AbstractMountInventoryMenu>
-		implements HorseScreenAccess, HorseInfoHolder {
+		implements HorseScreenAccess {
 	@Shadow
 	@Final
 	protected LivingEntity mount;

@@ -37,17 +37,7 @@ public final class HorseGenetics {
 
 	/** Game randomness as genetics {@link Dice}. */
 	public static Dice dice(RandomSource random) {
-		return new Dice() {
-			@Override
-			public int nextInt(int bound) {
-				return random.nextInt(bound);
-			}
-
-			@Override
-			public double nextDouble() {
-				return random.nextDouble();
-			}
-		};
+		return Dice.of(random::nextInt, random::nextDouble);
 	}
 
 	/** Whether genetics covers this kind of horse at all (not llamas or camels). */

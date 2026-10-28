@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
  * {@link HorseProfiles}; screens only ever read this, never the horse or its genes. Names of
  * genes, coats and patterns are ids, so the screen picks how to name them.
  *
- * @param identity name, kind and personality
+ * @param identity kind and personality
  * @param loyalty  the viewing player's loyalty level
  * @param stats    stat bars in display order
  * @param parents  the parents' names, if recorded
@@ -27,11 +27,10 @@ public record HorseProfile(
 		Shown<List<GeneRow>> genes) {
 
 	/**
-	 * @param name        the horse's name (its custom name, or its kind)
 	 * @param kind        the kind of horse, such as "Donkey"
 	 * @param personality what the horse shows
 	 */
-	public record Identity(Component name, Component kind, Personality personality) {
+	public record Identity(Component kind, Personality personality) {
 	}
 
 	/**

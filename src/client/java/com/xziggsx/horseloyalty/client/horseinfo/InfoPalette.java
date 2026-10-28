@@ -4,6 +4,7 @@ import java.util.Map;
 
 /** Every colour the horse info screen uses, in one place. */
 public final class InfoPalette {
+	/** Vanilla's dark label colour, also used for the loyalty text on the inventory. */
 	public static final int TEXT = 0xFF404040;
 	public static final int DIM = 0xFF7A7A7A;
 	public static final int SLOT_SHADOW = 0xFF373737;

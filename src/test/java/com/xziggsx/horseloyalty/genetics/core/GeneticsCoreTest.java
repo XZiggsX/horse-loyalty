@@ -24,6 +24,15 @@ class GeneticsCoreTest {
 	private static final MarkingTrait MARKING = new MarkingTrait();
 	private static final QuirkTrait QUIRK = new QuirkTrait();
 
+	private static Dice seeded(long seed) {
+		Random random = new Random(seed);
+		return Dice.of(random::nextInt, random::nextDouble);
+	}
+
+	private static boolean hasEveryLocus(Genome genome) {
+		return Loci.ALL.stream().allMatch(genome::has);
+	}
+
 	/** Plain genes everywhere: bay base, no cream, gray, pinto, leopard or socks, steady. */
 	private static Genome plain() {
 		return Genome.EMPTY
@@ -116,7 +125,7 @@ class GeneticsCoreTest {
 				.with(Loci.TEMPERAMENT, new GenePair<>(Temperament.LAZY, Temperament.STEADY));
 		double mutation = 0.01;
 		int count = 10_000;
-		Dice dice = Dice.of(new Random(12345));
+		Dice dice = seeded(12345);
 		for (Trait<?> trait : List.of(COAT, MARKING, QUIRK)) {
 			assertSimulationClose(trait, a, b, mutation, count, dice);
 		}
@@ -141,7 +150,7 @@ class GeneticsCoreTest {
 
 	@Test
 	void forLookGivesEveryCoatAndMarking() {
-		Dice dice = Dice.of(new Random(42));
+		Dice dice = seeded(42);
 		for (Variant variant : Variant.values()) {
 			for (Markings markings : Markings.values()) {
 				for (int i = 0; i < 20; i++) {
@@ -150,7 +159,7 @@ class GeneticsCoreTest {
 					look.put(MARKING, markings);
 					look.put(QUIRK, Temperament.CURIOUS);
 					Genome genome = GenomeFactory.forLook(look, dice);
-					assertTrue(genome.isComplete(), "incomplete genome " + genome);
+					assertTrue(hasEveryLocus(genome), "incomplete genome " + genome);
 					assertEquals(1.0, COAT.express(genome).chance(variant), EPSILON, variant + " from " + genome);
 					assertEquals(1.0, MARKING.express(genome).chance(markings), EPSILON, markings + " from " + genome);
 					assertTrue(QUIRK.canExpress(genome, Temperament.CURIOUS), "curious from " + genome);
@@ -161,7 +170,7 @@ class GeneticsCoreTest {
 
 	@Test
 	void refitOnlyChangesThatTraitsLoci() {
-		Dice dice = Dice.of(new Random(7));
+		Dice dice = seeded(7);
 		Genome genome = palomino().with(Loci.PINTO, new GenePair<>(Pinto.PINTO, Pinto.NONE));
 		Genome refitted = GenomeFactory.refit(genome, COAT, Variant.DARK_BROWN, dice);
 		assertEquals(1.0, COAT.express(refitted).chance(Variant.DARK_BROWN), EPSILON);
@@ -182,7 +191,7 @@ class GeneticsCoreTest {
 		Genome read = Genome.fromStrings(junk);
 		assertEquals(genome.get(Loci.RED_BLACK), read.get(Loci.RED_BLACK));
 		assertTrue(!read.has(Loci.GRAY) && !read.has(Loci.CREAM));
-		assertTrue(GenomeFactory.fillMissing(read, Dice.of(new Random(1))).isComplete());
+		assertTrue(hasEveryLocus(GenomeFactory.fillMissing(read, seeded(1))));
 	}
 
 	@Test

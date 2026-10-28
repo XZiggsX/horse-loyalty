@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.client.horseinfo.section;
 
+import com.xziggsx.horseloyalty.client.horseinfo.InfoLayout;
 import com.xziggsx.horseloyalty.client.horseinfo.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.client.horseinfo.InfoPalette;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
@@ -10,7 +11,6 @@ import net.minecraft.network.chat.Component;
 
 /** The parents' names: "Thunder × unnamed", or "not recorded (older horse)". */
 public final class ParentsSection implements InfoSection {
-	private static final int LABEL_WIDTH = 42;
 
 	@Override
 	public int height(HorseProfile profile) {
@@ -20,7 +20,7 @@ public final class ParentsSection implements InfoSection {
 	@Override
 	public void draw(InfoContext context, HorseProfile profile, Rect area) {
 		context.text(Component.translatable("horseloyalty.info.parents"), area.x(), area.y(), InfoPalette.DIM);
-		int x = area.x() + LABEL_WIDTH;
+		int x = area.x() + InfoLayout.LABEL_WIDTH;
 		switch (profile.parents()) {
 			case Shown.Visible<Parents>(Parents parents) when parents.recorded() -> context.text(
 					Component.translatable("horseloyalty.info.parents.names", name(parents.nameA()), name(parents.nameB())),
