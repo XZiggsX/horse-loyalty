@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.mixin.client;
 
 import com.xziggsx.horseloyalty.client.horseinfo.InfoPalette;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
 import net.minecraft.client.Minecraft;
@@ -44,7 +45,7 @@ public abstract class AbstractMountInventoryScreenMixin extends AbstractContaine
 	@Inject(method = "extractBackground", at = @At("TAIL"))
 	private void horseloyalty$drawLoyalty(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 		Player player = Minecraft.getInstance().player;
-		if (!(mount instanceof AbstractHorse horse) || !Loyalty.appliesTo(horse) || player == null) {
+		if (!(mount instanceof AbstractHorse horse) || !HorseScope.inScope(horse) || player == null) {
 			return;
 		}
 		int level = Loyalty.level(horse, player);

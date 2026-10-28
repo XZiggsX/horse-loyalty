@@ -18,9 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.animal.equine.Llama;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -69,11 +67,6 @@ public final class Loyalty {
 
 	/** Forces the class to load so the attachments are registered during mod init. */
 	public static void init() {
-	}
-
-	/** Horses, donkeys, mules and the undead horses. Llamas and camels are left alone. */
-	public static boolean appliesTo(AbstractHorse horse) {
-		return !(horse instanceof Llama) && !(horse instanceof Camel);
 	}
 
 	/** This player's stats with the horse (empty if they have none). Server side only. */

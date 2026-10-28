@@ -5,6 +5,7 @@ import com.xziggsx.horseloyalty.client.riding.ClientGait;
 import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -59,7 +60,7 @@ public final class RidingHud implements HudElement {
 		Minecraft minecraft = Minecraft.getInstance();
 		Player player = minecraft.player;
 		if (player == null || !HorseLoyaltyConfig.get().ridingHud()
-				|| !(player.getVehicle() instanceof AbstractHorse horse) || !Loyalty.appliesTo(horse)) {
+				|| !(player.getVehicle() instanceof AbstractHorse horse) || !HorseScope.inScope(horse)) {
 			return;
 		}
 		// Vanilla draws the horse's hearts in rows of 10 from 39 pixels above the bottom, going up,

@@ -2,25 +2,25 @@ package com.xziggsx.horseloyalty;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.config.RidingRules;
-import com.xziggsx.horseloyalty.dev.HorseGenesCommand;
-import com.xziggsx.horseloyalty.genetics.world.GeneticsData;
-import com.xziggsx.horseloyalty.horn.HornBinding;
-import com.xziggsx.horseloyalty.horn.HornCall;
-import com.xziggsx.horseloyalty.loyalty.Family;
-import com.xziggsx.horseloyalty.loyalty.Hunger;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.loyalty.LoyaltyChangePayload;
-import com.xziggsx.horseloyalty.personality.Personality;
-import com.xziggsx.horseloyalty.riding.GaitSync;
+import com.xziggsx.horseloyalty.core.feature.Features;
+import com.xziggsx.horseloyalty.dev.DevToolsFeature;
+import com.xziggsx.horseloyalty.foals.FoalsFeature;
+import com.xziggsx.horseloyalty.genetics.GeneticsFeature;
+import com.xziggsx.horseloyalty.horseinfo.HorseInfoFeature;
+import com.xziggsx.horseloyalty.hunger.HungerFeature;
+import com.xziggsx.horseloyalty.loyalty.LoyaltyFeature;
+import com.xziggsx.horseloyalty.personality.PersonalityFeature;
+import com.xziggsx.horseloyalty.riding.RidingFeature;
+import com.xziggsx.horseloyalty.summoning.SummoningFeature;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Common entrypoint: runs on dedicated servers and on the client (whose built-in server
- * runs singleplayer worlds). Everything in the main source set is loaded on both sides;
- * the game logic in it (loyalty, hunger, feeding) only does work on the server side.
- * Client-only code (riding controls, screens, HUD) is in the client source set.
+ * runs singleplayer worlds). Registers every feature, then lets the switches decide what runs.
+ * Everything in the main source set is loaded on both sides; client-only code (riding controls,
+ * screens, HUD) is in the client source set.
  */
 public class HorseLoyaltyMod implements ModInitializer {
 	public static final String MOD_ID = "horseloyalty";
@@ -30,22 +30,20 @@ public class HorseLoyaltyMod implements ModInitializer {
 	public void onInitialize() {
 		// Config first: the attachments and all game logic read their numbers from it.
 		HorseLoyaltyConfig.load();
-		// Registers the data saved on horses (Fabric Data Attachment API).
-		Loyalty.init();
-		Hunger.init();
-		Family.init();
-		Personality.init();
-		// Genetics: the genome and lineage saved on horses.
-		GeneticsData.init();
-		// Goat horns bound to a horse: the item data, the sneak-click to bind and the call.
-		HornBinding.init();
-		HornCall.init();
-		// Packets: the rider's gait (to the server), loyalty toasts and the server's riding rules (to the client).
-		GaitSync.init();
-		LoyaltyChangePayload.init();
+		// Personality before genetics: genetics builds genes around a horse's personality.
+		Features.register(new RidingFeature());
+		Features.register(new LoyaltyFeature());
+		Features.register(new HungerFeature());
+		Features.register(new PersonalityFeature());
+		Features.register(new GeneticsFeature());
+		Features.register(new FoalsFeature());
+		Features.register(new SummoningFeature());
+		Features.register(new HorseInfoFeature());
+		Features.register(new DevToolsFeature());
+		// registerData() and wire() for all of them; the switches decide what actually runs.
+		Features.wireAll();
+		// The server's riding rules, sent to every player who joins.
 		RidingRules.init();
-		// Operator-only /horsegenes, for testing genetics.
-		HorseGenesCommand.init();
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }

@@ -1,4 +1,4 @@
-package com.xziggsx.horseloyalty.util;
+package com.xziggsx.horseloyalty.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -6,6 +6,7 @@ import com.xziggsx.horseloyalty.ai.FollowBreederGoal;
 import com.xziggsx.horseloyalty.ai.FollowChosenParentGoal;
 import com.xziggsx.horseloyalty.ai.SkittishAvoidGoal;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
@@ -91,7 +92,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	@Inject(method = "handleEating", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$countFeed(Player player, ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
 		AbstractHorse horse = horseloyalty$self();
-		if (horse.level().isClientSide() || !Loyalty.appliesTo(horse) || !isTamed()) {
+		if (horse.level().isClientSide() || !HorseScope.inScope(horse) || !isTamed()) {
 			return;
 		}
 		boolean countsForLoyalty = Loyalty.canCountFeed(horse, player);
@@ -126,7 +127,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 		horseloyalty$lastX = horse.getX();
 		horseloyalty$lastZ = horse.getZ();
 
-		if (!isTamed() || !Loyalty.appliesTo(horse)) {
+		if (!isTamed() || !HorseScope.inScope(horse)) {
 			return;
 		}
 		LivingEntity rider = horse.getControllingPassenger();
@@ -139,7 +140,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	@Inject(method = "addPassenger", at = @At("TAIL"))
 	private void horseloyalty$showStatus(Entity passenger, CallbackInfo ci) {
 		AbstractHorse horse = horseloyalty$self();
-		if (passenger instanceof ServerPlayer player && isTamed() && Loyalty.appliesTo(horse)) {
+		if (passenger instanceof ServerPlayer player && isTamed() && HorseScope.inScope(horse)) {
 			player.sendOverlayMessage(Loyalty.describe(horse, player));
 		}
 	}

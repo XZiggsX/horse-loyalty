@@ -3,7 +3,7 @@ package com.xziggsx.horseloyalty.client.feedback;
 import com.xziggsx.horseloyalty.client.riding.ClientGait;
 import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -44,7 +44,7 @@ public final class GaitEffects {
 			return;
 		}
 		for (Entity entity : level.entitiesForRendering()) {
-			if (entity instanceof AbstractHorse horse && horse.isVehicle() && Loyalty.appliesTo(horse)
+			if (entity instanceof AbstractHorse horse && horse.isVehicle() && HorseScope.inScope(horse)
 					&& horse.distanceToSqr(minecraft.player) < MAX_DISTANCE * MAX_DISTANCE) {
 				tickHorse(level, horse, config);
 			}

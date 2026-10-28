@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.horn;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.ai.ComeWhenCalledGoal;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import java.util.UUID;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
@@ -129,7 +130,7 @@ public final class HornCall {
 	/** The horse with this UUID if it's loaded and alive in any dimension, else null. */
 	private static AbstractHorse find(MinecraftServer server, UUID id) {
 		for (ServerLevel level : server.getAllLevels()) {
-			if (level.getEntity(id) instanceof AbstractHorse horse && horse.isAlive() && Loyalty.appliesTo(horse)) {
+			if (level.getEntity(id) instanceof AbstractHorse horse && horse.isAlive() && HorseScope.inScope(horse)) {
 				return horse;
 			}
 		}

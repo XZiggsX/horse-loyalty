@@ -1,5 +1,8 @@
 package com.xziggsx.horseloyalty.dev;
 
+import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.genetics.core.CrossPredictor;
 import com.xziggsx.horseloyalty.genetics.core.Dice;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
@@ -8,7 +11,6 @@ import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Inheritance;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
-import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
 import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
 import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
@@ -77,8 +79,9 @@ public final class HorseGenesCommand {
 	private HorseGenesCommand() {
 	}
 
-	public static void init() {
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> register(dispatcher));
+	/** Registers the command while genetics is on. */
+	public static void init(FeatureContext context) {
+		context.on(CommandRegistrationCallback.EVENT, (dispatcher, registryAccess, environment) -> register(dispatcher));
 	}
 
 	private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -230,7 +233,7 @@ public final class HorseGenesCommand {
 		Vec3 reach = player.getViewVector(1.0F).scale(RANGE);
 		AABB area = player.getBoundingBox().expandTowards(reach).inflate(1.0);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, eye.add(reach), area,
-				entity -> entity instanceof AbstractHorse horse && horse.isAlive() && HorseGenetics.appliesTo(horse), RANGE * RANGE);
+				entity -> entity instanceof AbstractHorse horse && horse.isAlive() && HorseScope.inScope(horse), RANGE * RANGE);
 		if (hit == null || !(hit.getEntity() instanceof AbstractHorse horse)) {
 			source.sendFailure(Component.literal("Look at a horse, donkey or mule within " + (int) RANGE + " blocks."));
 			return null;

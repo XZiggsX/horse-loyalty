@@ -6,7 +6,7 @@ import com.xziggsx.horseloyalty.client.riding.GaitRaise;
 import com.xziggsx.horseloyalty.client.riding.GallopPush;
 import com.xziggsx.horseloyalty.client.riding.Riding;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.personality.Personality;
 import com.xziggsx.horseloyalty.riding.GaitSync;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -152,7 +152,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$gaitInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
 		AbstractHorse horse = horseloyalty$self();
-		if (!Loyalty.appliesTo(horse)) {
+		if (!HorseScope.inScope(horse)) {
 			return;
 		}
 		float forward = player.zza;
@@ -326,7 +326,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	/** Replaces the horse's speed with the current gait's speed, scaled by the rider's loyalty and any gallop push. */
 	@Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$gaitSpeed(Player player, CallbackInfoReturnable<Float> cir) {
-		if (!Loyalty.appliesTo(horseloyalty$self())) {
+		if (!HorseScope.inScope(horseloyalty$self())) {
 			return;
 		}
 		if (horseloyalty$reversing) {
@@ -349,7 +349,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Inject(method = "getRiddenRotation", at = @At("HEAD"), cancellable = true)
 	private void horseloyalty$boatSteering(LivingEntity rider, CallbackInfoReturnable<Vec2> cir) {
 		AbstractHorse horse = horseloyalty$self();
-		if (!Loyalty.appliesTo(horse)) {
+		if (!HorseScope.inScope(horse)) {
 			return;
 		}
 		// Turn rate depends on loyalty. Only players steer horses, see getControllingPassenger.

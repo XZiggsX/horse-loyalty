@@ -1,6 +1,8 @@
 package com.xziggsx.horseloyalty.horn;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
+import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import java.util.List;
 import java.util.UUID;
@@ -48,15 +50,19 @@ public final class HornBinding {
 	private HornBinding() {
 	}
 
-	/** Registers the data component (by loading the class) and the click handler. */
+	/** Registers the data component, by loading the class. Runs whether summoning is on or off. */
 	public static void init() {
-		UseEntityCallback.EVENT.register(HornBinding::onUseEntity);
+	}
+
+	/** Hooks up the sneak-click that binds a horn. */
+	public static void wire(FeatureContext context) {
+		context.on(UseEntityCallback.EVENT, HornBinding::onUseEntity);
 	}
 
 	private static InteractionResult onUseEntity(Player player, Level level, InteractionHand hand, Entity entity, EntityHitResult hit) {
 		ItemStack stack = player.getItemInHand(hand);
 		if (!stack.is(Items.GOAT_HORN) || !player.isSecondaryUseActive() || player.isSpectator()
-				|| !(entity instanceof AbstractHorse horse) || !horse.isTamed() || !Loyalty.appliesTo(horse)) {
+				|| !(entity instanceof AbstractHorse horse) || !horse.isTamed() || !HorseScope.inScope(horse)) {
 			return InteractionResult.PASS;
 		}
 		// From here the horn handles the click, so the horse's inventory doesn't open as well.

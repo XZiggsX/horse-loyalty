@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.util.HorseUnits;
+import com.xziggsx.horseloyalty.core.HorseUnits;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 

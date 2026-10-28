@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.personality;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
@@ -82,7 +83,7 @@ public enum Personality {
 	 * off, for llamas and camels, and for a horse that hasn't been given one yet. Works on both sides.
 	 */
 	public static Personality of(AbstractHorse horse) {
-		if (!HorseLoyaltyConfig.get().personalityEnabled() || !Loyalty.appliesTo(horse)) {
+		if (!HorseLoyaltyConfig.get().personalityEnabled() || !HorseScope.inScope(horse)) {
 			return STEADY;
 		}
 		return horse.getAttachedOrElse(DATA, STEADY);
@@ -99,7 +100,7 @@ public enum Personality {
 	 * from before the mod was added (and wild ones) get one the first time they're loaded.
 	 */
 	public static void ensureAssigned(AbstractHorse horse) {
-		if (Loyalty.appliesTo(horse) && !horse.hasAttached(DATA)) {
+		if (HorseScope.inScope(horse) && !horse.hasAttached(DATA)) {
 			horse.setAttached(DATA, roll(horse.getRandom()));
 		}
 	}
@@ -110,7 +111,7 @@ public enum Personality {
 	 * likely to have it too, so you can breed for a line of brave horses.
 	 */
 	public static void inherit(AbstractHorse foal, AbstractHorse parentA, AbstractHorse parentB) {
-		if (!Loyalty.appliesTo(foal)) {
+		if (!HorseScope.inScope(foal)) {
 			return;
 		}
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();

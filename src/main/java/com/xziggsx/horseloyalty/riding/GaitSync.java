@@ -1,13 +1,13 @@
 package com.xziggsx.horseloyalty.riding;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -94,11 +94,14 @@ public final class GaitSync {
 	private GaitSync() {
 	}
 
-	/** Registers the attachment and the packet. Called once from the common entrypoint. */
-	public static void init() {
+	/** Registers the attachment (by loading the class) and the packet type. Runs whether riding is on or off. */
+	public static void registerData() {
 		PayloadTypeRegistry.serverboundPlay().register(GaitPayload.TYPE, GaitPayload.STREAM_CODEC);
-		ServerPlayNetworking.registerGlobalReceiver(GaitPayload.TYPE,
-				(payload, context) -> receive(payload, context.player()));
+	}
+
+	/** Handles the riders' gait packets while riding is on. */
+	public static void wire(FeatureContext context) {
+		context.receive(GaitPayload.TYPE, (payload, packetContext) -> receive(payload, packetContext.player()));
 	}
 
 	/** The horse's synced gait index, or -1 if nobody with the mod is riding it. Works on both sides. */
@@ -110,7 +113,7 @@ public final class GaitSync {
 	/** Server: a rider's client reported its gait. Ignored unless they're steering a horse this mod handles. */
 	private static void receive(GaitPayload payload, ServerPlayer player) {
 		if (!(player.getVehicle() instanceof AbstractHorse horse) || horse.getControllingPassenger() != player
-				|| !Loyalty.appliesTo(horse)) {
+				|| !HorseScope.inScope(horse)) {
 			return;
 		}
 		int gait = Math.clamp(payload.gait(), HALT, GALLOP);

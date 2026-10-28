@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.loyalty;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public record Family(UUID parentA, UUID parentB, UUID followed, Optional<UUID> b
 	 */
 	public static void onBorn(AbstractHorse foal, AbstractHorse parentA, AbstractHorse parentB, ServerPlayer breeder) {
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		if (!config.foalsEnabled() || !Loyalty.appliesTo(foal)) {
+		if (!config.foalsEnabled() || !HorseScope.inScope(foal)) {
 			return;
 		}
 		UUID followed = foal.getRandom().nextBoolean() ? parentA.getUUID() : parentB.getUUID();

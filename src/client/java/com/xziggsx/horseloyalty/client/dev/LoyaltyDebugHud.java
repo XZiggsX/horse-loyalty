@@ -1,6 +1,12 @@
 package com.xziggsx.horseloyalty.client.dev;
 
+import com.xziggsx.horseloyalty.client.riding.Gait;
+import com.xziggsx.horseloyalty.client.riding.GaitHolder;
+import com.xziggsx.horseloyalty.client.riding.GaitRaise;
+import com.xziggsx.horseloyalty.client.riding.Riding;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.HorseUnits;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
 import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
@@ -10,11 +16,6 @@ import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
 import com.xziggsx.horseloyalty.personality.Personality;
-import com.xziggsx.horseloyalty.util.HorseUnits;
-import com.xziggsx.horseloyalty.client.riding.Gait;
-import com.xziggsx.horseloyalty.client.riding.GaitHolder;
-import com.xziggsx.horseloyalty.client.riding.GaitRaise;
-import com.xziggsx.horseloyalty.client.riding.Riding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -116,7 +117,7 @@ public final class LoyaltyDebugHud {
 		boolean riding = player.getVehicle() instanceof AbstractHorse;
 		AbstractHorse horse = riding ? (AbstractHorse) player.getVehicle()
 				: minecraft.crosshairPickEntity instanceof AbstractHorse looked ? looked : null;
-		if (horse == null || !Loyalty.appliesTo(horse)) {
+		if (horse == null || !HorseScope.inScope(horse)) {
 			return;
 		}
 		draw(graphics, minecraft, sections(minecraft, player, horse, riding));

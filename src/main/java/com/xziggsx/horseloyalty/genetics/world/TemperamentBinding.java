@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.genetics.world;
 
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
 import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.personality.Personality;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
@@ -15,7 +15,7 @@ public final class TemperamentBinding implements TraitBinding<Personality> {
 
 	@Override
 	public boolean appliesTo(AbstractHorse horse) {
-		return Loyalty.appliesTo(horse);
+		return HorseScope.inScope(horse);
 	}
 
 	@Override

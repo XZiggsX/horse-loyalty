@@ -1,4 +1,4 @@
-package com.xziggsx.horseloyalty.util;
+package com.xziggsx.horseloyalty.core;
 
 /**
  * Horse numbers in units players understand, and vanilla's ranges for them. The one place for

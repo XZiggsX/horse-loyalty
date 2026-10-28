@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.loyalty;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
@@ -56,7 +57,7 @@ public final class Hunger {
 	/** Called every server tick for every horse. */
 	public static void tick(AbstractHorse horse, ServerLevel level) {
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		if (!config.hungerEnabled() || !horse.isTamed() || !Loyalty.appliesTo(horse)
+		if (!config.hungerEnabled() || !horse.isTamed() || !HorseScope.inScope(horse)
 				|| horse.tickCount % CHECK_INTERVAL_TICKS != 0) {
 			return;
 		}

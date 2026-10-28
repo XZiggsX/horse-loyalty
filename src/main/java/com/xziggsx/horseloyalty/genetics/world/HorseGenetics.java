@@ -1,12 +1,12 @@
 package com.xziggsx.horseloyalty.genetics.world;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.genetics.core.Dice;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.GenomeFactory;
 import com.xziggsx.horseloyalty.genetics.core.Inheritance;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -40,18 +40,13 @@ public final class HorseGenetics {
 		return Dice.of(random::nextInt, random::nextDouble);
 	}
 
-	/** Whether genetics covers this kind of horse at all (not llamas or camels). */
-	public static boolean appliesTo(AbstractHorse horse) {
-		return Loyalty.appliesTo(horse);
-	}
-
 	/**
 	 * Sets up a bred foal: crosses the parents' genes, records them and their names as its
 	 * lineage, and makes the foal show what its genes say. Parents without genes get some
 	 * that fit their look first. Called on the server before the foal is added to the world.
 	 */
 	public static void onBred(AbstractHorse foal, AbstractHorse parentA, AbstractHorse parentB) {
-		if (!enabled() || !appliesTo(foal) || !appliesTo(parentA) || !appliesTo(parentB)) {
+		if (!enabled() || !HorseScope.inScope(foal) || !HorseScope.inScope(parentA) || !HorseScope.inScope(parentB)) {
 			return;
 		}
 		Dice dice = dice(foal.getRandom());
@@ -71,7 +66,7 @@ public final class HorseGenetics {
 	 * @param groupData the spawn group data shared by the herd, or null
 	 */
 	public static void onSpawn(AbstractHorse horse, SpawnGroupData groupData) {
-		if (!enabled() || !appliesTo(horse) || horse.level().isClientSide()) {
+		if (!enabled() || !HorseScope.inScope(horse) || horse.level().isClientSide()) {
 			return;
 		}
 		RandomSource random = horse.getRandom();
@@ -98,7 +93,7 @@ public final class HorseGenetics {
 	 * Horses with genes are only checked every second, and only a change is saved and synced.
 	 */
 	public static void ensureAssigned(AbstractHorse horse) {
-		if (!enabled() || !appliesTo(horse)) {
+		if (!enabled() || !HorseScope.inScope(horse)) {
 			return;
 		}
 		Genome genome = horse.getAttached(GeneticsData.GENOME);
