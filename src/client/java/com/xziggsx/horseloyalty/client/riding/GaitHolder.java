@@ -1,5 +1,7 @@
 package com.xziggsx.horseloyalty.client.riding;
 
+import com.xziggsx.horseloyalty.riding.api.Gait;
+
 /**
  * Implemented on every horse by {@code AbstractHorseRidingMixin}, so other client code
  * (the dev panel) can read the riding state. Cast a horse to this to use it.

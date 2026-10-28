@@ -2,8 +2,9 @@ package com.xziggsx.horseloyalty.mixin.client;
 
 import com.xziggsx.horseloyalty.client.horseinfo.InfoPalette;
 import com.xziggsx.horseloyalty.core.HorseScope;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.personality.api.Personality;
+import com.xziggsx.horseloyalty.personality.api.PersonalityView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Adds your own loyalty level with the horse, and its name, to the horse inventory screen, plus the
- * horse's personality once you know it well enough (see {@link Personality#isRevealedTo}). With no chest
+ * horse's personality once you know it well enough (see {@link PersonalityView#revealedTo}). With no chest
  * it goes in the empty panel right of the horse preview; with a chest it goes on
  * the title row instead, so it never covers the chest slots.
  */
@@ -48,11 +49,10 @@ public abstract class AbstractMountInventoryScreenMixin extends AbstractContaine
 		if (!(mount instanceof AbstractHorse horse) || !HorseScope.inScope(horse) || player == null) {
 			return;
 		}
-		int level = Loyalty.level(horse, player);
-		Component score = Component.translatable("horseloyalty.loyalty.screen", level, Loyalty.MAX_LEVEL);
-		Component name = Loyalty.levelName(level);
-		Component personality = Personality.isRevealedTo(horse, player)
-				? Personality.of(horse).displayName() : null;
+		int level = Bond.get().level(horse, player);
+		Component score = Component.translatable("horseloyalty.loyalty.screen", level, Bond.MAX_LEVEL);
+		Component name = Bond.levelName(level);
+		Component personality = PersonalityView.get().revealedTo(horse, player).map(Personality::displayName).orElse(null);
 
 		if (inventoryColumns == 0) {
 			int x = leftPos + 82;

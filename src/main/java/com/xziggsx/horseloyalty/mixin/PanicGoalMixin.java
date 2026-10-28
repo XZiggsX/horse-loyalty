@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.mixin;
 
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.Personalities;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -23,7 +24,7 @@ public abstract class PanicGoalMixin {
 
 	@Inject(method = "canUse", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$bravery(CallbackInfoReturnable<Boolean> cir) {
-		if (cir.getReturnValueZ() && mob instanceof AbstractHorse horse && Personality.of(horse) == Personality.BRAVE
+		if (cir.getReturnValueZ() && mob instanceof AbstractHorse horse && Personalities.of(horse) == Personality.BRAVE
 				&& !horse.isOnFire() && !horse.isFreezing()) {
 			cir.setReturnValue(false);
 		}

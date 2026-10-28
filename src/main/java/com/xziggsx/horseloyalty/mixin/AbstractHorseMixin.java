@@ -11,8 +11,9 @@ import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.loyalty.Family;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.Personalities;
 import com.xziggsx.horseloyalty.riding.GaitSync;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -118,7 +119,7 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 			return;
 		}
 		Hunger.tick(horse, serverLevel);
-		Personality.ensureAssigned(horse);
+		Personalities.ensureAssigned(horse);
 		HorseGenetics.ensureAssigned(horse);
 		GaitSync.tick(horse);
 
@@ -154,20 +155,20 @@ public abstract class AbstractHorseMixin implements GaitSync.HorseSounds {
 	@Inject(method = "playStepSound", at = @At("HEAD"), cancellable = true)
 	private void horseloyalty$gaitStepSound(BlockPos pos, BlockState state, CallbackInfo ci) {
 		AbstractHorse horse = horseloyalty$self();
-		int gait = GaitSync.gait(horse);
-		if (gait < 0 || state.liquid() || !HorseLoyaltyConfig.get().gaitSounds()) {
+		Gait gait = GaitSync.gait(horse);
+		if (gait == null || state.liquid() || !HorseLoyaltyConfig.get().gaitSounds()) {
 			return;
 		}
 		ci.cancel();
 		BlockState above = horse.level().getBlockState(pos.above());
 		SoundType type = above.is(Blocks.SNOW) ? above.getSoundType() : state.getSoundType();
-		if (gait == GaitSync.GALLOP) {
+		if (gait == Gait.GALLOP) {
 			playGallopSound(type);
-		} else if (gait == GaitSync.CANTER) {
+		} else if (gait == Gait.CANTER) {
 			horse.playSound(SoundEvents.HORSE_GALLOP, type.getVolume() * 0.12F, type.getPitch() * 0.85F);
 		} else {
 			SoundEvent step = isWoodSoundType(type) ? SoundEvents.HORSE_STEP_WOOD : SoundEvents.HORSE_STEP;
-			boolean trot = gait == GaitSync.TROT;
+			boolean trot = gait == Gait.TROT;
 			horse.playSound(step, type.getVolume() * (trot ? 0.22F : 0.15F), type.getPitch() * (trot ? 1.15F : 1.0F));
 		}
 	}

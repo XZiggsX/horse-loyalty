@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.horseinfo;
 
 import com.xziggsx.horseloyalty.genetics.core.CopyRole;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;

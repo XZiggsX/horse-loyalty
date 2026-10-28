@@ -5,7 +5,7 @@ import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.GenomeFactory;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
 import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.api.PersonalityView;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.util.RandomSource;
@@ -60,7 +60,7 @@ public record HerdFounders(Genome a, Genome b) {
 		Map<Trait<?>, Object> look = new LinkedHashMap<>();
 		look.put(HorseTraits.COAT, variant);
 		look.put(HorseTraits.MARKING, Util.getRandom(Markings.values(), random));
-		look.put(HorseTraits.TEMPERAMENT, Personality.roll(random));
+		look.put(HorseTraits.TEMPERAMENT, PersonalityView.get().roll(random));
 		return GenomeFactory.forLook(look, dice);
 	}
 }

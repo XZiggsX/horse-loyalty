@@ -17,8 +17,8 @@ import com.xziggsx.horseloyalty.horseinfo.HorseProfile.LoyaltyLine;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile.Parents;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile.StatLine;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfile.TraitLine;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.personality.api.PersonalityView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,7 @@ public final class HorseProfiles {
 	public static Object changeKey(AbstractHorse horse, Player player) {
 		return List.of(horse.getHealth(), horse.getMaxHealth(),
 				horse.getAttributeValue(Attributes.MOVEMENT_SPEED), horse.getAttributeValue(Attributes.JUMP_STRENGTH),
-				Loyalty.level(horse, player), Personality.of(horse),
+				Bond.get().level(horse, player), PersonalityView.get().of(horse),
 				GeneticsView.genome(horse).map(Object.class::cast).orElse(""),
 				GeneticsView.lineage(horse).map(Object.class::cast).orElse(""));
 	}
@@ -76,12 +76,12 @@ public final class HorseProfiles {
 	}
 
 	private static Identity identity(AbstractHorse horse) {
-		return new Identity(horse.getType().getDescription(), Personality.of(horse));
+		return new Identity(horse.getType().getDescription(), PersonalityView.get().of(horse));
 	}
 
 	private static LoyaltyLine loyalty(AbstractHorse horse, Player player) {
-		int level = Loyalty.level(horse, player);
-		return new LoyaltyLine(level, Loyalty.MAX_LEVEL, Loyalty.levelName(level));
+		int level = Bond.get().level(horse, player);
+		return new LoyaltyLine(level, Bond.MAX_LEVEL, Bond.levelName(level));
 	}
 
 	/** Health, speed and jump. Add a line here for a new stat; the screen formats it by id. */

@@ -3,101 +3,57 @@ package com.xziggsx.horseloyalty.personality;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.mojang.serialization.Codec;
-import io.netty.buffer.ByteBuf;
-import java.util.Locale;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * A horse's character, rolled once and kept for life. Each one changes a little of how the
- * horse behaves; most horses are steady and have no quirk at all.
- * <ul>
- *   <li>Steady: plain vanilla behaviour.</li>
- *   <li>Brave: only panics when burning or freezing, not when hit.</li>
- *   <li>Skittish: runs from creepers, and bolts at a gallop when one comes near while ridden.</li>
- *   <li>Curious: now and then wanders off toward a nearby village.</li>
- *   <li>Lazy: drops gaits sooner and more often while ridden.</li>
- * </ul>
- * Foals take after their parents (see {@link #inherit}). Names live in the lang file under
- * {@code horseloyalty.personality.<id>}. Odds and numbers are in the user config.
+ * Which {@link Personality} each horse has: rolled once, inherited by foals (see {@link #inherit})
+ * and kept for life. Odds and numbers are in the user config.
  */
-public enum Personality {
-	STEADY,
-	BRAVE,
-	SKITTISH,
-	CURIOUS,
-	LAZY;
-
-	private static final Personality[] VALUES = values();
-
-	public static final Codec<Personality> CODEC = Codec.STRING.xmap(Personality::byId, Personality::id);
-
-	public static final StreamCodec<ByteBuf, Personality> STREAM_CODEC =
-			ByteBufCodecs.VAR_INT.map(i -> VALUES[Math.clamp(i, 0, VALUES.length - 1)], Personality::ordinal);
-
+public final class Personalities {
 	/**
 	 * Saved with the horse and synced to every client: riding runs on the rider's client,
 	 * so the lazy gait drops and skittish bolts need to know it there.
 	 */
 	public static final AttachmentType<Personality> DATA = AttachmentRegistry.create(
 			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "personality"),
-			builder -> builder.persistent(CODEC).syncWith(STREAM_CODEC, AttachmentSyncPredicate.all())
+			builder -> builder.persistent(Personality.CODEC).syncWith(Personality.STREAM_CODEC, AttachmentSyncPredicate.all())
 	);
+
+	private Personalities() {
+	}
 
 	/** Forces the class to load so the attachment is registered during mod init. */
 	public static void init() {
 	}
 
-	/** The id used in saves, the config and lang keys, such as "skittish". */
-	public String id() {
-		return name().toLowerCase(Locale.ROOT);
-	}
-
-	/** Translated name, such as "Skittish". */
-	public Component displayName() {
-		return Component.translatable("horseloyalty.personality." + id());
-	}
-
-	/** The personality with this id, or STEADY for anything unknown. */
-	public static Personality byId(String id) {
-		for (Personality personality : VALUES) {
-			if (personality.id().equals(id)) {
-				return personality;
-			}
-		}
-		return STEADY;
-	}
-
 	/**
 	 * This horse's personality, as far as behaviour goes. STEADY when personalities are turned
-	 * off, for llamas and camels, and for a horse that hasn't been given one yet. Works on both sides.
+	 * off, for horses out of scope, and for a horse that hasn't been given one yet. Works on both sides.
 	 */
 	public static Personality of(AbstractHorse horse) {
 		if (!HorseLoyaltyConfig.get().personalityEnabled() || !HorseScope.inScope(horse)) {
-			return STEADY;
+			return Personality.STEADY;
 		}
-		return horse.getAttachedOrElse(DATA, STEADY);
+		return horse.getAttachedOrElse(DATA, Personality.STEADY);
 	}
 
 	/** Whether this player knows the horse well enough to see its personality. */
 	public static boolean isRevealedTo(AbstractHorse horse, Player player) {
 		return HorseLoyaltyConfig.get().personalityEnabled() && horse.hasAttached(DATA)
-				&& Loyalty.level(horse, player) >= HorseLoyaltyConfig.get().personalityRevealLevel();
+				&& Bond.get().level(horse, player) >= HorseLoyaltyConfig.get().personalityRevealLevel();
 	}
 
 	/**
-	 * Gives a horse a random personality if it has none yet. Called every server tick, so horses
-	 * from before the mod was added (and wild ones) get one the first time they're loaded.
+	 * Gives a horse a random personality if it has none yet. Called on the server for every horse,
+	 * so horses from before the mod was added (and wild ones) get one the first time they're loaded.
 	 */
 	public static void ensureAssigned(AbstractHorse horse) {
 		if (HorseScope.inScope(horse) && !horse.hasAttached(DATA)) {
@@ -141,20 +97,21 @@ public enum Personality {
 	/** A random personality, weighted by the config. */
 	public static Personality roll(RandomSource random) {
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
+		Personality[] all = Personality.values();
 		double total = 0;
-		for (Personality personality : VALUES) {
+		for (Personality personality : all) {
 			total += config.personalityWeight(personality);
 		}
 		if (total <= 0) {
-			return STEADY;
+			return Personality.STEADY;
 		}
 		double pick = random.nextDouble() * total;
-		for (Personality personality : VALUES) {
+		for (Personality personality : all) {
 			pick -= config.personalityWeight(personality);
 			if (pick < 0) {
 				return personality;
 			}
 		}
-		return STEADY;
+		return Personality.STEADY;
 	}
 }

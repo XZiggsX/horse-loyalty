@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.config;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;

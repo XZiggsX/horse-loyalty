@@ -2,7 +2,7 @@ package com.xziggsx.horseloyalty.config;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;

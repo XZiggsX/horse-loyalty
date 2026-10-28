@@ -2,11 +2,11 @@ package com.xziggsx.horseloyalty.client.feedback;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.client.riding.ClientGait;
-import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -79,9 +79,9 @@ public final class RidingHud implements HudElement {
 
 		// Untamed horses have no loyalty to show yet.
 		if (horse.isTamed()) {
-			int level = Loyalty.level(horse, player);
-			int shoesLeft = barsLeft - GAP_BEFORE_BARS - (Loyalty.MAX_LEVEL - 1) * ICON_STEP - ICON_SIZE;
-			for (int i = 0; i < Loyalty.MAX_LEVEL; i++) {
+			int level = Bond.get().level(horse, player);
+			int shoesLeft = barsLeft - GAP_BEFORE_BARS - (Bond.MAX_LEVEL - 1) * ICON_STEP - ICON_SIZE;
+			for (int i = 0; i < Bond.MAX_LEVEL; i++) {
 				Identifier sprite = i < level ? SHOE_FULL : SHOE_EMPTY;
 				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, shoesLeft + i * ICON_STEP, top, ICON_SIZE, ICON_SIZE);
 			}

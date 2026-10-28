@@ -1,5 +1,7 @@
 package com.xziggsx.horseloyalty.core.feature;
 
+import com.xziggsx.horseloyalty.core.link.Contributions;
+import com.xziggsx.horseloyalty.core.link.LinkKey;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -22,4 +24,10 @@ public interface FeatureContext {
 
 	/** Handles a packet from a client while the feature is on. While it's off the packet is ignored. */
 	<T extends CustomPacketPayload> void receive(CustomPacketPayload.Type<T> type, ServerPlayNetworking.PlayPayloadHandler<T> handler);
+
+	/** Provides a link to other features. While this feature is off, the key's neutral stand-in answers instead. */
+	<T> void provide(LinkKey<T> key, T implementation);
+
+	/** Adds an item to another feature's list, such as a ride modifier. It only counts while this feature is on. */
+	<T> void contribute(Contributions<T> list, T item);
 }

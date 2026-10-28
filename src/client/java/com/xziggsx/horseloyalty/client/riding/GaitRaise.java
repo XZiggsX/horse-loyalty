@@ -2,8 +2,9 @@ package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.client.feedback.RidingToasts;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.riding.api.Gait;
+import com.xziggsx.horseloyalty.riding.api.RideModifiers;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
@@ -16,8 +17,8 @@ import net.minecraft.world.entity.player.Player;
  * canter, and pushing at a gallop (which counts as going up from a gallop). The config sets a fail
  * chance per gait and loyalty level; by default only walk to trot can fail, and only at loyalty 1 to 3.
  * <p>
- * A horse that refuses prances (rears up) and won't go faster for a while (the cooldown). A horse
- * whose personality is on the config's buck-off list may throw its rider off instead. One of these
+ * A horse that refuses prances (rears up) and won't go faster for a while (the cooldown). A horse may
+ * throw its rider off instead, with the chance the ride modifiers give (such as a skittish horse's). One of these
  * lives on every horse (see {@code AbstractHorseRidingMixin}), which makes the horse act on the outcome.
  */
 public final class GaitRaise {
@@ -75,17 +76,15 @@ public final class GaitRaise {
 	/** Chance (0.06 = 6%) that the horse refuses this rider going faster from {@code from}. 0 when turned off. */
 	public static double failChance(AbstractHorse horse, Player player, Gait from) {
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		return config.gaitRaiseEnabled() ? config.gaitRaiseFailChance(from.ordinal(), Loyalty.level(horse, player)) : 0;
+		return config.gaitRaiseEnabled() ? config.gaitRaiseFailChance(from.ordinal(), Bond.get().level(horse, player)) : 0;
 	}
 
 	/** Rolls whether the horse goes along, prances or bucks. */
 	private static Outcome roll(AbstractHorse horse, Player player, Gait from) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
 		RandomSource random = horse.getRandom();
 		if (random.nextDouble() >= failChance(horse, player, from)) {
 			return Outcome.OK;
 		}
-		return config.bucksOff(Personality.of(horse)) && random.nextDouble() < config.buckOffChance()
-				? Outcome.BUCK : Outcome.PRANCE;
+		return random.nextDouble() < RideModifiers.buckChance(horse, player, 0) ? Outcome.BUCK : Outcome.PRANCE;
 	}
 }

@@ -2,8 +2,10 @@ package com.xziggsx.horseloyalty.personality;
 
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
+import com.xziggsx.horseloyalty.personality.api.PersonalityView;
+import com.xziggsx.horseloyalty.riding.api.RideModifiers;
 
-/** Personalities: steady, brave, skittish, curious and lazy horses, see {@link Personality}. */
+/** Personalities: steady, brave, skittish, curious and lazy horses, see {@link Personalities}. */
 public final class PersonalityFeature implements Feature {
 	public static final String ID = "personality";
 
@@ -14,10 +16,12 @@ public final class PersonalityFeature implements Feature {
 
 	@Override
 	public void registerData() {
-		Personality.init();
+		Personalities.init();
 	}
 
 	@Override
 	public void wire(FeatureContext context) {
+		context.provide(PersonalityView.KEY, new HorsePersonalityView());
+		context.contribute(RideModifiers.ALL, new PersonalityRideModifier());
 	}
 }

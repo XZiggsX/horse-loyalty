@@ -3,6 +3,7 @@ package com.xziggsx.horseloyalty.loyalty;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
@@ -75,13 +76,13 @@ public record Family(UUID parentA, UUID parentB, UUID followed, Optional<UUID> b
 		foal.setOwner(breeder);
 		foal.setTamed(true);
 		// A share of the average of what the breeder built up with each parent.
-		int average = (Loyalty.get(parentA, breeder).points() + Loyalty.get(parentB, breeder).points()) / 2;
+		int average = (Bond.get().points(parentA, breeder) + Bond.get().points(parentB, breeder)) / 2;
 		int bonus = (int) Math.round(average * config.foalParentLoyaltyShare());
-		Loyalty.startWith(foal, breeder, bonus);
+		Bond.get().startWith(foal, breeder, bonus);
 
-		int level = Loyalty.level(foal, breeder);
+		int level = Bond.get().level(foal, breeder);
 		breeder.sendOverlayMessage(Component.translatable("horseloyalty.foal.born",
-				level, Loyalty.MAX_LEVEL, Loyalty.levelName(level)));
+				level, Bond.MAX_LEVEL, Bond.levelName(level)));
 	}
 
 	/** The parent this foal follows, or the other one if that one is gone. Empty if neither is loaded. */

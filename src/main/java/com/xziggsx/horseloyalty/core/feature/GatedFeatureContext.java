@@ -1,5 +1,8 @@
 package com.xziggsx.horseloyalty.core.feature;
 
+import com.xziggsx.horseloyalty.core.link.Contributions;
+import com.xziggsx.horseloyalty.core.link.LinkKey;
+import com.xziggsx.horseloyalty.core.link.Links;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -41,5 +44,15 @@ final class GatedFeatureContext implements FeatureContext {
 				handler.receive(payload, context);
 			}
 		});
+	}
+
+	@Override
+	public <T> void provide(LinkKey<T> key, T implementation) {
+		Links.provide(featureId, key, implementation);
+	}
+
+	@Override
+	public <T> void contribute(Contributions<T> list, T item) {
+		list.add(featureId, item);
 	}
 }

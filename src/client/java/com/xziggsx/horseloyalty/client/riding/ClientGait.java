@@ -1,13 +1,12 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.riding.GaitSync;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 /** A ridden horse's gait as this client knows it, for visuals. */
 public final class ClientGait {
-	private static final Gait[] GAITS = Gait.values();
-
 	private ClientGait() {
 	}
 
@@ -20,7 +19,7 @@ public final class ClientGait {
 		if (minecraft.player != null && horse.getControllingPassenger() == minecraft.player) {
 			return ((GaitHolder) horse).horseloyalty$getGait();
 		}
-		int gait = GaitSync.gait(horse);
-		return gait < 0 ? Gait.HALT : GAITS[Math.clamp(gait, 0, GAITS.length - 1)];
+		Gait gait = GaitSync.gait(horse);
+		return gait == null ? Gait.HALT : gait;
 	}
 }

@@ -1,15 +1,16 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.riding.api.Gait;
+import com.xziggsx.horseloyalty.riding.api.RideModifiers;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Gait speed, steering, gait drop and gallop push numbers for a rider, scaled by their loyalty level.
- * The numbers per level come from the user config, see {@link HorseLoyaltyConfig}.
- * Client side only: riding runs on the rider's client.
+ * Gait speed, steering, gait drop and gallop push numbers for a rider, scaled by their loyalty level
+ * (see {@link Bond}) and changed by any {@link RideModifiers}. The numbers per level come from the
+ * user config, see {@link HorseLoyaltyConfig}. Client side only: riding runs on the rider's client.
  */
 public final class Riding {
 	private Riding() {
@@ -20,7 +21,7 @@ public final class Riding {
 	 * Every gait is scaled by it, so a less loyal horse is slower in every gait.
 	 */
 	public static double topSpeedShare(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().topSpeedShare(Loyalty.level(horse, player));
+		return HorseLoyaltyConfig.get().topSpeedShare(Bond.get().level(horse, player));
 	}
 
 	/**
@@ -28,7 +29,7 @@ public final class Riding {
 	 * for a level, so the faster the gait the wider the circle (radius scales with 1 / rate).
 	 */
 	public static float turnRate(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().turnDegreesPerTick(Loyalty.level(horse, player));
+		return HorseLoyaltyConfig.get().turnDegreesPerTick(Bond.get().level(horse, player));
 	}
 
 	/** Turn rate for a rider that isn't a player. Only players steer horses, so this is a fallback. */
@@ -42,51 +43,51 @@ public final class Riding {
 	}
 
 	/**
+	 * The effective speed for a gait before the loyalty cap: its configured share of the horse's
+	 * top speed. Each gait is faster than the one below.
+	 * <p>
+	 * Speeds are "effective" movement speeds: the speed value the horse moves with when given a
+	 * full forward input. A player walking moves at 0.1 speed with a 0.98 input, so 0.098 here is
+	 * exactly a player's walking pace (about 4.3 blocks/s).
+	 *
+	 * @param horseSpeed the horse's movement speed attribute
+	 */
+	public static double baseSpeed(Gait gait, double horseSpeed) {
+		return horseSpeed * 0.98 * HorseLoyaltyConfig.get().gaitSpeedShare(gait.ordinal());
+	}
+
+	/**
 	 * Effective speed for a gait with this rider, scaled by their loyalty.
 	 * @param horseSpeed the horse's movement speed attribute
 	 */
 	public static double gaitSpeed(Gait gait, double horseSpeed, AbstractHorse horse, Player player) {
-		return gait.speed(horseSpeed) * topSpeedShare(horse, player);
+		return baseSpeed(gait, horseSpeed) * topSpeedShare(horse, player);
 	}
 
-	/** Chance per check that the horse drops a gait on its own for this rider. Lazy horses drop more often. */
+	/** Chance per check that the horse drops a gait on its own for this rider. */
 	public static double gaitDropChance(AbstractHorse horse, Player player) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		double chance = config.gaitDropChance(Loyalty.level(horse, player));
-		if (Personality.of(horse) == Personality.LAZY) {
-			chance = Math.min(1, chance * config.lazyGaitDropChanceMultiplier());
-		}
-		return chance;
+		double chance = HorseLoyaltyConfig.get().gaitDropChance(Bond.get().level(horse, player));
+		return RideModifiers.gaitDropChance(horse, player, chance);
 	}
 
-	/** Ticks of riding without shifting gait before each gait drop roll for this rider. Lazy horses roll sooner. */
+	/** Ticks of riding without shifting gait before each gait drop roll for this rider. */
 	public static int gaitDropTicks(AbstractHorse horse, Player player) {
-		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();
-		int ticks = config.gaitDropTicks(Loyalty.level(horse, player));
-		if (Personality.of(horse) == Personality.LAZY) {
-			ticks = (int) Math.max(20, Math.round(ticks * config.lazyGaitDropTimeMultiplier()));
-		}
-		return ticks;
+		int ticks = HorseLoyaltyConfig.get().gaitDropTicks(Bond.get().level(horse, player));
+		return RideModifiers.gaitDropTicks(horse, player, ticks);
 	}
 
 	/**
 	 * How long a gallop push holds after the rider's last W tap, in ticks. Each tap restarts it;
-	 * when it runs out the extra speed fades back to a normal gallop.
-	 * <p>
-	 * TODO: base this on loyalty, personality or a stamina system instead of one config value
-	 * (a more loyal horse keeps up the effort longer). The riding mixin only reads it from here.
+	 * when it runs out the extra speed fades back to a normal gallop. Ride modifiers can change it,
+	 * such as a more loyal horse or a stamina system keeping up the effort longer.
 	 */
 	public static int gallopPushTicks(AbstractHorse horse, Player player) {
-		return HorseLoyaltyConfig.get().gallopPushHoldTicks();
+		int ticks = HorseLoyaltyConfig.get().gallopPushHoldTicks();
+		return Math.max(1, RideModifiers.gallopPushHoldTicks(horse, player, ticks));
 	}
 
-	/**
-	 * How long a skittish horse bolts for this rider when a creeper comes near, in ticks.
-	 * Half as long at loyalty 4; a level 5 horse trusts its rider and doesn't bolt at all.
-	 */
-	public static int boltTicks(AbstractHorse horse, Player player) {
-		int level = Loyalty.level(horse, player);
-		int ticks = HorseLoyaltyConfig.get().boltTicks();
-		return level >= Loyalty.MAX_LEVEL ? 0 : level == Loyalty.MAX_LEVEL - 1 ? ticks / 2 : ticks;
+	/** How long the horse bolts for if something spooks it now, in ticks, or 0. See {@link RideModifiers#spook}. */
+	public static int spookTicks(AbstractHorse horse, Player player) {
+		return RideModifiers.spook(horse, player);
 	}
 }

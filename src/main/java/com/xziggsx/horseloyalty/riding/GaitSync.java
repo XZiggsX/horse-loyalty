@@ -3,6 +3,8 @@ package com.xziggsx.horseloyalty.riding;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
+import com.xziggsx.horseloyalty.riding.api.Gait;
+import com.xziggsx.horseloyalty.riding.api.GaitEvent;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
@@ -27,20 +29,16 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
  * own client. A balking horse rears up on the server, and one that bucks throws its rider off there.
  */
 public final class GaitSync {
-	/** Gaits are sent as their index: 0 halt, 1 walk, 2 trot, 3 canter, 4 gallop. */
-	public static final int HALT = 0;
-	public static final int WALK = 1;
-	public static final int TROT = 2;
-	public static final int CANTER = 3;
-	public static final int GALLOP = 4;
-
 	/** At most one drop or bolt sound per horse this often, whatever a client sends. */
 	private static final int SOUND_COOLDOWN_TICKS = 10;
 
-	/** The ridden horse's gait index. Not saved; removed when nobody rides the horse. Synced to all. */
-	public static final AttachmentType<Integer> GAIT = AttachmentRegistry.create(
+	/** Gaits are sent as their index: 0 halt, 1 walk, 2 trot, 3 canter, 4 gallop. */
+	private static final StreamCodec<ByteBuf, Gait> GAIT_CODEC = ByteBufCodecs.VAR_INT.map(Gait::byIndex, Gait::ordinal);
+
+	/** The ridden horse's gait. Not saved; removed when nobody rides the horse. Synced to all. */
+	public static final AttachmentType<Gait> GAIT = AttachmentRegistry.create(
 			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "gait"),
-			builder -> builder.syncWith(ByteBufCodecs.VAR_INT, AttachmentSyncPredicate.all())
+			builder -> builder.syncWith(GAIT_CODEC, AttachmentSyncPredicate.all())
 	);
 
 	/** Game time of the last drop or bolt sound, for the cooldown. Server only, not saved. */
@@ -48,33 +46,14 @@ public final class GaitSync {
 			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "last_gait_sound")
 	);
 
-	/** Why the rider's client sent its gait. */
-	public enum Event {
-		/** The gait changed: the rider shifted, or the ride just started. */
-		SHIFT,
-		/** The horse dropped a gait on its own. */
-		DROPPED,
-		/** A skittish horse spooked and bolted. */
-		BOLTED,
-		/** The rider asked for more speed and the horse refused, rearing up instead. */
-		PRANCED,
-		/** As PRANCED, but the horse threw its rider off. */
-		BUCKED;
-
-		private static final Event[] VALUES = values();
-
-		public static final StreamCodec<ByteBuf, Event> STREAM_CODEC =
-				ByteBufCodecs.VAR_INT.map(i -> VALUES[Math.clamp(i, 0, VALUES.length - 1)], Event::ordinal);
-	}
-
 	/** Rider's client to server: the horse the player is riding is now at this gait. */
-	public record GaitPayload(int gait, Event event) implements CustomPacketPayload {
+	public record GaitPayload(Gait gait, GaitEvent event) implements CustomPacketPayload {
 		public static final Type<GaitPayload> TYPE =
 				new Type<>(Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "gait"));
 
 		public static final StreamCodec<ByteBuf, GaitPayload> STREAM_CODEC = StreamCodec.composite(
-				ByteBufCodecs.VAR_INT, GaitPayload::gait,
-				Event.STREAM_CODEC, GaitPayload::event,
+				GAIT_CODEC, GaitPayload::gait,
+				GaitEvent.STREAM_CODEC, GaitPayload::event,
 				GaitPayload::new);
 
 		@Override
@@ -104,10 +83,9 @@ public final class GaitSync {
 		context.receive(GaitPayload.TYPE, (payload, packetContext) -> receive(payload, packetContext.player()));
 	}
 
-	/** The horse's synced gait index, or -1 if nobody with the mod is riding it. Works on both sides. */
-	public static int gait(AbstractHorse horse) {
-		Integer gait = horse.getAttached(GAIT);
-		return gait == null ? -1 : gait;
+	/** The horse's synced gait, or null if nobody with the mod is riding it. Works on both sides. */
+	public static Gait gait(AbstractHorse horse) {
+		return horse.getAttached(GAIT);
 	}
 
 	/** Server: a rider's client reported its gait. Ignored unless they're steering a horse this mod handles. */
@@ -116,17 +94,17 @@ public final class GaitSync {
 				|| !HorseScope.inScope(horse)) {
 			return;
 		}
-		int gait = Math.clamp(payload.gait(), HALT, GALLOP);
+		Gait gait = payload.gait();
 		if (gait(horse) != gait) {
 			horse.setAttached(GAIT, gait);
 		}
-		if (payload.event() == Event.SHIFT) {
+		if (payload.event() == GaitEvent.SHIFT) {
 			return;
 		}
-		if (payload.event() == Event.PRANCED || payload.event() == Event.BUCKED) {
+		if (payload.event() == GaitEvent.PRANCED || payload.event() == GaitEvent.BUCKED) {
 			// Rearing is synced to every client, and stops the horse for its rider too.
 			horse.standIfPossible();
-			if (payload.event() == Event.BUCKED) {
+			if (payload.event() == GaitEvent.BUCKED) {
 				player.stopRiding();
 			}
 		}

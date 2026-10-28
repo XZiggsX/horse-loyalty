@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.client.feedback;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyChangePayload;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
@@ -36,11 +36,11 @@ public final class LoyaltyToasts {
 		String key = payload.up() ? "level_up" : "level_down";
 		if (!HorseLoyaltyConfig.get().loyaltyToasts()) {
 			minecraft.player.sendOverlayMessage(Component.translatable("horseloyalty.loyalty." + key,
-					name, level, Loyalty.MAX_LEVEL, Loyalty.levelName(level)));
+					name, level, Bond.MAX_LEVEL, Bond.levelName(level)));
 			return;
 		}
 		SystemToast.addOrUpdate(minecraft.gui.toastManager(), TOAST_ID,
 				Component.translatable("horseloyalty.toast." + key + ".title", name),
-				Component.translatable("horseloyalty.toast." + key, level, Loyalty.MAX_LEVEL, Loyalty.levelName(level)));
+				Component.translatable("horseloyalty.toast." + key, level, Bond.MAX_LEVEL, Bond.levelName(level)));
 	}
 }

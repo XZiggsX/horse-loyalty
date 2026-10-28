@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.client.riding;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import java.util.function.BooleanSupplier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;

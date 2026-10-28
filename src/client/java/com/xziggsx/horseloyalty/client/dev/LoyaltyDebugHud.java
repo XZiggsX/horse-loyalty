@@ -1,6 +1,5 @@
 package com.xziggsx.horseloyalty.client.dev;
 
-import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.client.riding.GaitRaise;
 import com.xziggsx.horseloyalty.client.riding.Riding;
@@ -15,7 +14,8 @@ import com.xziggsx.horseloyalty.genetics.world.Lineage;
 import com.xziggsx.horseloyalty.loyalty.Hunger;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.api.PersonalityView;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -151,12 +151,12 @@ public final class LoyaltyDebugHud {
 		section.add("Name", horse.getName().getString() + "  (" + horse.getType().getDescription().getString() + ")");
 		section.add("Tamed", horse.isTamed() ? "yes, owner " + ownerText(player, serverHorse) : "no",
 				horse.isTamed() ? VALUE_COLOR : DIM_COLOR);
-		section.add("Personality", Personality.of(horse).displayName().getString()
-				+ (Personality.isRevealedTo(horse, player) ? "" : "  (hidden from you)"));
+		section.add("Personality", PersonalityView.get().of(horse).displayName().getString()
+				+ (PersonalityView.get().revealedTo(horse, player).isPresent() ? "" : "  (hidden from you)"));
 		section.add("Health", String.format(Locale.ROOT, "%.1f / %.1f", horse.getHealth(), horse.getMaxHealth()));
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
 		section.add("Speed", String.format(Locale.ROOT, "%.4f  (gallop ~%.1f b/s)",
-				speed, Gait.GALLOP.speed(speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND));
+				speed, Riding.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND));
 		section.add("Jump", String.format(Locale.ROOT, "%.3f", horse.getAttributeValue(Attributes.JUMP_STRENGTH)));
 		return section;
 	}
@@ -207,7 +207,7 @@ public final class LoyaltyDebugHud {
 		GaitHolder holder = (GaitHolder) horse;
 		Gait gait = holder.horseloyalty$getGait();
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
-		double top = Gait.GALLOP.speed(speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
+		double top = Riding.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
 		double push = holder.horseloyalty$getGallopPush().extra();
 		double target = Riding.gaitSpeed(gait, speed, horse, player) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND * (1 + push);
 		// Distance actually covered last tick. Not getDeltaMovement(): that is stored after

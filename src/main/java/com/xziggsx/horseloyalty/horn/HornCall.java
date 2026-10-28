@@ -3,7 +3,7 @@ package com.xziggsx.horseloyalty.horn;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.ai.ComeWhenCalledGoal;
 import com.xziggsx.horseloyalty.core.HorseScope;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import java.util.UUID;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
@@ -38,7 +38,7 @@ public final class HornCall {
 	/** Loyalty level a player needs with a horse to bind a horn to it and to call it. */
 	public static final int MIN_LEVEL = 2;
 	/** Loyalty level at which a horse answers from another dimension. */
-	public static final int CROSS_DIMENSION_LEVEL = Loyalty.MAX_LEVEL;
+	public static final int CROSS_DIMENSION_LEVEL = Bond.MAX_LEVEL;
 	/** A called horse gives up after this many ticks if it still hasn't reached the player. */
 	public static final int CALL_TICKS = 600;
 
@@ -77,9 +77,9 @@ public final class HornCall {
 			return;
 		}
 		Component name = horse.getName();
-		int loyalty = Loyalty.level(horse, player);
+		int loyalty = Bond.get().level(horse, player);
 		if (loyalty < MIN_LEVEL) {
-			say(player, "horseloyalty.horn.not_trusted", name, MIN_LEVEL, Loyalty.MAX_LEVEL, Loyalty.levelName(MIN_LEVEL));
+			say(player, "horseloyalty.horn.not_trusted", name, MIN_LEVEL, Bond.MAX_LEVEL, Bond.levelName(MIN_LEVEL));
 			return;
 		}
 		if (horse.isVehicle()) {

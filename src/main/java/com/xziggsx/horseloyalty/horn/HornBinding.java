@@ -3,7 +3,7 @@ package com.xziggsx.horseloyalty.horn;
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.core.HorseScope;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
-import com.xziggsx.horseloyalty.loyalty.Loyalty;
+import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import java.util.List;
 import java.util.UUID;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
@@ -69,10 +69,10 @@ public final class HornBinding {
 		if (!(player instanceof ServerPlayer serverPlayer) || !(level instanceof ServerLevel serverLevel)) {
 			return InteractionResult.SUCCESS;
 		}
-		int loyalty = Loyalty.level(horse, serverPlayer);
+		int loyalty = Bond.get().level(horse, serverPlayer);
 		if (loyalty < HornCall.MIN_LEVEL) {
 			serverPlayer.sendOverlayMessage(Component.translatable("horseloyalty.horn.not_trusted",
-					horse.getName(), HornCall.MIN_LEVEL, Loyalty.MAX_LEVEL, Loyalty.levelName(HornCall.MIN_LEVEL)));
+					horse.getName(), HornCall.MIN_LEVEL, Bond.MAX_LEVEL, Bond.levelName(HornCall.MIN_LEVEL)));
 			return InteractionResult.FAIL;
 		}
 		bind(stack, horse);

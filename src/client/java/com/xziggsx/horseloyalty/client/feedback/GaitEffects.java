@@ -1,9 +1,9 @@
 package com.xziggsx.horseloyalty.client.feedback;
 
 import com.xziggsx.horseloyalty.client.riding.ClientGait;
-import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.riding.api.Gait;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

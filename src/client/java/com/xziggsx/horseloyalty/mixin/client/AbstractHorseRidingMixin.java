@@ -1,14 +1,14 @@
 package com.xziggsx.horseloyalty.mixin.client;
 
-import com.xziggsx.horseloyalty.client.riding.Gait;
 import com.xziggsx.horseloyalty.client.riding.GaitHolder;
 import com.xziggsx.horseloyalty.client.riding.GaitRaise;
 import com.xziggsx.horseloyalty.client.riding.GallopPush;
 import com.xziggsx.horseloyalty.client.riding.Riding;
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
 import com.xziggsx.horseloyalty.core.HorseScope;
-import com.xziggsx.horseloyalty.personality.Personality;
 import com.xziggsx.horseloyalty.riding.GaitSync;
+import com.xziggsx.horseloyalty.riding.api.Gait;
+import com.xziggsx.horseloyalty.riding.api.GaitEvent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -31,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Client-side riding controls: gaits (W/S taps), backing up, gait speeds, boat-style A/D steering,
  * sidestepping (sprint key + A/D), pushing at a gallop (W taps), the horse refusing to go faster,
- * random gait drops, and skittish horses bolting from creepers. The gait is sent to the server
+ * random gait drops, and spooked horses bolting. The gait is sent to the server
  * whenever it changes (see {@link GaitSync}), so other players can see and hear it.
  * <p>
  * Minecraft moves a player-ridden horse on that player's own client and sends the
@@ -84,13 +83,13 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	@Unique
 	private int horseloyalty$boltTurn;
 
-	/** Gait index last sent to the server, -1 if none yet this ride. */
+	/** Gait last sent to the server, null if none yet this ride. */
 	@Unique
-	private int horseloyalty$sentGait = -1;
+	private Gait horseloyalty$sentGait;
 
 	/** A drop, bolt or refusal still to be sent to the server with the gait, or null. */
 	@Unique
-	private GaitSync.Event horseloyalty$pendingEvent;
+	private GaitEvent horseloyalty$pendingEvent;
 
 	/** Pushing at a gallop with W taps. */
 	@Unique
@@ -138,7 +137,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$boltTicks = 0;
 		horseloyalty$boltCheckTimer = 0;
 		horseloyalty$boltTurn = 0;
-		horseloyalty$sentGait = -1;
+		horseloyalty$sentGait = null;
 		horseloyalty$pendingEvent = null;
 		horseloyalty$push.reset();
 	}
@@ -194,7 +193,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		} else if (horseloyalty$gait != before) {
 			// Only the rider's own client runs this, so this shows on their screen only.
 			// A buck has its own toast; "Halt" on top of it would only confuse.
-			if (horseloyalty$pendingEvent != GaitSync.Event.BUCKED) {
+			if (horseloyalty$pendingEvent != GaitEvent.BUCKED) {
 				player.sendOverlayMessage(horseloyalty$gait.displayName());
 			}
 			// Shifting gait shows the rider is paying attention, so the drop timer restarts.
@@ -209,7 +208,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 				player.sendOverlayMessage(Component.translatable("horseloyalty.gait.dropped",
 						horseloyalty$gait.displayName()));
 				horseloyalty$playAngrySound(horse);
-				horseloyalty$pendingEvent = GaitSync.Event.DROPPED;
+				horseloyalty$pendingEvent = GaitEvent.DROPPED;
 			}
 		}
 		horseloyalty$push.tick(horse, player, !bolting && horseloyalty$gait == Gait.GALLOP);
@@ -249,16 +248,16 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		if (outcome == GaitRaise.Outcome.BUCK) {
 			// The server throws the rider off; stop here in the meantime.
 			horseloyalty$gait = Gait.HALT;
-			horseloyalty$pendingEvent = GaitSync.Event.BUCKED;
+			horseloyalty$pendingEvent = GaitEvent.BUCKED;
 		} else {
-			horseloyalty$pendingEvent = GaitSync.Event.PRANCED;
+			horseloyalty$pendingEvent = GaitEvent.PRANCED;
 		}
 		return false;
 	}
 
 	/**
-	 * Runs a skittish horse's bolt: counts down a bolt in progress, or every half second looks
-	 * for a creeper close enough to start one. Returns whether the horse is bolting this tick.
+	 * Runs a bolt: counts down a bolt in progress, or every half second asks the ride modifiers
+	 * whether something spooks the horse (a skittish horse and a creeper, say). Returns whether the horse is bolting this tick.
 	 */
 	@Unique
 	private boolean horseloyalty$updateBolt(AbstractHorse horse, Player player) {
@@ -273,14 +272,12 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 			}
 			return true;
 		}
-		if (Personality.of(horse) != Personality.SKITTISH || --horseloyalty$boltCheckTimer > 0) {
+		if (--horseloyalty$boltCheckTimer > 0) {
 			return false;
 		}
 		horseloyalty$boltCheckTimer = 10;
-		int ticks = Riding.boltTicks(horse, player);
-		double distance = HorseLoyaltyConfig.get().boltCreeperDistance();
-		if (ticks <= 0 || horse.level().getEntitiesOfClass(Creeper.class,
-				horse.getBoundingBox().inflate(distance), Entity::isAlive).isEmpty()) {
+		int ticks = Riding.spookTicks(horse, player);
+		if (ticks <= 0) {
 			return false;
 		}
 		horseloyalty$boltTicks = ticks;
@@ -289,7 +286,7 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 		horseloyalty$boltTurn = horse.getRandom().nextInt(3) - 1;
 		player.sendOverlayMessage(Component.translatable("horseloyalty.personality.bolt", horse.getName()));
 		horseloyalty$playAngrySound(horse);
-		horseloyalty$pendingEvent = GaitSync.Event.BOLTED;
+		horseloyalty$pendingEvent = GaitEvent.BOLTED;
 		return true;
 	}
 
@@ -299,12 +296,12 @@ public abstract class AbstractHorseRidingMixin implements GaitHolder {
 	 */
 	@Unique
 	private void horseloyalty$syncGait() {
-		int gait = horseloyalty$gait.ordinal();
+		Gait gait = horseloyalty$gait;
 		if (gait == horseloyalty$sentGait && horseloyalty$pendingEvent == null) {
 			return;
 		}
 		if (ClientPlayNetworking.canSend(GaitSync.GaitPayload.TYPE)) {
-			GaitSync.Event event = horseloyalty$pendingEvent != null ? horseloyalty$pendingEvent : GaitSync.Event.SHIFT;
+			GaitEvent event = horseloyalty$pendingEvent != null ? horseloyalty$pendingEvent : GaitEvent.SHIFT;
 			ClientPlayNetworking.send(new GaitSync.GaitPayload(gait, event));
 		}
 		horseloyalty$sentGait = gait;

@@ -1,7 +1,8 @@
 package com.xziggsx.horseloyalty.ai;
 
 import com.xziggsx.horseloyalty.config.HorseLoyaltyConfig;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.Personalities;
+import com.xziggsx.horseloyalty.personality.api.Personality;
 import java.util.EnumSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +33,7 @@ public class CuriousWanderGoal extends Goal {
 
 	@Override
 	public boolean canUse() {
-		if (Personality.of(horse) != Personality.CURIOUS || horse.isBaby() || horse.isVehicle() || horse.isLeashed()) {
+		if (Personalities.of(horse) != Personality.CURIOUS || horse.isBaby() || horse.isVehicle() || horse.isLeashed()) {
 			return false;
 		}
 		HorseLoyaltyConfig config = HorseLoyaltyConfig.get();

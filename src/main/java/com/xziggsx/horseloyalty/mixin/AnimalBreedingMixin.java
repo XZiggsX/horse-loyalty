@@ -2,7 +2,7 @@ package com.xziggsx.horseloyalty.mixin;
 
 import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.loyalty.Family;
-import com.xziggsx.horseloyalty.personality.Personality;
+import com.xziggsx.horseloyalty.personality.Personalities;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.AgeableMob;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Hooks horse breeding to set up the foal's family (see {@link Family}) and its genes
  * (see {@link HorseGenetics#onBred}), or with genetics off, its personality
- * (see {@link Personality#inherit}). Horses don't override breeding, so this hooks Animal
+ * (see {@link Personalities#inherit}). Horses don't override breeding, so this hooks Animal
  * and checks for horses.
  * <p>
  * Runs at the start of finalizeSpawnChildFromBreeding: the foal exists but isn't in the
@@ -34,7 +34,7 @@ public abstract class AnimalBreedingMixin {
 			if (HorseGenetics.enabled()) {
 				HorseGenetics.onBred(foal, parentA, parentB);
 			} else {
-				Personality.inherit(foal, parentA, parentB);
+				Personalities.inherit(foal, parentA, parentB);
 			}
 			Family.onBorn(foal, parentA, parentB, breeder);
 		}
