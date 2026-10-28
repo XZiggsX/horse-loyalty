@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.summoning;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.HorseTags;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import java.util.List;
@@ -24,7 +25,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -83,9 +83,9 @@ public final class HornBinding {
 		return InteractionResult.SUCCESS;
 	}
 
-	/** Whether this item can be bound to a horse: a goat horn. */
+	/** Whether this item can be bound to a horse: anything in {@code horseloyalty:summoning_horns}, goat horns by default. */
 	public static boolean isHorn(ItemStack stack) {
-		return stack.is(Items.GOAT_HORN);
+		return stack.is(HorseTags.SUMMONING_HORNS);
 	}
 
 	/** Points the horn at this horse: remembers it, adds the glint, and takes its name if it has one. */

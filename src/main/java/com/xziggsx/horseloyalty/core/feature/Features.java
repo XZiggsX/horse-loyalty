@@ -1,6 +1,7 @@
 package com.xziggsx.horseloyalty.core.feature;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
+import com.xziggsx.horseloyalty.core.config.ConfigFile;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,6 +89,17 @@ public final class Features {
 	public static synchronized void useLocal(Map<String, FeatureSwitch> switches) {
 		localSwitches = Map.copyOf(switches);
 		resolve();
+	}
+
+	/**
+	 * Server: changes a switch now and saves it in the config (see {@link ConfigFile#saveSwitch}).
+	 * The caller then tells every client, see {@code SettingsSync.sendToAll}.
+	 */
+	public static void set(String id, FeatureSwitch value) {
+		if (!FEATURES.containsKey(id)) {
+			throw new IllegalArgumentException("No feature called " + id);
+		}
+		ConfigFile.saveSwitch(id, value);
 	}
 
 	/** Client: follow the server's switches from now on, or this side's own config again with null (on disconnecting). */

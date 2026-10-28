@@ -118,6 +118,8 @@
 	"horseloyalty.command.features.off": "off",
 	"horseloyalty.command.features.needs": "off (switched on, but needs %s)",
 	"horseloyalty.command.reload": "Reloaded the Horse Loyalty config and sent it to every player",
+	"horseloyalty.command.feature.unknown": "No feature called %s. See /hl features",
+	"horseloyalty.command.feature.set": "Feature %s is now %s, for every player",
 	"horseloyalty.command.loyalty.untamed": "%s isn't tamed, so it has no loyalty yet",
 	"horseloyalty.command.loyalty.set": "%s is now at loyalty %s/%s with %s: %s",
 	"horseloyalty.command.loyalty.points": "%s now has %s points with %s (level %s)",

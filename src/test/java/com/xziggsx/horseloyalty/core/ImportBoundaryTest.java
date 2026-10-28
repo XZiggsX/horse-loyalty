@@ -51,6 +51,18 @@ class ImportBoundaryTest {
 		assertTrue(violations.isEmpty(), "Imports across feature boundaries:\n" + String.join("\n", violations));
 	}
 
+	@Test
+	void everyClassBelongsToCoreOrAFeature() throws IOException {
+		List<String> strays = new ArrayList<>();
+		for (Path file : javaFiles()) {
+			String className = className(file);
+			if (ownerOf(packageOf(className)) == null && !ENTRYPOINTS.contains(className)) {
+				strays.add(className);
+			}
+		}
+		assertTrue(strays.isEmpty(), "Classes outside core and the feature packages:\n" + String.join("\n", strays));
+	}
+
 	/** Whether code owned by {@code owner} ("core" or a feature) may import from this package or class. */
 	private static boolean allowed(String owner, String imported) {
 		if (SHARED.stream().anyMatch(imported::startsWith)) {

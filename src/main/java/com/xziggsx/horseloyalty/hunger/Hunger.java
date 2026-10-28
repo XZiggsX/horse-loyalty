@@ -2,18 +2,16 @@ package com.xziggsx.horseloyalty.hunger;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.HorseTags;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.level.block.Block;
 
 /**
  * Tamed horses need to eat. Feeding them, or leaving them (unridden) on a grazing block,
@@ -24,9 +22,6 @@ import net.minecraft.world.level.block.Block;
  * change them. Timings are in the user config, see {@link HungerSettings}.
  */
 public final class Hunger {
-	public static final TagKey<Block> GRAZING_BLOCKS = TagKey.create(Registries.BLOCK,
-			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "grazing_blocks"));
-
 	/**
 	 * @param lastFedTick  game time the horse last ate or grazed
 	 * @param lastLossTick game time it last lost loyalty to hunger, 0 if it hasn't since eating
@@ -64,7 +59,7 @@ public final class Hunger {
 			horse.setAttached(STATE, new State(now, 0L));
 			return;
 		}
-		if (!horse.isVehicle() && horse.getBlockStateOn().is(GRAZING_BLOCKS)) {
+		if (!horse.isVehicle() && horse.getBlockStateOn().is(HorseTags.GRAZING_BLOCKS)) {
 			feed(horse);
 			return;
 		}

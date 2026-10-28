@@ -1,17 +1,17 @@
 package com.xziggsx.horseloyalty.personality;
 
+import com.xziggsx.horseloyalty.core.HorseTags;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.personality.api.Personality;
 import com.xziggsx.horseloyalty.riding.api.RideModifier;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 
 /**
  * How personalities change riding. Lazy horses drop gaits sooner and more often; horses with a
  * buck-off personality may throw their rider when they refuse to go faster; skittish horses bolt
- * when a creeper comes near. Riding itself doesn't know personalities exist.
+ * when a creeper (anything in the {@code horseloyalty:spooks_horses} tag) comes near. Riding itself doesn't know personalities exist.
  */
 final class PersonalityRideModifier implements RideModifier {
 	@Override
@@ -50,8 +50,8 @@ final class PersonalityRideModifier implements RideModifier {
 		int ticks = config.boltTicks();
 		ticks = level >= Bond.MAX_LEVEL ? 0 : level == Bond.MAX_LEVEL - 1 ? ticks / 2 : ticks;
 		double distance = config.boltCreeperDistance();
-		if (ticks <= 0 || horse.level().getEntitiesOfClass(Creeper.class,
-				horse.getBoundingBox().inflate(distance), Entity::isAlive).isEmpty()) {
+		if (ticks <= 0 || horse.level().getEntitiesOfClass(LivingEntity.class, horse.getBoundingBox().inflate(distance),
+				entity -> entity.isAlive() && entity.getType().builtInRegistryHolder().is(HorseTags.SPOOKS_HORSES)).isEmpty()) {
 			return 0;
 		}
 		return ticks;

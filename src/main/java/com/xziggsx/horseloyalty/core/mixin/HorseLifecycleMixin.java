@@ -1,9 +1,12 @@
 package com.xziggsx.horseloyalty.core.mixin;
 
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.HorseTags;
 import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
@@ -38,8 +41,9 @@ public abstract class HorseLifecycleMixin {
 	}
 
 	/**
-	 * A tamed horse at full health normally refuses food, so it also eats when a listener wants it
-	 * to (see {@link HorseEvents#WANTS_TREAT}). Whenever it ate, {@link HorseEvents#ATE} fires.
+	 * A tamed horse at full health normally refuses food, so it also eats (its own food, or anything in
+	 * the {@code horseloyalty:treats} tag) when a listener wants it to (see {@link HorseEvents#WANTS_TREAT}).
+	 * Whenever it ate, {@link HorseEvents#ATE} fires.
 	 */
 	@Inject(method = "handleEating", at = @At("RETURN"), cancellable = true)
 	private void horseloyalty$treat(Player player, ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
@@ -48,7 +52,7 @@ public abstract class HorseLifecycleMixin {
 			return;
 		}
 		boolean ate = cir.getReturnValueZ();
-		if (!ate && isFood(stack) && HorseEvents.WANTS_TREAT.invoker().wantsTreat(horse, player, stack)) {
+		if (!ate && (isFood(stack) || stack.is(HorseTags.TREATS)) && HorseEvents.WANTS_TREAT.invoker().wantsTreat(horse, player, stack)) {
 			eating();
 			cir.setReturnValue(true);
 			ate = true;
@@ -56,6 +60,20 @@ public abstract class HorseLifecycleMixin {
 		if (ate) {
 			HorseEvents.ATE.invoker().ate(horse, player, stack);
 		}
+	}
+
+	/**
+	 * Vanilla only offers a horse its own food. A treat from the {@code horseloyalty:treats} tag that
+	 * isn't its food goes the same way, through vanilla's feeding (which uses up the item if it ate).
+	 */
+	@Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
+	private void horseloyalty$offerTreat(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+		AbstractHorse horse = horseloyalty$self();
+		ItemStack stack = player.getItemInHand(hand);
+		if (!stack.is(HorseTags.TREATS) || isFood(stack) || !isTamed() || player.isSecondaryUseActive() || !HorseScope.inScope(horse)) {
+			return;
+		}
+		cir.setReturnValue(horse.level().isClientSide() ? InteractionResult.SUCCESS : horse.fedFood(player, stack));
 	}
 
 	/** Every server tick, and once a second spread out by entity id, for horses in scope. */
