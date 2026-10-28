@@ -5,7 +5,10 @@
 	"client": [
 		"AbstractHorseRidingMixin",
 		"AbstractMountInventoryScreenMixin",
-		"HudMixin"
+		"ContainerScreenAccessor",
+		"ContainerScreenInfoMixin",
+		"HudMixin",
+		"MountInfoScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

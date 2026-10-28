@@ -48,6 +48,8 @@ dependencies {
 	testImplementation platform("org.junit:junit-bom:5.13.4")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+	// The client source set too, for the screen layout tests (pure Java, no game needed).
+	testImplementation sourceSets.client.output
 }
 
 processResources {

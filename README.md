@@ -74,6 +74,19 @@ Horses from before genetics (or with it just turned on) get genes that fit how t
 Donkeys and mules only use the temperament gene. Turn it all off with `genetics.enabled`; then
 coats are vanilla again and personalities use the old inherit odds.
 
+### Horse info screen
+
+The horse inventory has two small tabs on its top-right edge: **Inventory** and **Info**. Info
+swaps the slots for an overview in a larger window: the horse, its kind and personality, your
+loyalty as horseshoes, health, speed and jump bars, its parents' names, its real coat and
+marking names (Buckskin, Palomino, Cremello, Smoky black, Tobiano, Fewspot leopard...), and a
+table of its genes with both copies written out in full (Extension, Agouti, Cream, Grey, Tobiano,
+Leopard complex, White socks, Temperament). Coloured copies decide the look; grey ones are only
+carried and can show in foals. The table scrolls when the window is too small. Donkeys and mules
+only show temperament. The screen always opens on the inventory, the Info tab can't be used with
+an item on the cursor, and with genetics off (on the server) there are no tabs at all.
+"White socks" is a made-up gene for the mod; the others are named after real horse genes.
+
 Operators (permission level 2) can test it with `/horsegenes` on the horse they look at:
 `show`, `set <gene> <v1> <v2>`, `mark` (horse A), `predict` (exact foal odds for the marked
 horse and this one) and `simulate <count>` (breeds that many foals on paper).
@@ -115,6 +128,7 @@ client; `client` is only loaded on the client and never on a dedicated server.
       genetics/world/                 genes saved on horses, herd founders, HorseGenetics (the entry point)
       genetics/view/GeneticsView.java read-only genetics, for the dev tools and a future screen
       dev/HorseGenesCommand.java      /horsegenes, operator-only genetics testing
+      horseinfo/                      read-only HorseProfile for the info screen, reveal policy, stat units
       mixin/AnimalBreedingMixin.java  sets up a bred foal (family, taming, genes or personality)
       mixin/HorseSpawnMixin.java      gives wild and summoned horses genes from their herd's founders
       mixin/HorseGroupDataMixin.java  lets a spawn group hold its herd's founders
@@ -142,6 +156,9 @@ client; `client` is only loaded on the client and never on a dedicated server.
       mixin/client/AbstractHorseRidingMixin.java          gaits, steering, gait drops, skittish bolts
       mixin/client/AbstractMountInventoryScreenMixin.java loyalty label in the horse inventory
       mixin/client/HudMixin.java                          draws the dev panel
+      client/horseinfo/                                   the horse info screen: tabs, layout, sections
+      mixin/client/MountInfoScreenMixin.java              adds the info screen to the horse inventory
+      mixin/client/ContainerScreenInfoMixin.java          blocks the slots while the info screen shows
     src/client/resources/
       assets/horseloyalty/lang/en_us.json                 all text shown to players
       assets/horseloyalty/textures/gui/sprites/hud/       the horseshoe icons
