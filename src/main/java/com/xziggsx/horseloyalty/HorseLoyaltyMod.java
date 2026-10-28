@@ -1,8 +1,12 @@
 package com.xziggsx.horseloyalty;
 
+import com.xziggsx.horseloyalty.core.command.CoreCommands;
+import com.xziggsx.horseloyalty.core.command.HorseCommands;
 import com.xziggsx.horseloyalty.core.config.ClientPrefs;
 import com.xziggsx.horseloyalty.core.config.ConfigFile;
 import com.xziggsx.horseloyalty.core.config.SettingsSync;
+import com.xziggsx.horseloyalty.core.debug.DebugSource;
+import com.xziggsx.horseloyalty.core.debug.HorseBasics;
 import com.xziggsx.horseloyalty.core.feature.Features;
 import com.xziggsx.horseloyalty.dev.DevToolsFeature;
 import com.xziggsx.horseloyalty.feedback.api.FeedbackSettings;
@@ -50,6 +54,10 @@ public class HorseLoyaltyMod implements ModInitializer {
 		Features.wireAll();
 		// The server's switches and synced settings, sent to every player who joins.
 		SettingsSync.init();
+		// The /hl command tree, with every feature's branches, and core's own debug section.
+		CoreCommands.init();
+		HorseCommands.init();
+		DebugSource.ALL.add(null, new HorseBasics());
 		LOGGER.info("Horse Loyalty loaded");
 	}
 }

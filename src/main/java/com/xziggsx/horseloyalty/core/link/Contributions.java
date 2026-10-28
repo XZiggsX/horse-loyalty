@@ -31,7 +31,7 @@ public final class Contributions<T> {
 		return id;
 	}
 
-	/** Adds an item for a feature. Called through {@code FeatureContext.contribute}. */
+	/** Adds an item for a feature (null for core, always on). Features add through {@code FeatureContext.contribute}. */
 	public void add(String featureId, T item) {
 		entries.add(new Entry<>(featureId, item));
 	}
@@ -40,7 +40,7 @@ public final class Contributions<T> {
 	public List<T> active() {
 		List<T> result = new ArrayList<>(entries.size());
 		for (Entry<T> entry : entries) {
-			if (Features.isOn(entry.featureId())) {
+			if (entry.featureId() == null || Features.isOn(entry.featureId())) {
 				result.add(entry.item());
 			}
 		}

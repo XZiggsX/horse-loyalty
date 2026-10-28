@@ -1,6 +1,6 @@
 package com.xziggsx.horseloyalty.genetics.dev;
 
-import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.command.HorseCommands;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.genetics.GeneticsSettings;
 import com.xziggsx.horseloyalty.genetics.core.CrossPredictor;
@@ -8,6 +8,7 @@ import com.xziggsx.horseloyalty.genetics.core.Dice;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
 import com.xziggsx.horseloyalty.genetics.core.GenePair;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
+import com.xziggsx.horseloyalty.genetics.core.GenomeFactory;
 import com.xziggsx.horseloyalty.genetics.core.Inheritance;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
@@ -17,48 +18,42 @@ import com.xziggsx.horseloyalty.genetics.view.GeneticsView;
 import com.xziggsx.horseloyalty.genetics.view.ShownTrait;
 import com.xziggsx.horseloyalty.genetics.world.HorseGenetics;
 import com.xziggsx.horseloyalty.genetics.world.Lineage;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.equine.Markings;
+import net.minecraft.world.entity.animal.equine.Variant;
 
 /**
- * Operator-only {@code /horsegenes} for testing genetics. Acts on the horse you look at
- * (up to {@link #RANGE} blocks away):
+ * {@code /hl genes} for testing genetics, also reachable as {@code /horsegenes}. Acts on the horse
+ * you look at (or a selector at the end):
  * <ul>
  *   <li>{@code show}: its genes, what it shows, and its parents' genes</li>
  *   <li>{@code set <locus> <v1> <v2>}: changes one gene pair and makes the horse show its genes again</li>
- *   <li>{@code mark}: remembers it as horse A for predict and simulate</li>
+ *   <li>{@code look <coat> [marking]}: gives it genes that show this look, with random hidden copies</li>
+ *   <li>{@code mark}: remembers it as horse A for predict, simulate and {@code /hl foal breed}</li>
  *   <li>{@code predict}: the exact odds for a foal of the marked horse and this one</li>
  *   <li>{@code simulate <count>}: breeds that many foals on paper and compares the counts with the odds</li>
+ *   <li>{@code lineage}: its parents' names and genomes, as recorded at birth (operators, without dev tools)</li>
  * </ul>
  */
-public final class HorseGenesCommand {
-	private static final double RANGE = 8;
+public final class GeneticsCommands {
 	private static final int MAX_SIMULATIONS = 100_000;
-
-	/** The horse each player marked as horse A, by player. Forgotten on restart. */
-	private static final Map<UUID, UUID> MARKED = new HashMap<>();
 
 	private static final SuggestionProvider<CommandSourceStack> LOCI = (context, builder) ->
 			SharedSuggestionProvider.suggest(Loci.ALL.stream().map(Locus::id), builder);
@@ -76,58 +71,61 @@ public final class HorseGenesCommand {
 		return SharedSuggestionProvider.suggest(locus.versions().stream().map(Locus::name), builder);
 	};
 
-	private HorseGenesCommand() {
+	private static final SuggestionProvider<CommandSourceStack> COATS = (context, builder) ->
+			SharedSuggestionProvider.suggest(Arrays.stream(Variant.values()).map(GeneticsCommands::id), builder);
+
+	private static final SuggestionProvider<CommandSourceStack> MARKINGS = (context, builder) ->
+			SharedSuggestionProvider.suggest(Arrays.stream(Markings.values()).map(GeneticsCommands::id), builder);
+
+	private GeneticsCommands() {
 	}
 
-	/** Registers the command while genetics is on. */
-	public static void init(FeatureContext context) {
-		context.on(CommandRegistrationCallback.EVENT, (dispatcher, registryAccess, environment) -> register(dispatcher));
-	}
-
-	private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(Commands.literal("horsegenes")
-				.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-				.then(Commands.literal("show").executes(HorseGenesCommand::show))
+	/** Adds the commands, and {@code /horsegenes} as an alias. */
+	public static void register(FeatureContext context) {
+		context.devCommand("genes", branch -> branch
+				.then(HorseCommands.withHorse(Commands.literal("show"), GeneticsCommands::show))
 				.then(Commands.literal("set")
 						.then(Commands.argument("locus", StringArgumentType.word()).suggests(LOCI)
 								.then(Commands.argument("v1", StringArgumentType.word()).suggests(VERSIONS)
-										.then(Commands.argument("v2", StringArgumentType.word()).suggests(VERSIONS)
-												.executes(HorseGenesCommand::set)))))
-				.then(Commands.literal("mark").executes(HorseGenesCommand::mark))
-				.then(Commands.literal("predict").executes(HorseGenesCommand::predict))
+										.then(HorseCommands.withHorse(Commands.argument("v2", StringArgumentType.word()).suggests(VERSIONS),
+												GeneticsCommands::set)))))
+				.then(Commands.literal("look")
+						.then(HorseCommands.withHorse(Commands.argument("coat", StringArgumentType.word()).suggests(COATS), GeneticsCommands::look)
+								.then(HorseCommands.withHorse(Commands.argument("marking", StringArgumentType.word()).suggests(MARKINGS),
+										GeneticsCommands::look))))
+				.then(HorseCommands.withHorse(Commands.literal("mark"), GeneticsCommands::mark))
+				.then(HorseCommands.withHorse(Commands.literal("predict"), GeneticsCommands::predict))
 				.then(Commands.literal("simulate")
-						.then(Commands.argument("count", IntegerArgumentType.integer(1, MAX_SIMULATIONS))
-								.executes(HorseGenesCommand::simulate))));
+						.then(HorseCommands.withHorse(Commands.argument("count", IntegerArgumentType.integer(1, MAX_SIMULATIONS)),
+								GeneticsCommands::simulate))));
+		context.adminCommand("genes", branch -> branch
+				.then(HorseCommands.withHorse(Commands.literal("lineage"), GeneticsCommands::lineage)));
+		HorseCommands.addAlias("horsegenes", "genes");
 	}
 
 	// --- Subcommands -------------------------------------------------------------
 
-	private static int show(CommandContext<CommandSourceStack> context) {
-		AbstractHorse horse = target(context.getSource());
-		if (horse == null) {
-			return 0;
-		}
+	private static int show(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse horse = HorseCommands.target(context);
 		Genome genome = HorseGenetics.genomeOf(horse);
 		List<String> lines = new ArrayList<>();
 		lines.add("Genes of " + horse.getName().getString() + ":");
 		genome.pairs().forEach((locus, pair) -> lines.add("  " + locus.id() + ": " + pair));
 		lines.add("Shows: " + shown(horse));
-		Optional<Lineage> lineage = GeneticsView.lineage(horse);
-		if (lineage.isEmpty() || !lineage.get().hasParents()) {
-			lines.add("Parents: not recorded (older horse)");
-		} else {
-			lines.add("Parent A" + named(lineage.get().nameA()) + ": " + lineage.get().parentA().map(Genome::toString).orElse("unknown"));
-			lines.add("Parent B" + named(lineage.get().nameB()) + ": " + lineage.get().parentB().map(Genome::toString).orElse("unknown"));
-		}
-		reply(context, lines);
-		return 1;
+		addParents(lines, horse);
+		return HorseCommands.replyLines(context, lines);
 	}
 
-	private static int set(CommandContext<CommandSourceStack> context) {
-		AbstractHorse horse = target(context.getSource());
-		if (horse == null) {
-			return 0;
-		}
+	private static int lineage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse horse = HorseCommands.target(context);
+		List<String> lines = new ArrayList<>();
+		lines.add("Lineage of " + horse.getName().getString() + ":");
+		addParents(lines, horse);
+		return HorseCommands.replyLines(context, lines);
+	}
+
+	private static int set(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse horse = HorseCommands.target(context);
 		String locusId = StringArgumentType.getString(context, "locus");
 		Locus<?> locus = Loci.byId(locusId);
 		if (locus == null) {
@@ -142,44 +140,55 @@ public final class HorseGenesCommand {
 			return 0;
 		}
 		HorseGenetics.setGenome(horse, changed);
-		reply(context, List.of("Set " + locus.id() + " to " + changed.get(locus) + ". Now shows: " + shown(horse)));
-		return 1;
+		return HorseCommands.replyLines(context, List.of("Set " + locus.id() + " to " + changed.get(locus) + ". Now shows: " + shown(horse)));
 	}
 
-	private static int mark(CommandContext<CommandSourceStack> context) {
-		ServerPlayer player = context.getSource().getPlayer();
-		AbstractHorse horse = target(context.getSource());
-		if (horse == null || player == null) {
+	/** Genes that show this coat (and marking), keeping the other genes; hidden copies are random. */
+	private static int look(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse horse = HorseCommands.target(context);
+		if (!(horse instanceof Horse)) {
+			context.getSource().sendFailure(Component.literal("Only horses have coat and marking genes."));
 			return 0;
 		}
+		Variant coat = parse(Variant.values(), StringArgumentType.getString(context, "coat"));
+		Markings marking = HorseCommands.has(context, "marking")
+				? parse(Markings.values(), StringArgumentType.getString(context, "marking")) : null;
+		if (coat == null || HorseCommands.has(context, "marking") && marking == null) {
+			context.getSource().sendFailure(Component.literal("Coats: " + names(Variant.values()) + ". Markings: " + names(Markings.values()) + "."));
+			return 0;
+		}
+		Dice dice = HorseGenetics.dice(horse.getRandom());
+		Genome genome = GenomeFactory.refit(HorseGenetics.genomeOf(horse), HorseTraits.COAT, coat, dice);
+		if (marking != null) {
+			genome = GenomeFactory.refit(genome, HorseTraits.MARKING, marking, dice);
+		}
+		HorseGenetics.setGenome(horse, genome);
+		return HorseCommands.replyLines(context, List.of("Now shows: " + shown(horse)));
+	}
+
+	private static int mark(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse horse = HorseCommands.target(context);
 		HorseGenetics.genomeOf(horse);
-		MARKED.put(player.getUUID(), horse.getUUID());
-		reply(context, List.of("Marked " + horse.getName().getString() + " as horse A. Look at another horse and use predict or simulate."));
-		return 1;
+		HorseCommands.mark(context.getSource().getPlayerOrException(), horse);
+		return HorseCommands.replyLines(context, List.of("Marked " + horse.getName().getString()
+				+ " as horse A. Look at another horse and use predict or simulate, or /hl foal breed."));
 	}
 
-	private static int predict(CommandContext<CommandSourceStack> context) {
-		AbstractHorse a = marked(context.getSource());
-		AbstractHorse b = a == null ? null : target(context.getSource());
-		if (b == null) {
-			return 0;
-		}
+	private static int predict(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse a = HorseCommands.marked(context.getSource());
+		AbstractHorse b = HorseCommands.target(context);
 		Map<Trait<?>, Distribution<?>> odds = CrossPredictor.predictAll(HorseGenetics.genomeOf(a), HorseGenetics.genomeOf(b), HorseTraits.ALL,
 				GeneticsSettings.get().mutationChance());
 		List<String> lines = new ArrayList<>();
 		lines.add("Foal of " + a.getName().getString() + " and " + b.getName().getString() + ":");
 		odds.forEach((trait, distribution) -> lines.add("  " + trait.id() + ": " + percentages(distribution)));
 		addSameHorseNote(lines, a, b);
-		reply(context, lines);
-		return 1;
+		return HorseCommands.replyLines(context, lines);
 	}
 
-	private static int simulate(CommandContext<CommandSourceStack> context) {
-		AbstractHorse a = marked(context.getSource());
-		AbstractHorse b = a == null ? null : target(context.getSource());
-		if (b == null) {
-			return 0;
-		}
+	private static int simulate(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		AbstractHorse a = HorseCommands.marked(context.getSource());
+		AbstractHorse b = HorseCommands.target(context);
 		int count = IntegerArgumentType.getInteger(context, "count");
 		Genome genomeA = HorseGenetics.genomeOf(a);
 		Genome genomeB = HorseGenetics.genomeOf(b);
@@ -212,44 +221,19 @@ public final class HorseGenesCommand {
 							+ percent(chanceOf(predicted, entry.getKey()))));
 		}
 		addSameHorseNote(lines, a, b);
-		reply(context, lines);
-		return 1;
+		return HorseCommands.replyLines(context, lines);
 	}
 
 	// --- Helpers -----------------------------------------------------------------
 
-	/** The horse the player is looking at, or null with a message saying why not. */
-	private static AbstractHorse target(CommandSourceStack source) {
-		ServerPlayer player = source.getPlayer();
-		if (player == null) {
-			source.sendFailure(Component.literal("Only a player can use this: it acts on the horse you look at."));
-			return null;
+	private static void addParents(List<String> lines, AbstractHorse horse) {
+		Optional<Lineage> lineage = GeneticsView.lineage(horse);
+		if (lineage.isEmpty() || !lineage.get().hasParents()) {
+			lines.add("Parents: not recorded (older horse)");
+		} else {
+			lines.add("Parent A" + named(lineage.get().nameA()) + ": " + lineage.get().parentA().map(Genome::toString).orElse("unknown"));
+			lines.add("Parent B" + named(lineage.get().nameB()) + ": " + lineage.get().parentB().map(Genome::toString).orElse("unknown"));
 		}
-		Vec3 eye = player.getEyePosition();
-		Vec3 reach = player.getViewVector(1.0F).scale(RANGE);
-		AABB area = player.getBoundingBox().expandTowards(reach).inflate(1.0);
-		EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, eye.add(reach), area,
-				entity -> entity instanceof AbstractHorse horse && horse.isAlive() && HorseScope.inScope(horse), RANGE * RANGE);
-		if (hit == null || !(hit.getEntity() instanceof AbstractHorse horse)) {
-			source.sendFailure(Component.literal("Look at a horse, donkey or mule within " + (int) RANGE + " blocks."));
-			return null;
-		}
-		return horse;
-	}
-
-	/** The player's marked horse A, or null with a message saying why not. */
-	private static AbstractHorse marked(CommandSourceStack source) {
-		ServerPlayer player = source.getPlayer();
-		UUID id = player == null ? null : MARKED.get(player.getUUID());
-		if (id == null) {
-			source.sendFailure(Component.literal("Mark a horse first: look at it and use /horsegenes mark."));
-			return null;
-		}
-		if (!(source.getLevel().getEntity(id) instanceof AbstractHorse horse) || !horse.isAlive()) {
-			source.sendFailure(Component.literal("The marked horse isn't loaded here any more. Mark one again."));
-			return null;
-		}
-		return horse;
 	}
 
 	/** A copy of the genome with the locus set to the two named versions, or null if a name is wrong. */
@@ -301,7 +285,21 @@ public final class HorseGenesCommand {
 		return value instanceof Enum<?> version ? Locus.name(version) : String.valueOf(value);
 	}
 
-	private static void reply(CommandContext<CommandSourceStack> context, List<String> lines) {
-		context.getSource().sendSuccess(() -> Component.literal(String.join("\n", lines)), false);
+	/** A vanilla enum's command id, such as "dark_brown". */
+	private static String id(Enum<?> value) {
+		return value.name().toLowerCase(Locale.ROOT);
+	}
+
+	private static <E extends Enum<E>> E parse(E[] values, String id) {
+		for (E value : values) {
+			if (id(value).equals(id)) {
+				return value;
+			}
+		}
+		return null;
+	}
+
+	private static String names(Enum<?>[] values) {
+		return String.join(", ", Arrays.stream(values).map(GeneticsCommands::id).toList());
 	}
 }

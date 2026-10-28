@@ -2,9 +2,12 @@ package com.xziggsx.horseloyalty.core.feature;
 
 import com.xziggsx.horseloyalty.core.link.Contributions;
 import com.xziggsx.horseloyalty.core.link.LinkKey;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -36,4 +39,10 @@ public interface FeatureContext {
 
 	/** Adds an item to another feature's list, such as a ride modifier. It only counts while this feature is on. */
 	<T> void contribute(Contributions<T> list, T item);
+
+	/** Adds {@code /hl <branch> ...} for operators, while this feature is on. */
+	void adminCommand(String branch, Consumer<LiteralArgumentBuilder<CommandSourceStack>> build);
+
+	/** Adds {@code /hl <branch> ...} for operators, while this feature and dev tools are on. */
+	void devCommand(String branch, Consumer<LiteralArgumentBuilder<CommandSourceStack>> build);
 }

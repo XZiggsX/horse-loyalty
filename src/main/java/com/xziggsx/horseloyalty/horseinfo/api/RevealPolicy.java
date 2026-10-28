@@ -1,4 +1,4 @@
-package com.xziggsx.horseloyalty.horseinfo;
+package com.xziggsx.horseloyalty.horseinfo.api;
 
 import java.util.Optional;
 import net.minecraft.network.chat.Component;

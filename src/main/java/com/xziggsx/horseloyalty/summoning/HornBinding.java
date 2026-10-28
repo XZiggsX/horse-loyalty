@@ -61,7 +61,7 @@ public final class HornBinding {
 
 	private static InteractionResult onUseEntity(Player player, Level level, InteractionHand hand, Entity entity, EntityHitResult hit) {
 		ItemStack stack = player.getItemInHand(hand);
-		if (!stack.is(Items.GOAT_HORN) || !player.isSecondaryUseActive() || player.isSpectator()
+		if (!isHorn(stack) || !player.isSecondaryUseActive() || player.isSpectator()
 				|| !(entity instanceof AbstractHorse horse) || !horse.isTamed() || !HorseScope.inScope(horse)) {
 			return InteractionResult.PASS;
 		}
@@ -83,8 +83,13 @@ public final class HornBinding {
 		return InteractionResult.SUCCESS;
 	}
 
+	/** Whether this item can be bound to a horse: a goat horn. */
+	public static boolean isHorn(ItemStack stack) {
+		return stack.is(Items.GOAT_HORN);
+	}
+
 	/** Points the horn at this horse: remembers it, adds the glint, and takes its name if it has one. */
-	private static void bind(ItemStack stack, AbstractHorse horse) {
+	static void bind(ItemStack stack, AbstractHorse horse) {
 		stack.set(BOUND_HORSE, horse.getUUID());
 		stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
 		if (horse.hasCustomName()) {

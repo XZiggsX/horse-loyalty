@@ -45,6 +45,17 @@ public record LoyaltyData(int feeds, int rideTicks, long lastFedTick, int lostPo
 		return new LoyaltyData(feeds, rideTicks, lastFedTick, lostPoints, bonusPoints + Math.max(0, points));
 	}
 
+	/**
+	 * A copy whose current points come out at {@code target}: bonus points make up the difference,
+	 * and below what feeding and riding earned, hunger losses do.
+	 */
+	public LoyaltyData withPoints(int target) {
+		int bonus = Math.max(0, bonusPoints + target - points());
+		LoyaltyData adjusted = new LoyaltyData(feeds, rideTicks, lastFedTick, lostPoints, bonus);
+		int lost = Math.clamp((long) adjusted.lostPoints + adjusted.points() - target, 0, adjusted.earnedPoints());
+		return new LoyaltyData(feeds, rideTicks, lastFedTick, lost, bonus);
+	}
+
 	/** Points earned from feeding, riding and bonuses, before hunger losses. */
 	public int earnedPoints() {
 		LoyaltySettings config = LoyaltySettings.get();

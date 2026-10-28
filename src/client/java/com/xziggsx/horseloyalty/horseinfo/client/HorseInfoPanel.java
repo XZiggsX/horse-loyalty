@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.horseinfo.client;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Layout;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.section.GenesSection;

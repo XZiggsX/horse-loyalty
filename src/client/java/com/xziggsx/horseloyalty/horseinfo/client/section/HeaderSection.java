@@ -1,10 +1,10 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.Identity;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.LoyaltyLine;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
-import com.xziggsx.horseloyalty.horseinfo.Shown;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.Identity;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.LoyaltyLine;
+import com.xziggsx.horseloyalty.horseinfo.api.Shown;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoPalette;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -26,9 +26,12 @@ public final class HeaderSection implements InfoSection {
 	@Override
 	public void draw(InfoContext context, HorseProfile profile, Rect area) {
 		switch (profile.identity()) {
-			case Shown.Visible<Identity>(Identity identity) -> context.text(Component.translatable("horseloyalty.info.identity",
-					identity.kind(), identity.personality().displayName()), area.x(), area.y(), InfoPalette.TEXT);
+			case Shown.Visible<Identity>(Identity identity) -> context.text(identity.personality()
+					.<Component>map(personality -> Component.translatable("horseloyalty.info.identity", identity.kind(), personality.displayName()))
+					.orElse(identity.kind()), area.x(), area.y(), InfoPalette.TEXT);
 			case Shown.Locked<Identity>(Component reason) -> context.locked(reason, area.x(), area.y());
+			case Shown.Off<Identity> off -> {
+			}
 		}
 		int y = area.y() + 11;
 		switch (profile.loyalty()) {
@@ -41,6 +44,8 @@ public final class HeaderSection implements InfoSection {
 						area.x() + loyalty.max() * SHOE_STEP + 3, y, InfoPalette.TEXT);
 			}
 			case Shown.Locked<LoyaltyLine>(Component reason) -> context.locked(reason, area.x(), y);
+			case Shown.Off<LoyaltyLine> off -> {
+			}
 		}
 	}
 }

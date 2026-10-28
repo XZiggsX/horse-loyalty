@@ -3,6 +3,7 @@ package com.xziggsx.horseloyalty.genetics.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.xziggsx.horseloyalty.genetics.api.CopyRole;
 import com.xziggsx.horseloyalty.genetics.core.Loci.Agouti;
 import com.xziggsx.horseloyalty.genetics.core.Loci.Cream;
 import com.xziggsx.horseloyalty.genetics.core.Loci.Gray;

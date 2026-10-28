@@ -1,8 +1,10 @@
 package com.xziggsx.horseloyalty.horseinfo.client;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
+import com.xziggsx.horseloyalty.core.feature.Features;
+import com.xziggsx.horseloyalty.horseinfo.HorseInfoFeature;
 import com.xziggsx.horseloyalty.horseinfo.HorseProfiles;
 import com.xziggsx.horseloyalty.horseinfo.RevealPolicies;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import java.util.Objects;
 import net.minecraft.client.Minecraft;
@@ -46,9 +48,9 @@ public final class HorseInfoController {
 		return open;
 	}
 
-	/** Whether this mount is a horse with an info view. Llamas, camels and other mounts never are. */
+	/** Whether this mount is a horse with an info view, and horse info is on. Llamas, camels and other mounts never are. */
 	private boolean available() {
-		return screen.horseloyalty$horse() != null && HorseProfiles.available(screen.horseloyalty$horse());
+		return Features.isOn(HorseInfoFeature.ID) && screen.horseloyalty$horse() != null && HorseProfiles.available(screen.horseloyalty$horse());
 	}
 
 	/** Called at the start of the screen's init, before the window is centred: picks the window size. */

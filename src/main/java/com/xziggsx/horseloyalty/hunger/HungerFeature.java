@@ -36,5 +36,6 @@ public final class HungerFeature implements Feature {
 		// A hungry horse takes any treat, and every meal resets its hunger.
 		context.on(HorseEvents.WANTS_TREAT, (horse, player, stack) -> Hunger.isHungry(horse));
 		context.on(HorseEvents.ATE, (horse, player, stack) -> Hunger.feed(horse));
+		HungerCommands.register(context);
 	}
 }

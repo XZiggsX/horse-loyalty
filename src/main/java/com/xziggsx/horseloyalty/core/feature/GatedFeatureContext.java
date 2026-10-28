@@ -1,12 +1,16 @@
 package com.xziggsx.horseloyalty.core.feature;
 
+import com.xziggsx.horseloyalty.core.command.HorseCommands;
 import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.link.Contributions;
 import com.xziggsx.horseloyalty.core.link.LinkKey;
 import com.xziggsx.horseloyalty.core.link.Links;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -59,6 +63,16 @@ final class GatedFeatureContext implements FeatureContext {
 	@Override
 	public <T> void provide(LinkKey<T> key, T implementation) {
 		Links.provide(featureId, key, implementation);
+	}
+
+	@Override
+	public void adminCommand(String branch, Consumer<LiteralArgumentBuilder<CommandSourceStack>> build) {
+		HorseCommands.addBranch(featureId, branch, false, build);
+	}
+
+	@Override
+	public void devCommand(String branch, Consumer<LiteralArgumentBuilder<CommandSourceStack>> build) {
+		HorseCommands.addBranch(featureId, branch, true, build);
 	}
 
 	@Override

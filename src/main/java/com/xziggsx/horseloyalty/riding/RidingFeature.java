@@ -32,5 +32,6 @@ public final class RidingFeature implements Feature {
 	public void wire(FeatureContext context) {
 		GaitSync.wire(context);
 		context.provide(RideView.KEY, new SyncedRideView());
+		RidingCommands.register(context);
 	}
 }

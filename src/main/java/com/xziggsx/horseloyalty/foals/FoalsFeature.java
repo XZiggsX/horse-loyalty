@@ -33,5 +33,6 @@ public final class FoalsFeature implements Feature {
 		// Ahead of vanilla's FollowParentGoal (4) and random strolling (6).
 		context.goal(3, FollowChosenParentGoal::new);
 		context.goal(3, FollowBreederGoal::new);
+		FoalCommands.register(context);
 	}
 }

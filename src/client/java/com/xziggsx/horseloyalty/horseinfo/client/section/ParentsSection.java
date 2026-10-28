@@ -1,10 +1,10 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.Parents;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
-import com.xziggsx.horseloyalty.horseinfo.Shown;
-import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.Parents;
+import com.xziggsx.horseloyalty.horseinfo.api.Shown;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout;
+import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoPalette;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -14,11 +14,14 @@ public final class ParentsSection implements InfoSection {
 
 	@Override
 	public int height(HorseProfile profile) {
-		return 10;
+		return profile.parents() instanceof Shown.Off<Parents> ? 0 : 10;
 	}
 
 	@Override
 	public void draw(InfoContext context, HorseProfile profile, Rect area) {
+		if (profile.parents() instanceof Shown.Off<Parents>) {
+			return;
+		}
 		context.text(Component.translatable("horseloyalty.info.parents"), area.x(), area.y(), InfoPalette.DIM);
 		int x = area.x() + InfoLayout.LABEL_WIDTH;
 		switch (profile.parents()) {
@@ -28,6 +31,8 @@ public final class ParentsSection implements InfoSection {
 			case Shown.Visible<Parents> unused -> context.text(Component.translatable("horseloyalty.info.parents.not_recorded"),
 					x, area.y(), InfoPalette.DIM);
 			case Shown.Locked<Parents>(Component reason) -> context.locked(reason, x, area.y());
+			case Shown.Off<Parents> off -> {
+			}
 		}
 	}
 

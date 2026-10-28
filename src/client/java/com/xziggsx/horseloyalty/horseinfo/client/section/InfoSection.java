@@ -1,6 +1,6 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 
 /**

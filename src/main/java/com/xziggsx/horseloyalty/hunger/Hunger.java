@@ -90,6 +90,12 @@ public final class Hunger {
 		horse.setAttached(STATE, new State(horse.level().getGameTime(), 0L));
 	}
 
+	/** Makes the horse hungry now, so its next loyalty loss comes after one loss interval. For testing. */
+	public static void starve(AbstractHorse horse) {
+		long now = horse.level().getGameTime();
+		horse.setAttached(STATE, new State(now - HungerSettings.get().ticksUntilHungry(), 0L));
+	}
+
 	/** True once the horse has gone longer than the configured time without eating or grazing. */
 	public static boolean isHungry(AbstractHorse horse) {
 		return ticksSinceFed(horse) >= HungerSettings.get().ticksUntilHungry();

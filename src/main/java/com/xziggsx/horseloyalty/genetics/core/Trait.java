@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.genetics.core;
 
+import com.xziggsx.horseloyalty.genetics.api.CopyRole;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

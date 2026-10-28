@@ -1,11 +1,11 @@
 package com.xziggsx.horseloyalty.genetics.trait;
 
-import com.xziggsx.horseloyalty.genetics.core.CopyRole;
+import com.xziggsx.horseloyalty.genetics.api.CopyRole;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
 import com.xziggsx.horseloyalty.genetics.core.GenePair;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
-import com.xziggsx.horseloyalty.genetics.core.Loci.Temperament;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
+import com.xziggsx.horseloyalty.genetics.core.Loci.Temperament;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
 import com.xziggsx.horseloyalty.personality.api.Personality;

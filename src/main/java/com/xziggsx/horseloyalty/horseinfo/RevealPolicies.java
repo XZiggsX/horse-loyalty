@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.horseinfo;
 
+import com.xziggsx.horseloyalty.horseinfo.api.RevealPolicy;
 import java.util.Optional;
 
 /** The available {@link RevealPolicy}s. */

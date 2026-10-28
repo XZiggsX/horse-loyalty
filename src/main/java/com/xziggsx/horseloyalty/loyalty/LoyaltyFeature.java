@@ -1,9 +1,11 @@
 package com.xziggsx.horseloyalty.loyalty;
 
 import com.xziggsx.horseloyalty.core.config.SettingsSection;
+import com.xziggsx.horseloyalty.core.debug.DebugSource;
 import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
+import com.xziggsx.horseloyalty.horseinfo.api.InfoProvider;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 
 /** Loyalty: levels 0 to 5 per rider, earned by feeding and riding, see {@link Loyalty}. */
@@ -39,5 +41,9 @@ public final class LoyaltyFeature implements Feature {
 		context.on(HorseEvents.SERVER_TICK, RideTicks::tick);
 		// The rider's own loyalty status above the hotbar.
 		context.on(HorseEvents.MOUNTED, (horse, player) -> player.sendOverlayMessage(Loyalty.describe(horse, player)));
+		LoyaltyInfo info = new LoyaltyInfo();
+		context.contribute(InfoProvider.ALL, info);
+		context.contribute(DebugSource.ALL, info);
+		LoyaltyCommands.register(context);
 	}
 }

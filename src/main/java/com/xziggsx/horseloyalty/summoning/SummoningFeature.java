@@ -29,5 +29,6 @@ public final class SummoningFeature implements Feature {
 		HornBinding.wire(context);
 		// Level with panicking; only runs for a horse that was called.
 		context.goal(1, ComeWhenCalledGoal::new);
+		SummoningCommands.register(context);
 	}
 }

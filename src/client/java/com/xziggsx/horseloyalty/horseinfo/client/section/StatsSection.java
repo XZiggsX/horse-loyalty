@@ -1,10 +1,10 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.StatLine;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
-import com.xziggsx.horseloyalty.horseinfo.Shown;
-import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.StatLine;
+import com.xziggsx.horseloyalty.horseinfo.api.Shown;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout;
+import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoPalette;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +32,8 @@ public final class StatsSection implements InfoSection {
 				}
 			}
 			case Shown.Locked<List<StatLine>>(Component reason) -> context.locked(reason, area.x(), area.y());
+			case Shown.Off<List<StatLine>> off -> {
+			}
 		}
 	}
 

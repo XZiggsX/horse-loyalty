@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.TraitLine;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
-import com.xziggsx.horseloyalty.horseinfo.Shown;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.TraitLine;
+import com.xziggsx.horseloyalty.horseinfo.api.Shown;
 import com.xziggsx.horseloyalty.horseinfo.client.GeneNames;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoPalette;
@@ -18,11 +18,15 @@ public final class LooksSection implements InfoSection {
 
 	@Override
 	public int height(HorseProfile profile) {
-		return profile.looks() instanceof Shown.Visible<List<TraitLine>>(List<TraitLine> lines) && lines.isEmpty() ? 0 : 22;
+		return profile.looks() instanceof Shown.Off<List<TraitLine>>
+				|| profile.looks() instanceof Shown.Visible<List<TraitLine>>(List<TraitLine> lines) && lines.isEmpty() ? 0 : 22;
 	}
 
 	@Override
 	public void draw(InfoContext context, HorseProfile profile, Rect area) {
+		if (profile.looks() instanceof Shown.Off<List<TraitLine>>) {
+			return;
+		}
 		context.text(Component.translatable("horseloyalty.info.looks"), area.x(), area.y(), InfoPalette.TEXT);
 		int y = area.y() + 11;
 		switch (profile.looks()) {
@@ -37,6 +41,8 @@ public final class LooksSection implements InfoSection {
 				}
 			}
 			case Shown.Locked<List<TraitLine>>(Component reason) -> context.locked(reason, area.x(), y);
+			case Shown.Off<List<TraitLine>> off -> {
+			}
 		}
 	}
 

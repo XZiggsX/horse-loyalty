@@ -43,6 +43,11 @@ public final class GaitSync {
 			builder -> builder.syncWith(GAIT_CODEC, AttachmentSyncPredicate.all())
 	);
 
+	/** The last drop, bolt or refusal a rider reported, for {@code /hl riding gait}. Server only, not saved. */
+	public static final AttachmentType<GaitEvent> LAST_EVENT = AttachmentRegistry.create(
+			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "last_gait_event")
+	);
+
 	/** Game time of the last drop or bolt sound, for the cooldown. Server only, not saved. */
 	private static final AttachmentType<Long> LAST_SOUND_TICK = AttachmentRegistry.create(
 			Identifier.fromNamespaceAndPath(HorseLoyaltyMod.MOD_ID, "last_gait_sound")
@@ -96,6 +101,7 @@ public final class GaitSync {
 		if (payload.event() == GaitEvent.SHIFT) {
 			return;
 		}
+		horse.setAttached(LAST_EVENT, payload.event());
 		if (payload.event() == GaitEvent.PRANCED || payload.event() == GaitEvent.BUCKED) {
 			// Rearing is synced to every client, and stops the horse for its rider too.
 			horse.standIfPossible();

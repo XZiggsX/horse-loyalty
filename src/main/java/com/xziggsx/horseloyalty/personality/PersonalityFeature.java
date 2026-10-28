@@ -40,5 +40,6 @@ public final class PersonalityFeature implements Feature {
 		// Skittish fleeing just below panicking, curious wandering alongside random strolling.
 		context.goal(2, SkittishAvoidGoal::new);
 		context.goal(6, CuriousWanderGoal::new);
+		PersonalityCommands.register(context);
 	}
 }

@@ -125,6 +125,30 @@ public final class Loyalty {
 		update(horse, player, get(horse, player).withBonus(bonusPoints), false);
 	}
 
+	/**
+	 * Sets a player's points with a horse, for the commands: changes their bonus points (and, below
+	 * what they earned, their losses) so the total comes out at {@code points}. A level change shows
+	 * the usual level-up or level-down toast. Server side.
+	 */
+	public static void setPoints(AbstractHorse horse, ServerPlayer player, int points) {
+		int before = level(horse, player);
+		update(horse, player, get(horse, player).withPoints(Math.max(0, points)), false);
+		int after = level(horse, player);
+		if (after != before) {
+			notifyChange(horse, player, after, after > before);
+		}
+	}
+
+	/** The horse forgets a rider entirely: their points, feeds and level. Server side. */
+	public static void forget(AbstractHorse horse, UUID player) {
+		Map<UUID, LoyaltyData> riders = new HashMap<>(horse.getAttachedOrElse(DATA, Map.of()));
+		riders.remove(player);
+		horse.setAttached(DATA, riders);
+		Map<UUID, Integer> levels = new HashMap<>(horse.getAttachedOrElse(EARNED_LEVELS, Map.of()));
+		levels.remove(player);
+		horse.setAttached(EARNED_LEVELS, levels);
+	}
+
 	/** Saves a player's new stats, refreshes the synced levels and, if {@code celebrate}, celebrates a level up. */
 	private static void update(AbstractHorse horse, Player player, LoyaltyData next, boolean celebrate) {
 		UUID id = player.getUUID();

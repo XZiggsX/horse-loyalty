@@ -1,4 +1,4 @@
-package com.xziggsx.horseloyalty.horseinfo;
+package com.xziggsx.horseloyalty.horseinfo.api;
 
 /** The parts of the horse info screen a {@link RevealPolicy} can show or lock. */
 public enum InfoTopic {

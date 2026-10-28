@@ -1,4 +1,6 @@
-package com.xziggsx.horseloyalty.genetics.core;
+package com.xziggsx.horseloyalty.genetics.api;
+
+import com.xziggsx.horseloyalty.genetics.core.GenePair;
 
 /**
  * Whether each copy at a locus shows on a horse, for display: a copy that shows helps decide

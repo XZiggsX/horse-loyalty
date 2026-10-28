@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.horseinfo.client.section;
 
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile.GeneRow;
-import com.xziggsx.horseloyalty.horseinfo.HorseProfile;
-import com.xziggsx.horseloyalty.horseinfo.Shown;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile;
+import com.xziggsx.horseloyalty.horseinfo.api.HorseProfile.GeneRow;
+import com.xziggsx.horseloyalty.horseinfo.api.Shown;
 import com.xziggsx.horseloyalty.horseinfo.client.GeneNames;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoLayout.Rect;
 import com.xziggsx.horseloyalty.horseinfo.client.InfoPalette;
@@ -23,7 +23,7 @@ public final class GenesSection implements InfoSection {
 
 	@Override
 	public int height(HorseProfile profile) {
-		return TITLE_HEIGHT + rowCount(profile) * ROW_HEIGHT;
+		return profile.genes() instanceof Shown.Off<List<GeneRow>> ? 0 : TITLE_HEIGHT + rowCount(profile) * ROW_HEIGHT;
 	}
 
 	private static int rowCount(HorseProfile profile) {
@@ -42,6 +42,9 @@ public final class GenesSection implements InfoSection {
 
 	@Override
 	public void draw(InfoContext context, HorseProfile profile, Rect area) {
+		if (profile.genes() instanceof Shown.Off<List<GeneRow>>) {
+			return;
+		}
 		context.text(Component.translatable("horseloyalty.info.genes"), area.x(), area.y(), InfoPalette.TEXT);
 		Component hint = Component.translatable("horseloyalty.info.genes.hint");
 		context.text(hint, area.right() - context.font().width(hint), area.y(), InfoPalette.DIM);
@@ -49,6 +52,8 @@ public final class GenesSection implements InfoSection {
 		switch (profile.genes()) {
 			case Shown.Visible<List<GeneRow>>(List<GeneRow> genes) -> drawRows(context, genes, rows, maxScroll(profile, area));
 			case Shown.Locked<List<GeneRow>>(Component reason) -> context.locked(reason, rows.x(), rows.y());
+			case Shown.Off<List<GeneRow>> off -> {
+			}
 		}
 	}
 
