@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "com.xziggsx.horseloyalty.horseinfo.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ContainerScreenAccessor",
+		"ContainerScreenInfoMixin",
+		"MountInfoScreenMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,8 +1,8 @@
 package com.xziggsx.horseloyalty.foals;
 
+import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
-import com.xziggsx.horseloyalty.loyalty.Family;
 
 /**
  * Foals growing up: bred foals are born tamed with a head start, follow a chosen parent and their
@@ -23,5 +23,9 @@ public final class FoalsFeature implements Feature {
 
 	@Override
 	public void wire(FeatureContext context) {
+		context.on(HorseEvents.BRED, HorseEvents.FAMILY, Family::onBorn);
+		// Ahead of vanilla's FollowParentGoal (4) and random strolling (6).
+		context.goal(3, FollowChosenParentGoal::new);
+		context.goal(3, FollowBreederGoal::new);
 	}
 }

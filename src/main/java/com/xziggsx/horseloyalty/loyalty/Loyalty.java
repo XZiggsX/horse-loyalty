@@ -120,7 +120,7 @@ public final class Loyalty {
 
 	/**
 	 * Gives a player bonus points with a horse without the level-up celebration, such as
-	 * a newly born foal's head start (see {@link Family}). Server side.
+	 * a newly born foal's head start (see {@code Family} in foals). Server side.
 	 */
 	public static void startWith(AbstractHorse horse, Player player, int bonusPoints) {
 		update(horse, player, get(horse, player).withBonus(bonusPoints), false);

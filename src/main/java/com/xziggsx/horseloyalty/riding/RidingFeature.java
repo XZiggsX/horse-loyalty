@@ -2,6 +2,7 @@ package com.xziggsx.horseloyalty.riding;
 
 import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
+import com.xziggsx.horseloyalty.riding.api.RideView;
 
 /**
  * Riding: gaits, boat-style steering, sidestepping, backing up, gait drops, gait raise and bucking,
@@ -24,5 +25,6 @@ public final class RidingFeature implements Feature {
 	@Override
 	public void wire(FeatureContext context) {
 		GaitSync.wire(context);
+		context.provide(RideView.KEY, new SyncedRideView());
 	}
 }

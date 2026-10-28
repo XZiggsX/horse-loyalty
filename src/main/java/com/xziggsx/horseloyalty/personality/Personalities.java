@@ -45,6 +45,11 @@ public final class Personalities {
 		return horse.getAttachedOrElse(DATA, Personality.STEADY);
 	}
 
+	/** Whether a horse that would panic stands its ground instead: a brave horse, unless it's burning or freezing. */
+	public static boolean standsGround(AbstractHorse horse) {
+		return of(horse) == Personality.BRAVE && !horse.isOnFire() && !horse.isFreezing();
+	}
+
 	/** Whether this player knows the horse well enough to see its personality. */
 	public static boolean isRevealedTo(AbstractHorse horse, Player player) {
 		return HorseLoyaltyConfig.get().personalityEnabled() && horse.hasAttached(DATA)

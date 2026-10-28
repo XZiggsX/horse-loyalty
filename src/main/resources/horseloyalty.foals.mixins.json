@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.xziggsx.horseloyalty.foals.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"FoalHorseMixin",
+		"FoalStrollMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

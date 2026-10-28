@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "com.xziggsx.horseloyalty.riding.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AbstractHorseRidingMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

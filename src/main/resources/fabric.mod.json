@@ -19,9 +19,27 @@
 		]
 	},
 	"mixins": [
-		"horseloyalty.mixins.json",
+		"horseloyalty.core.mixins.json",
+		"horseloyalty.riding.mixins.json",
+		"horseloyalty.personality.mixins.json",
+		"horseloyalty.genetics.mixins.json",
+		"horseloyalty.foals.mixins.json",
+		"horseloyalty.summoning.mixins.json",
+		"horseloyalty.feedback.mixins.json",
 		{
-			"config": "horseloyalty.client.mixins.json",
+			"config": "horseloyalty.riding.client.mixins.json",
+			"environment": "client"
+		},
+		{
+			"config": "horseloyalty.loyalty.client.mixins.json",
+			"environment": "client"
+		},
+		{
+			"config": "horseloyalty.horseinfo.client.mixins.json",
+			"environment": "client"
+		},
+		{
+			"config": "horseloyalty.dev.client.mixins.json",
 			"environment": "client"
 		}
 	],

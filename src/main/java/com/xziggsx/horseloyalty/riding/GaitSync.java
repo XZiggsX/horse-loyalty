@@ -2,9 +2,11 @@ package com.xziggsx.horseloyalty.riding;
 
 import com.xziggsx.horseloyalty.HorseLoyaltyMod;
 import com.xziggsx.horseloyalty.core.HorseScope;
+import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.GaitEvent;
+import com.xziggsx.horseloyalty.riding.mixin.HorseSoundInvoker;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
@@ -21,7 +23,7 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 /**
  * Shares a ridden horse's gait with the server and every other player.
  * <p>
- * Riding runs on the rider's client (see {@code AbstractHorseRidingMixin}), so only that client
+ * Riding runs on the rider's client (see {@code AbstractHorseRidingMixin} in the riding client package), so only that client
  * knows the gait. It sends a {@link GaitPayload} whenever the gait changes or the horse drops a
  * gait, bolts or balks at a shift up. The server keeps the gait in {@link #GAIT}, which is synced to
  * everyone, so other clients can show gait dust and every side can pick the right hoof sound. Those
@@ -62,14 +64,6 @@ public final class GaitSync {
 		}
 	}
 
-	/**
-	 * Implemented on every horse by {@code AbstractHorseMixin}, so the packet handler can play the
-	 * horse's own angry sound (it differs for donkeys and the undead horses).
-	 */
-	public interface HorseSounds {
-		SoundEvent horseloyalty$getAngrySound();
-	}
-
 	private GaitSync() {
 	}
 
@@ -78,9 +72,10 @@ public final class GaitSync {
 		PayloadTypeRegistry.serverboundPlay().register(GaitPayload.TYPE, GaitPayload.STREAM_CODEC);
 	}
 
-	/** Handles the riders' gait packets while riding is on. */
+	/** Handles the riders' gait packets while riding is on, and forgets the gait of horses nobody rides. */
 	public static void wire(FeatureContext context) {
 		context.receive(GaitPayload.TYPE, (payload, packetContext) -> receive(payload, packetContext.player()));
+		context.on(HorseEvents.SERVER_TICK, (horse, level) -> tick(horse));
 	}
 
 	/** The horse's synced gait, or null if nobody with the mod is riding it. Works on both sides. */
@@ -114,7 +109,7 @@ public final class GaitSync {
 			return;
 		}
 		horse.setAttached(LAST_SOUND_TICK, now);
-		SoundEvent angry = ((HorseSounds) horse).horseloyalty$getAngrySound();
+		SoundEvent angry = ((HorseSoundInvoker) horse).horseloyalty$getAngrySound();
 		if (angry != null) {
 			// Everyone nearby but the rider, who already heard it on their own client.
 			horse.level().playSound(player, horse, angry, horse.getSoundSource(), 1.0F, horse.getVoicePitch());
@@ -122,7 +117,7 @@ public final class GaitSync {
 	}
 
 	/** Server, every tick: forgets the gait once no player is steering the horse. */
-	public static void tick(AbstractHorse horse) {
+	private static void tick(AbstractHorse horse) {
 		if (horse.hasAttached(GAIT) && horse.getControllingPassenger() == null) {
 			horse.removeAttached(GAIT);
 		}

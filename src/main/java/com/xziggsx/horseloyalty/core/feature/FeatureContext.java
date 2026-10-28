@@ -2,10 +2,13 @@ package com.xziggsx.horseloyalty.core.feature;
 
 import com.xziggsx.horseloyalty.core.link.Contributions;
 import com.xziggsx.horseloyalty.core.link.LinkKey;
+import java.util.function.Function;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 /**
  * What a feature hooks in with. Everything added here only runs while the feature is on, so
@@ -21,6 +24,9 @@ public interface FeatureContext {
 
 	/** As {@link #on(Event, Object)}, in one of the event's phases, such as a breeding phase. */
 	<T> void on(Event<T> event, Identifier phase, T listener);
+
+	/** Adds a goal to every horse as it is built. The goal never runs while the feature is off. */
+	void goal(int priority, Function<AbstractHorse, Goal> goal);
 
 	/** Handles a packet from a client while the feature is on. While it's off the packet is ignored. */
 	<T extends CustomPacketPayload> void receive(CustomPacketPayload.Type<T> type, ServerPlayNetworking.PlayPayloadHandler<T> handler);

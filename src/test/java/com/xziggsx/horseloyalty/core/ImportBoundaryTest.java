@@ -28,9 +28,8 @@ class ImportBoundaryTest {
 	/** Classes every package may use: the mod id and logger. */
 	private static final Set<String> SHARED = Set.of(ROOT + ".HorseLoyaltyMod");
 	/** Feature classes still allowed to cross a boundary until their part of the migration is done. */
-	private static final Set<String> NOT_MIGRATED_YET = Set.of(ROOT + ".dev.HorseGenesCommand", ROOT + ".foals.FoalsFeature",
-			ROOT + ".genetics.GeneticsFeature", ROOT + ".horseinfo.HorseProfile", ROOT + ".horseinfo.HorseProfiles",
-			ROOT + ".hunger.HungerFeature");
+	private static final Set<String> NOT_MIGRATED_YET = Set.of(ROOT + ".dev.client.LoyaltyDebugHud",
+			ROOT + ".horseinfo.HorseProfile", ROOT + ".horseinfo.HorseProfiles");
 
 	private static final Pattern IMPORT = Pattern.compile("^import (?:static )?(" + Pattern.quote(ROOT) + "[\\w.]*?)(?:\\.\\*)?;",
 			Pattern.MULTILINE);

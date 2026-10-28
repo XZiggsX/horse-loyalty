@@ -1,7 +1,7 @@
 package com.xziggsx.horseloyalty.genetics.world;
 
+import com.xziggsx.horseloyalty.genetics.mixin.HorseInvoker;
 import com.xziggsx.horseloyalty.genetics.trait.HorseTraits;
-import com.xziggsx.horseloyalty.mixin.HorseInvoker;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;

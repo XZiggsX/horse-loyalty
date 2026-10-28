@@ -1,12 +1,16 @@
 package com.xziggsx.horseloyalty.core.feature;
 
+import com.xziggsx.horseloyalty.core.event.HorseEvents;
 import com.xziggsx.horseloyalty.core.link.Contributions;
 import com.xziggsx.horseloyalty.core.link.LinkKey;
 import com.xziggsx.horseloyalty.core.link.Links;
+import java.util.function.Function;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 /** The {@link FeatureContext} of one feature: wraps everything in a check of that feature's switch. */
 final class GatedFeatureContext implements FeatureContext {
@@ -34,6 +38,12 @@ final class GatedFeatureContext implements FeatureContext {
 	@Override
 	public <T> void on(Event<T> event, Identifier phase, T listener) {
 		event.register(phase, ListenerGates.wrap(event, listener, this::isOn));
+	}
+
+	@Override
+	public void goal(int priority, Function<AbstractHorse, Goal> goal) {
+		// Not gated: goals are added when the horse is built; the goal itself checks the switch.
+		HorseEvents.REGISTER_GOALS.register((horse, goals) -> goals.addGoal(priority, new GatedGoal(goal.apply(horse), this::isOn)));
 	}
 
 	@Override

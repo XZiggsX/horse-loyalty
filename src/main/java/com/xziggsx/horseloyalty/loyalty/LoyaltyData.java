@@ -11,9 +11,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param feeds       times this player has fed it (with a cooldown, see {@link HorseLoyaltyConfig})
  * @param rideTicks   ticks this player has spent riding it while it was moving
  * @param lastFedTick game time of the last counted feed, 0 if never fed
- * @param lostPoints  points lost to hunger (see {@link Hunger}). Never more than the points earned,
+ * @param lostPoints  points lost to hunger (see {@code Hunger}). Never more than the points earned,
  *                    so a neglected horse bottoms out at level 1 instead of building up a debt.
- * @param bonusPoints points given outright, such as a bred foal's head start (see {@link Family})
+ * @param bonusPoints points given outright, such as a bred foal's head start (see {@code Family})
  */
 public record LoyaltyData(int feeds, int rideTicks, long lastFedTick, int lostPoints, int bonusPoints) {
 	public static final LoyaltyData EMPTY = new LoyaltyData(0, 0, 0L, 0, 0);

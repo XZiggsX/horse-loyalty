@@ -16,17 +16,14 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 /**
- * Hidden genes behind a horse's coat, markings and personality. The only way in for mixins:
- * breeding ({@link #onBred}), wild spawns ({@link #onSpawn}) and the tick check
+ * Hidden genes behind a horse's coat, markings and personality. The only way in, through the horse events:
+ * breeding ({@link #onBred}), wild spawns ({@link #onSpawn}) and the once-a-second check
  * ({@link #ensureAssigned}). Everything here does nothing while genetics is off in the config,
  * and only runs on the server.
  * <p>
  * Genes don't touch stats: health, speed and jump still average the parents as in vanilla.
  */
 public final class HorseGenetics {
-	/** Ticks between checks that a horse's look still fits its genes. */
-	private static final int CHECK_INTERVAL = 20;
-
 	private HorseGenetics() {
 	}
 
@@ -81,8 +78,8 @@ public final class HorseGenetics {
 	}
 
 	/**
-	 * Keeps a horse's genes in step with its look. Called every server tick, after
-	 * {@code Personality.ensureAssigned}:
+	 * Keeps a horse's genes in step with its look. Called once a second for every horse, after
+	 * personality's own check:
 	 * <ul>
 	 *   <li>no genes yet (an old horse, or genetics was just turned on): builds genes that fit
 	 *   what it shows now, so nothing about it changes;</li>
@@ -90,7 +87,7 @@ public final class HorseGenetics {
 	 *   <li>a trait its genes can't show (changed by a command or another mod): re-rolls just
 	 *   that trait's genes to fit.</li>
 	 * </ul>
-	 * Horses with genes are only checked every second, and only a change is saved and synced.
+	 * Only a change is saved and synced.
 	 */
 	public static void ensureAssigned(AbstractHorse horse) {
 		if (!enabled() || !HorseScope.inScope(horse)) {
@@ -99,9 +96,6 @@ public final class HorseGenetics {
 		Genome genome = horse.getAttached(GeneticsData.GENOME);
 		if (genome == null) {
 			horse.setAttached(GeneticsData.GENOME, buildForLook(horse));
-			return;
-		}
-		if ((horse.tickCount + horse.getId()) % CHECK_INTERVAL != 0) {
 			return;
 		}
 		Dice dice = dice(horse.getRandom());

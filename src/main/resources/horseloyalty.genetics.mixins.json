@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.xziggsx.horseloyalty.genetics.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"HorseGroupDataMixin",
+		"HorseInvoker"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
