@@ -185,6 +185,18 @@ class GeneticsCoreTest {
 		assertTrue(GenomeFactory.fillMissing(read, Dice.of(new Random(1))).isComplete());
 	}
 
+	@Test
+	void defaultRolesGuessFromWhatChanges() {
+		// The stand-in trait has no roles of its own, so this is the generic guess.
+		Genome brave = plain().with(Loci.TEMPERAMENT, new GenePair<>(Temperament.BRAVE, Temperament.STEADY));
+		// Coarse: swapping the steady copy for another quirk would change things too, so it counts.
+		// This is why the real traits give their own roles.
+		assertEquals(CopyRole.BOTH, QUIRK.roles(brave, Temperament.BRAVE).get(Loci.TEMPERAMENT));
+		assertTrue(!QUIRK.roles(plain(), Temperament.STEADY).containsKey(Loci.CREAM), "only this trait's loci");
+		Genome mixed = plain().with(Loci.TEMPERAMENT, new GenePair<>(Temperament.BRAVE, Temperament.LAZY));
+		assertEquals(CopyRole.BOTH, QUIRK.roles(mixed, Temperament.LAZY).get(Loci.TEMPERAMENT));
+	}
+
 	/**
 	 * The temperament rules on the core enum. The real trait shows a Personality, whose class
 	 * registers game data when it loads, so it can't be used outside the game.

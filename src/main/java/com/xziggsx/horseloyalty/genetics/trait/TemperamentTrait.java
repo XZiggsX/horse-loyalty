@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.genetics.trait;
 
+import com.xziggsx.horseloyalty.genetics.core.CopyRole;
 import com.xziggsx.horseloyalty.genetics.core.Distribution;
 import com.xziggsx.horseloyalty.genetics.core.GenePair;
 import com.xziggsx.horseloyalty.genetics.core.Genome;
@@ -44,6 +45,16 @@ public final class TemperamentTrait implements Trait<Personality> {
 		split.put(personality(first), 0.5);
 		split.put(personality(second), 0.5);
 		return Distribution.of(split);
+	}
+
+	/**
+	 * The copies of the personality the horse shows. With two different quirks only the one
+	 * picked at birth shows; a steady horse shows both steady copies.
+	 */
+	@Override
+	public Map<Locus<?>, CopyRole> roles(Genome genome, Personality shown) {
+		GenePair<Temperament> pair = genome.getOr(Loci.TEMPERAMENT, GenePair.of(Temperament.STEADY));
+		return Map.of(Loci.TEMPERAMENT, shown == null ? CopyRole.NEITHER : CopyRole.where(pair, temperament(shown)));
 	}
 
 	/** The personality a temperament version stands for; they share their names. */

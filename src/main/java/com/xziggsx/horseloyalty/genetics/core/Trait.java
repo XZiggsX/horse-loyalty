@@ -1,6 +1,8 @@
 package com.xziggsx.horseloyalty.genetics.core;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,6 +39,37 @@ public interface Trait<T> {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Which copies at each of this trait's loci show on a horse with this genome that shows
+	 * {@code shown}, for display. The default guesses: a copy shows if swapping it for another
+	 * version could change what the horse shows. That misses copies that only matter together
+	 * (black/black), so traits override it with their own rules.
+	 */
+	default Map<Locus<?>, CopyRole> roles(Genome genome, T shown) {
+		Map<Locus<?>, CopyRole> roles = new LinkedHashMap<>();
+		Distribution<T> current = express(genome);
+		for (Locus<?> locus : loci()) {
+			roles.put(locus, guessRole(genome, locus, current));
+		}
+		return roles;
+	}
+
+	private <A extends Enum<A>> CopyRole guessRole(Genome genome, Locus<A> locus, Distribution<T> current) {
+		GenePair<A> pair = genome.get(locus);
+		if (pair == null) {
+			return CopyRole.NEITHER;
+		}
+		boolean first = false;
+		boolean second = false;
+		for (A other : locus.versions()) {
+			first |= other != pair.first()
+					&& !express(genome.with(locus, new GenePair<>(other, pair.second()))).outcomes().equals(current.outcomes());
+			second |= other != pair.second()
+					&& !express(genome.with(locus, new GenePair<>(pair.first(), other))).outcomes().equals(current.outcomes());
+		}
+		return new CopyRole(first, second);
 	}
 
 	/** Casts an untyped value to this trait's type, for code that holds traits of any type. */

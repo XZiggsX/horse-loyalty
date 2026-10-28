@@ -62,7 +62,7 @@ into a random version. Genes never change stats: health, speed and jump still av
 |---|---|---|
 | red_black | black, red | two red: chestnut base |
 | agouti | bay, seal_brown, black | on black pigment: brown, dark brown or black |
-| cream | cream, none | one copy lightens to creamy (except black), two make white |
+| cream | cream, none | one copy lightens to creamy (except black); two make a chestnut white (cremello) and any other base creamy |
 | gray | gray, none | one copy turns any coat gray |
 | pinto | pinto, none | one copy: white patches |
 | leopard | leopard, none | one copy: white dots, two: black dots |
