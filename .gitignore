@@ -5,6 +5,8 @@ out/
 
 # Dev game folder (worlds, logs, options)
 run/
+# Logs written by the unit tests
+logs/
 
 # IDE
 .idea/

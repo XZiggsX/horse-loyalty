@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"id": "horseloyalty-gametest",
+	"version": "1.0.0",
+	"name": "Horse Loyalty game tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.xziggsx.horseloyalty.gametest.HorseLoyaltyGameTests"
+		]
+	},
+	"depends": {
+		"horseloyalty": "*",
+		"fabric-gametest-api-v1": "*"
+	}
+}

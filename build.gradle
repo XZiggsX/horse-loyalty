@@ -36,6 +36,17 @@ loom {
 	}
 }
 
+fabricApi {
+	// Server game tests for the features and their switches, in src/gametest (its own test mod).
+	// Run them with gradlew runGameTest.
+	configureTests {
+		createSourceSet = true
+		modId = "horseloyalty-gametest"
+		enableGameTests = true
+		enableClientGameTests = false
+	}
+}
+
 dependencies {
 	// Versions live in gradle.properties
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
