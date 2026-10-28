@@ -7,6 +7,7 @@ import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Leopard;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
+import com.xziggsx.horseloyalty.genetics.core.NamedTrait;
 import com.xziggsx.horseloyalty.genetics.core.Pinto;
 import com.xziggsx.horseloyalty.genetics.core.Socks;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
@@ -21,7 +22,7 @@ import net.minecraft.world.entity.animal.equine.Markings;
  * dots (leopard), two SOCKS white legs, and anything else no markings. The real pattern name
  * is {@link #pattern}.
  */
-public final class MarkingTrait implements Trait<Markings> {
+public final class MarkingTrait implements Trait<Markings>, NamedTrait {
 	private static final List<Locus<?>> LOCI = List.of(Loci.PINTO, Loci.LEOPARD, Loci.SOCKS);
 
 	@Override
@@ -37,6 +38,11 @@ public final class MarkingTrait implements Trait<Markings> {
 	@Override
 	public Distribution<Markings> express(Genome genome) {
 		return Distribution.single(pattern(genome).texture());
+	}
+
+	@Override
+	public String nameId(Genome genome) {
+		return pattern(genome).id();
 	}
 
 	/** The pattern's real name, such as tobiano. Its {@link MarkingPattern#texture()} is what {@link #express} shows. */

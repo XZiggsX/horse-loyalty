@@ -603,7 +603,7 @@ public final class HorseLoyaltyConfig {
 				personality.boltSeconds, personality.boltCreeperDistance, config.gaitRaiseEnabled,
 				config.gaitRaiseCooldownTicks, config.gaitRaiseFailChance, config.buckOffPersonalities,
 				config.buckOffChance, config.gallopPushEnabled, config.gallopPushStep, config.gallopPushMax,
-				config.gallopPushHoldTicks, config.gallopPushFadePerTick);
+				config.gallopPushHoldTicks, config.gallopPushFadePerTick, config.resolvedGenetics.enabled);
 	}
 
 	/**
@@ -657,6 +657,7 @@ public final class HorseLoyaltyConfig {
 		gallopPushMax = rules.gallopPushMax();
 		gallopPushHoldTicks = Math.max(1, rules.gallopPushHoldTicks());
 		gallopPushFadePerTick = rules.gallopPushFadePerTick();
+		resolvedGenetics.enabled = rules.geneticsEnabled();
 	}
 
 	private static double[] sameLength(double[] server, double[] local) {

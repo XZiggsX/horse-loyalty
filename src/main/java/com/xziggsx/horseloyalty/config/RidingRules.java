@@ -19,6 +19,9 @@ import net.minecraft.resources.Identifier;
  * (see {@link Payload}), and the client rides by them until it disconnects. A server without the
  * mod sends nothing, and the client's own config applies. Arrays are indexed like the config's:
  * by loyalty level 0 to 5, or by gait 0 (halt) to 4 (gallop).
+ * <p>
+ * Also carries whether genetics is on, so the horse info screen follows the server, not the
+ * player's own file.
  */
 public record RidingRules(
 		double[] topSpeedShare,
@@ -42,7 +45,8 @@ public record RidingRules(
 		double gallopPushStep,
 		double gallopPushMax,
 		int gallopPushHoldTicks,
-		double gallopPushFadePerTick) {
+		double gallopPushFadePerTick,
+		boolean geneticsEnabled) {
 
 	public static final StreamCodec<ByteBuf, RidingRules> STREAM_CODEC = StreamCodec.of(RidingRules::write, RidingRules::read);
 
@@ -105,6 +109,7 @@ public record RidingRules(
 		buf.writeDouble(rules.gallopPushMax);
 		buf.writeInt(rules.gallopPushHoldTicks);
 		buf.writeDouble(rules.gallopPushFadePerTick);
+		buf.writeBoolean(rules.geneticsEnabled);
 	}
 
 	private static RidingRules read(ByteBuf buf) {
@@ -140,7 +145,7 @@ public record RidingRules(
 		return new RidingRules(topSpeedShare, gaitShares, turnDegrees, turnEaseTicks, sidestepAngleDegrees,
 				gaitDropChance, gaitDropTicks, personalityEnabled, lazyChance, lazyTime, boltSeconds, boltDistance,
 				raiseEnabled, raiseCooldown, failChance, buckOff, buf.readDouble(), buf.readBoolean(),
-				buf.readDouble(), buf.readDouble(), buf.readInt(), buf.readDouble());
+				buf.readDouble(), buf.readDouble(), buf.readInt(), buf.readDouble(), buf.readBoolean());
 	}
 
 	private static void writeDoubles(ByteBuf buf, double[] values) {

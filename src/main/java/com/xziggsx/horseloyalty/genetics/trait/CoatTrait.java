@@ -9,6 +9,7 @@ import com.xziggsx.horseloyalty.genetics.core.Genome;
 import com.xziggsx.horseloyalty.genetics.core.Gray;
 import com.xziggsx.horseloyalty.genetics.core.Loci;
 import com.xziggsx.horseloyalty.genetics.core.Locus;
+import com.xziggsx.horseloyalty.genetics.core.NamedTrait;
 import com.xziggsx.horseloyalty.genetics.core.RedBlack;
 import com.xziggsx.horseloyalty.genetics.core.Trait;
 import java.util.LinkedHashMap;
@@ -30,7 +31,7 @@ import net.minecraft.world.entity.animal.equine.Variant;
  * The same rules give the coat's real name too (see {@link #colour}), which tells apart
  * colours that share a vanilla texture, such as palomino and buckskin.
  */
-public final class CoatTrait implements Trait<Variant> {
+public final class CoatTrait implements Trait<Variant>, NamedTrait {
 	private static final List<Locus<?>> LOCI = List.of(Loci.RED_BLACK, Loci.AGOUTI, Loci.CREAM, Loci.GRAY);
 
 	@Override
@@ -46,6 +47,11 @@ public final class CoatTrait implements Trait<Variant> {
 	@Override
 	public Distribution<Variant> express(Genome genome) {
 		return Distribution.single(colour(genome).texture());
+	}
+
+	@Override
+	public String nameId(Genome genome) {
+		return colour(genome).id();
 	}
 
 	/** The coat's real colour name, such as buckskin. Its {@link CoatColour#texture()} is what {@link #express} shows. */
