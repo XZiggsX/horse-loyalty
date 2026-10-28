@@ -7,7 +7,7 @@ import net.minecraft.world.entity.monster.Creeper;
 
 /**
  * A skittish horse runs from creepers while nobody rides it. Ridden, the rider's client
- * handles it instead (the bolt in AbstractHorseRidingMixin), since riding runs there.
+ * handles it instead (the bolt in HorseRidingMixin), since riding runs there.
  */
 public class SkittishAvoidGoal extends AvoidEntityGoal<Creeper> {
 	private final AbstractHorse horse;

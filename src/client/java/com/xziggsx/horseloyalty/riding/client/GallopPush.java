@@ -13,13 +13,13 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Pushing a galloping horse with W taps. Each tap adds a step of extra speed, up to the configured
- * most. Every tap, also at the most, restarts the hold timer (see {@link Riding#gallopPushTicks});
+ * most. Every tap, also at the most, restarts the hold timer (see {@link RideNumbers#gallopPushTicks});
  * once the rider stops tapping that long the extra speed fades away exponentially, and a tap while
  * it fades builds on what's left. Leaving the gallop ends the push at once.
  * <p>
  * While pushed the horse breathes hard, for the rider only. The HUD gait bar glows with the push
  * (see {@code RidingHud}); with the HUD off, a message above the hotbar says it instead.
- * One of these lives on every horse (see {@code AbstractHorseRidingMixin}).
+ * One of these lives on every horse (see {@code HorseRidingMixin}).
  */
 public final class GallopPush {
 	/** Most ticks between breaths while pushed; up to 6 fewer at the full push. */
@@ -43,8 +43,7 @@ public final class GallopPush {
 
 	/** How hard the horse is pushed, from 0 (not at all) to 1 (the most the config allows). */
 	public double effort() {
-		double max = RidingSettings.get().gallopPushMax();
-		return max > 0 ? Math.min(1, push / max) : 0;
+		return RideMath.effort(push, RidingSettings.get().gallopPushMax());
 	}
 
 	/** Ends any push, for a new ride. */
@@ -70,7 +69,7 @@ public final class GallopPush {
 			}
 			push = Math.min(config.gallopPushMax(), push + config.gallopPushStep());
 		}
-		holdTicks = Riding.gallopPushTicks(horse, player);
+		holdTicks = RideNumbers.gallopPushTicks(horse, player);
 		// A tap answers with a breath straight away, unless one just played.
 		if (starting || soundTicks >= SOUND_MIN_GAP) {
 			playSound(horse);
@@ -95,7 +94,7 @@ public final class GallopPush {
 			holdTicks--;
 		} else {
 			// Shrinks by the same share every tick: quick at first, then easing into a normal gallop.
-			push *= RidingSettings.get().gallopPushFadePerTick();
+			push = RideMath.fade(push, RidingSettings.get().gallopPushFadePerTick());
 			if (push < MIN_PUSH) {
 				reset();
 				if (!FeedbackSettings.get().ridingHud()) {

@@ -14,12 +14,12 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 final class ClientRideView extends SyncedRideView {
 	@Override
 	public Gait gait(AbstractHorse horse) {
-		return isOwnRide(horse) ? ((GaitHolder) horse).horseloyalty$getGait() : GaitSync.gait(horse);
+		return isOwnRide(horse) ? ((RideHolder) horse).horseloyalty$ride().gait() : GaitSync.gait(horse);
 	}
 
 	@Override
 	public double pushEffort(AbstractHorse horse) {
-		return isOwnRide(horse) ? ((GaitHolder) horse).horseloyalty$getGallopPush().effort() : 0;
+		return isOwnRide(horse) ? ((RideHolder) horse).horseloyalty$ride().push().effort() : 0;
 	}
 
 	private static boolean isOwnRide(AbstractHorse horse) {

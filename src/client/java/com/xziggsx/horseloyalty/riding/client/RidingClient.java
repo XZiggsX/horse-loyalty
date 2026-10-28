@@ -4,7 +4,7 @@ import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.riding.api.RideView;
 
 /**
- * Client side of riding. The controls themselves hook in through {@code AbstractHorseRidingMixin};
+ * Client side of riding. The controls themselves hook in through {@code HorseRidingMixin};
  * this only swaps in the client's {@link RideView}, which knows your own ride.
  */
 public final class RidingClient {

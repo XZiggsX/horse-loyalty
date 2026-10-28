@@ -23,7 +23,7 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 /**
  * Shares a ridden horse's gait with the server and every other player.
  * <p>
- * Riding runs on the rider's client (see {@code AbstractHorseRidingMixin} in the riding client package), so only that client
+ * Riding runs on the rider's client (see {@code HorseRidingMixin} in the riding client package), so only that client
  * knows the gait. It sends a {@link GaitPayload} whenever the gait changes or the horse drops a
  * gait, bolts or balks at a shift up. The server keeps the gait in {@link #GAIT}, which is synced to
  * everyone, so other clients can show gait dust and every side can pick the right hoof sound. Those

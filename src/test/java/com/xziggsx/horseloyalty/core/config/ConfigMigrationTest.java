@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.xziggsx.horseloyalty.foals.FoalSettings;
 import com.xziggsx.horseloyalty.genetics.GeneticsSettings;
 import com.xziggsx.horseloyalty.hunger.HungerSettings;
@@ -15,6 +13,8 @@ import com.xziggsx.horseloyalty.personality.PersonalitySettings;
 import com.xziggsx.horseloyalty.personality.api.Personality;
 import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

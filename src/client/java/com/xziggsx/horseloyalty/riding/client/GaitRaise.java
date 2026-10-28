@@ -6,7 +6,6 @@ import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.RideModifiers;
-import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -20,26 +19,9 @@ import net.minecraft.world.entity.player.Player;
  * <p>
  * A horse that refuses prances (rears up) and won't go faster for a while (the cooldown). A horse may
  * throw its rider off instead, with the chance the ride modifiers give (such as a skittish horse's). One of these
- * lives on every horse (see {@code AbstractHorseRidingMixin}), which makes the horse act on the outcome.
+ * lives on every horse (see {@code HorseRidingMixin}), which makes the horse act on the outcome.
  */
 public final class GaitRaise {
-	/** What the horse does when asked for more speed. */
-	public enum Outcome {
-		/** Goes faster as asked. */
-		OK,
-		/** Still unsettled from refusing before; nothing happens. */
-		UNSETTLED,
-		/** Refuses and rears up; the gait stays as it was. */
-		PRANCE,
-		/** Refuses and throws its rider off. */
-		BUCK;
-
-		/** Lang key part for the toast, such as "prance". */
-		public String id() {
-			return name().toLowerCase(Locale.ROOT);
-		}
-	}
-
 	/**
 	 * Game time until which the horse won't go faster, after it refused. Lives on the horse, not
 	 * the ride, so getting off and on again doesn't skip it.
@@ -51,14 +33,14 @@ public final class GaitRaise {
 	 * (a halt to walk is never held back by that) the rider gets a message; on a new refusal, a toast
 	 * and the cooldown starts. The caller plays the sound and makes the horse rear or buck.
 	 */
-	public Outcome ask(AbstractHorse horse, Player player, Gait from) {
+	public RaiseOutcome ask(AbstractHorse horse, Player player, Gait from) {
 		long now = horse.level().getGameTime();
 		if (from != Gait.HALT && now < blockedUntil) {
 			player.sendOverlayMessage(Component.translatable("horseloyalty.gait.unsettled", horse.getName()));
-			return Outcome.UNSETTLED;
+			return RaiseOutcome.UNSETTLED;
 		}
-		Outcome outcome = roll(horse, player, from);
-		if (outcome == Outcome.OK) {
+		RaiseOutcome outcome = roll(horse, player, from);
+		if (outcome == RaiseOutcome.OK) {
 			return outcome;
 		}
 		int cooldown = RidingSettings.get().gaitRaiseCooldownTicks();
@@ -81,11 +63,11 @@ public final class GaitRaise {
 	}
 
 	/** Rolls whether the horse goes along, prances or bucks. */
-	private static Outcome roll(AbstractHorse horse, Player player, Gait from) {
+	private static RaiseOutcome roll(AbstractHorse horse, Player player, Gait from) {
 		RandomSource random = horse.getRandom();
 		if (random.nextDouble() >= failChance(horse, player, from)) {
-			return Outcome.OK;
+			return RaiseOutcome.OK;
 		}
-		return random.nextDouble() < RideModifiers.buckChance(horse, player, 0) ? Outcome.BUCK : Outcome.PRANCE;
+		return random.nextDouble() < RideModifiers.buckChance(horse, player, 0) ? RaiseOutcome.BUCK : RaiseOutcome.PRANCE;
 	}
 }

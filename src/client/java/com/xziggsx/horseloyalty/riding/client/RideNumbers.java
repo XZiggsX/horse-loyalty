@@ -12,8 +12,8 @@ import net.minecraft.world.entity.player.Player;
  * (see {@link Bond}) and changed by any {@link RideModifiers}. The numbers per level come from the
  * user config, see {@link RidingSettings}. Client side only: riding runs on the rider's client.
  */
-public final class Riding {
-	private Riding() {
+public final class RideNumbers {
+	private RideNumbers() {
 	}
 
 	/**

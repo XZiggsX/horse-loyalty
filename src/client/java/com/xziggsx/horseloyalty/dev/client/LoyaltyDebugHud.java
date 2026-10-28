@@ -15,9 +15,10 @@ import com.xziggsx.horseloyalty.loyalty.LoyaltyData;
 import com.xziggsx.horseloyalty.loyalty.LoyaltySettings;
 import com.xziggsx.horseloyalty.personality.api.PersonalityView;
 import com.xziggsx.horseloyalty.riding.api.Gait;
-import com.xziggsx.horseloyalty.riding.client.GaitHolder;
 import com.xziggsx.horseloyalty.riding.client.GaitRaise;
-import com.xziggsx.horseloyalty.riding.client.Riding;
+import com.xziggsx.horseloyalty.riding.client.RideControl;
+import com.xziggsx.horseloyalty.riding.client.RideHolder;
+import com.xziggsx.horseloyalty.riding.client.RideNumbers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -158,7 +159,7 @@ public final class LoyaltyDebugHud {
 		section.add("Health", String.format(Locale.ROOT, "%.1f / %.1f", horse.getHealth(), horse.getMaxHealth()));
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
 		section.add("Speed", String.format(Locale.ROOT, "%.4f  (gallop ~%.1f b/s)",
-				speed, Riding.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND));
+				speed, RideNumbers.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND));
 		section.add("Jump", String.format(Locale.ROOT, "%.3f", horse.getAttributeValue(Attributes.JUMP_STRENGTH)));
 		return section;
 	}
@@ -206,12 +207,12 @@ public final class LoyaltyDebugHud {
 	/** Gait, speed against target, loyalty limits, gait drops and balking. Only while riding. */
 	private static Section ridingSection(Player player, AbstractHorse horse) {
 		Section section = new Section("Riding");
-		GaitHolder holder = (GaitHolder) horse;
-		Gait gait = holder.horseloyalty$getGait();
+		RideControl holder = ((RideHolder) horse).horseloyalty$ride();
+		Gait gait = holder.gait();
 		double speed = horse.getAttributeValue(Attributes.MOVEMENT_SPEED);
-		double top = Riding.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
-		double push = holder.horseloyalty$getGallopPush().extra();
-		double target = Riding.gaitSpeed(gait, speed, horse, player) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND * (1 + push);
+		double top = RideNumbers.baseSpeed(Gait.GALLOP, speed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND;
+		double push = holder.push().extra();
+		double target = RideNumbers.gaitSpeed(gait, speed, horse, player) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND * (1 + push);
 		// Distance actually covered last tick. Not getDeltaMovement(): that is stored after
 		// ground friction is applied, so it reads only about 55% of the real speed.
 		double actual = Math.hypot(horse.getX() - horse.xo, horse.getZ() - horse.zo) * 20;
@@ -220,16 +221,16 @@ public final class LoyaltyDebugHud {
 				+ (push > 0 ? String.format(Locale.ROOT, "  push +%.0f%%", push * 100) : ""));
 		section.add("Speed", String.format(Locale.ROOT, "%.1f b/s  (target %.1f, %.0f%% of max)",
 				actual, target, target / top * 100));
-		float turnRate = Riding.turnRate(horse, player);
+		float turnRate = RideNumbers.turnRate(horse, player);
 		section.add("Limits", String.format(Locale.ROOT, "top %.0f%%, turn %.1f deg/t",
-				Riding.topSpeedShare(horse, player) * 100, turnRate));
+				RideNumbers.topSpeedShare(horse, player) * 100, turnRate));
 
-		int dropTicks = Riding.gaitDropTicks(horse, player);
-		int dropIn = Math.max(0, dropTicks - holder.horseloyalty$getGaitDropTimer());
+		int dropTicks = RideNumbers.gaitDropTicks(horse, player);
+		int dropIn = Math.max(0, dropTicks - holder.gaitDropTimer());
 		section.add("Gait drop", String.format(Locale.ROOT, "%.0f%% every %s, next roll in %s",
-				Riding.gaitDropChance(horse, player) * 100, seconds(dropTicks), seconds(dropIn)));
+				RideNumbers.gaitDropChance(horse, player) * 100, seconds(dropTicks), seconds(dropIn)));
 
-		int raiseCooldown = holder.horseloyalty$getRaiseCooldown();
+		int raiseCooldown = holder.raiseCooldown(horse);
 		double balk = GaitRaise.failChance(horse, player, gait) * 100;
 		if (raiseCooldown > 0) {
 			section.add("Balk", "unsettled for " + seconds(raiseCooldown + 19), WARN_COLOR);
