@@ -4,6 +4,7 @@ import com.xziggsx.horseloyalty.riding.GaitSync;
 import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
 import com.xziggsx.horseloyalty.riding.api.GaitEvent;
+import com.xziggsx.horseloyalty.riding.client.sense.Senses;
 import com.xziggsx.horseloyalty.riding.mixin.HorseSoundInvoker;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -18,7 +19,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * One horse's ride, on the rider's client: gaits (W/S taps), backing up, gait speeds, boat-style
  * A/D steering, sidestepping (sprint key + A/D), pushing at a gallop (W taps), the horse refusing
- * to go faster, random gait drops, and spooked horses bolting. The gait is sent to the server
+ * to go faster, random gait drops, spooked horses bolting, and the horse following a path by itself
+ * (see {@link Senses}). The gait is sent to the server
  * whenever it changes (see {@link GaitSync}), so other players can see and hear it.
  * <p>
  * One of these lives on every horse (see {@code HorseRidingMixin}, which only forwards here).
@@ -54,6 +56,8 @@ public final class RideControl {
 	private final GallopPush push = new GallopPush();
 	/** Whether the horse goes along with more speed, and its cooldown after refusing. Kept between rides. */
 	private final GaitRaise raise = new GaitRaise();
+	/** What the horse senses ahead and does about it on its own, such as following a path. */
+	private final Senses senses = new Senses();
 
 	/** The current gait. */
 	public Gait gait() {
@@ -68,6 +72,11 @@ public final class RideControl {
 	/** The gallop push, to read how hard the horse is pushed. */
 	public GallopPush push() {
 		return push;
+	}
+
+	/** The horse's senses, to read what it makes of the way ahead. */
+	public Senses senses() {
+		return senses;
 	}
 
 	/** Ticks until the horse will go faster again after refusing, 0 if it will now. */
@@ -90,6 +99,7 @@ public final class RideControl {
 		sentGait = null;
 		pendingEvent = null;
 		push.reset();
+		senses.reset();
 	}
 
 	/**
@@ -143,10 +153,11 @@ public final class RideControl {
 			}
 			// Shifting gait shows the rider is paying attention, so the drop timer restarts.
 			gaitDropTimer = 0;
-		} else if (gait != Gait.HALT && ++gaitDropTimer >= RideNumbers.gaitDropTicks(horse, player)) {
+		} else if (gait != Gait.HALT && ++gaitDropTimer >= RideNumbers.gaitDropTicks(horse, player, senses.path().active())) {
 			// Less loyal horses lose interest sooner and drop a gait on their own, which
-			// also stops riders from holding nothing and crossing the map AFK. With a 100%
-			// chance (the level 5 default) this is a fixed timer.
+			// also stops riders from holding nothing and crossing the map AFK. On a path the
+			// horse follows by itself the timer is longer, to reward building roads. With a
+			// 100% chance (the level 5 default) this is a fixed timer.
 			gaitDropTimer = 0;
 			if (horse.getRandom().nextDouble() < RideNumbers.gaitDropChance(horse, player)) {
 				gait = gait.down();
@@ -190,13 +201,21 @@ public final class RideControl {
 	/**
 	 * Boat-style steering. Vanilla points the horse wherever the rider looks; instead A and D turn it,
 	 * easing up to a fixed rate set by the rider's loyalty, and the rider's view turns along with it
-	 * (see {@link #takeRiderTurn}). The rider can still look around freely with the mouse.
+	 * (see {@link #takeRiderTurn}). The rider can still look around freely with the mouse. With no A
+	 * or D held, the horse's senses may steer it, such as along a path.
 	 */
 	public Vec2 rotation(AbstractHorse horse, LivingEntity rider) {
 		// Turn rate depends on loyalty. Only players steer horses, see getControllingPassenger.
 		float maxRate = rider instanceof Player player ? RideNumbers.turnRate(horse, player) : RideNumbers.defaultTurnRate();
-		float target = RideMath.turnTarget(boltTicks > 0, boltTurn, sidestepping, rider.xxa, maxRate);
-		turnSpeed = RideMath.easeTurn(turnSpeed, target, RideNumbers.turnEase(maxRate));
+		boolean bolting = boltTicks > 0;
+		boolean steering = rider.xxa != 0;
+		senses.tick(horse, gait, !bolting && !sidestepping && !reversing && gait != Gait.HALT, steering);
+		float senseTarget = senses.turnTarget();
+		float target = RideMath.turnTarget(bolting, boltTurn, sidestepping, rider.xxa, maxRate, senseTarget);
+		// A turn the horse makes by itself eases at its own rate, so loyalty doesn't creep in through the easing.
+		boolean sensed = !bolting && !sidestepping && !steering && !Float.isNaN(senseTarget);
+		float easeRate = sensed ? RideNumbers.pathTurnRate(gait) : maxRate;
+		turnSpeed = RideMath.easeTurn(turnSpeed, target, RideNumbers.turnEase(easeRate));
 		pendingRiderTurn += turnSpeed;
 		return new Vec2(rider.getXRot() * 0.5F, horse.getYRot() + turnSpeed);
 	}

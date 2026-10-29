@@ -21,6 +21,9 @@ Horses, donkeys, mules and skeleton/zombie horses are affected; llamas and camel
 - **Sidestepping**: hold sprint (Ctrl) with A or D and the horse moves at an angle (45° by
   default) without turning; from a halt it steps straight sideways.
 - **Boat-style steering**: A and D turn at a fixed rate, so faster gaits make wider turns.
+- **Path following**: on a dirt path (the `horseloyalty:path_blocks` tag), let go of A and D and the
+  horse steers itself along the bends. It never changes gait, and while it follows a path gait drops
+  come half as often, so roads you build take you further hands-free.
 - **Loyalty matters**: it scales the speed of every gait, sets the turn rate, and sets how often the
   horse drops a gait on its own (level 5: a fixed 10 minute timer without input, against AFK riding).
 - **Hunger**: a tamed horse that isn't fed or left to graze on grass, mycelium or podzol

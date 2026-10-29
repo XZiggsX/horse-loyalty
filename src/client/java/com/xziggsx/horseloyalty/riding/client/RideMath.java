@@ -23,10 +23,26 @@ public final class RideMath {
 	 * lowers the yaw.
 	 */
 	public static float turnTarget(boolean bolting, int boltTurn, boolean sidestepping, float sideKey, float maxRate) {
+		return turnTarget(bolting, boltTurn, sidestepping, sideKey, maxRate, Float.NaN);
+	}
+
+	/**
+	 * As above, but with no A or D held the horse may steer itself: {@code senseTarget} is what its
+	 * senses aim for (see {@code Senses}), or NaN to keep going straight. Bolting, sidestepping and
+	 * the rider's keys all come first.
+	 */
+	public static float turnTarget(boolean bolting, int boltTurn, boolean sidestepping, float sideKey, float maxRate,
+			float senseTarget) {
 		if (bolting) {
 			return boltTurn * maxRate;
 		}
-		return sidestepping ? 0 : Math.signum(sideKey) * -maxRate;
+		if (sidestepping) {
+			return 0;
+		}
+		if (sideKey != 0 || Float.isNaN(senseTarget)) {
+			return Math.signum(sideKey) * -maxRate;
+		}
+		return senseTarget;
 	}
 
 	/** The forward input for the horse: -1 backing up, 0 at a halt, 1 at any other gait. */

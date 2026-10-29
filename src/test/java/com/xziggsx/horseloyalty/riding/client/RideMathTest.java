@@ -29,6 +29,17 @@ class RideMathTest {
 	}
 
 	@Test
+	void senseTargetOnlyWithoutKeys() {
+		// No keys: the horse's own target, or straight on without one.
+		assertEquals(2.5, RideMath.turnTarget(false, 0, false, 0, 5, 2.5f), 1e-6);
+		assertEquals(0, RideMath.turnTarget(false, 0, false, 0, 5, Float.NaN), 1e-6);
+		// The rider's keys, a sidestep and a bolt all come first.
+		assertEquals(-5, RideMath.turnTarget(false, 0, false, 1, 5, 2.5f), 1e-6);
+		assertEquals(0, RideMath.turnTarget(false, 0, true, 0, 5, 2.5f), 1e-6);
+		assertEquals(-5, RideMath.turnTarget(true, -1, false, 0, 5, 2.5f), 1e-6);
+	}
+
+	@Test
 	void inputs() {
 		assertEquals(-1, RideMath.forwardInput(true, true));
 		assertEquals(0, RideMath.forwardInput(false, true));

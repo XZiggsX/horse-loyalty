@@ -23,6 +23,8 @@ public final class HorseTags {
 	public static final TagKey<Item> SUMMONING_HORNS = TagKey.create(Registries.ITEM, id("summoning_horns"));
 	/** Blocks an unridden horse grazes on, which keeps it fed. By default grass, mycelium and podzol. */
 	public static final TagKey<Block> GRAZING_BLOCKS = TagKey.create(Registries.BLOCK, id("grazing_blocks"));
+	/** Blocks a ridden horse follows as a path, steering itself along them. By default dirt paths. */
+	public static final TagKey<Block> PATH_BLOCKS = TagKey.create(Registries.BLOCK, id("path_blocks"));
 
 	private HorseTags() {
 	}

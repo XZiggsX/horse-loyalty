@@ -1,5 +1,6 @@
 package com.xziggsx.horseloyalty.riding.client;
 
+import com.xziggsx.horseloyalty.core.HorseUnits;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
 import com.xziggsx.horseloyalty.riding.RidingSettings;
 import com.xziggsx.horseloyalty.riding.api.Gait;
@@ -74,6 +75,32 @@ public final class RideNumbers {
 	public static int gaitDropTicks(AbstractHorse horse, Player player) {
 		int ticks = RidingSettings.get().gaitDropTicks(Bond.get().level(horse, player));
 		return RideModifiers.gaitDropTicks(horse, player, ticks);
+	}
+
+	/**
+	 * As above, stretched while the horse follows a path on its own, so riders who build roads can
+	 * travel further without touching the keys.
+	 */
+	public static int gaitDropTicks(AbstractHorse horse, Player player, boolean followingPath) {
+		int ticks = gaitDropTicks(horse, player);
+		return followingPath ? (int) Math.round(ticks * RidingSettings.get().pathGaitDropTimeFactor()) : ticks;
+	}
+
+	/**
+	 * Fastest turn, in degrees per tick, while the horse follows a path at this gait. The same for
+	 * every horse and rider: loyalty doesn't change how well a horse follows a path.
+	 */
+	public static float pathTurnRate(Gait gait) {
+		return RidingSettings.get().pathTurnDegreesPerTick(gait);
+	}
+
+	/**
+	 * Blocks per tick a gait covers on flat ground, before the loyalty cap: how far ahead the horse's
+	 * senses look depends on it, and that shouldn't depend on loyalty either.
+	 * @param horseSpeed the horse's movement speed attribute
+	 */
+	public static double blocksPerTick(Gait gait, double horseSpeed) {
+		return baseSpeed(gait, horseSpeed) * HorseUnits.SPEED_TO_BLOCKS_PER_SECOND / 20;
 	}
 
 	/**

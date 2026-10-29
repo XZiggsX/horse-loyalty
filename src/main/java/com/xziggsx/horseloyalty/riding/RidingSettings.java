@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * The riding section of the config: gait speeds, steering, and per loyalty level the top speed,
- * turn rate and gait drops, plus gait raise and the gallop push. Synced: riding runs on the
+ * turn rate and gait drops, plus gait raise, the gallop push and path following. Synced: riding runs on the
  * rider's client, so it rides by the server's numbers. Field names are the JSON keys.
  */
 @Synced
@@ -40,6 +40,9 @@ public final class RidingSettings implements SettingsSection {
 	@Doc("Tap W again at a gallop to push the horse faster.")
 	private GallopPushSettings gallopPush = new GallopPushSettings();
 
+	@Doc("On a path, with no A or D held, the horse steers itself along it. It never changes gait, and it's the same for every horse and rider.")
+	private PathFollowingSettings pathFollowing = new PathFollowingSettings();
+
 	private transient double[] gaitShares;
 	private transient double[] topSpeedShare;
 	private transient float[] turnDegrees;
@@ -47,6 +50,9 @@ public final class RidingSettings implements SettingsSection {
 	private transient int[] gaitDropTicks;
 	/** Fail chance (0.06 = 6%) by gait index (0 halt to 4 gallop), then loyalty level 0 to 5. */
 	private transient double[][] gaitRaiseFailChance;
+	/** Path following's cone width and turn rate by gait index (0 halt to 4 gallop). Halt mirrors walk. */
+	private transient double[] pathWidth;
+	private transient float[] pathTurn;
 
 	/** Each gait's share of top speed, in percent. */
 	public static final class GaitSpeeds {
@@ -118,6 +124,71 @@ public final class RidingSettings implements SettingsSection {
 		@Range(min = 0, max = 100)
 		@Doc("Volume of the hard breathing while pushed, 0 for none.")
 		private double soundVolumePercent = 40;
+	}
+
+	/** Following paths. */
+	public static final class PathFollowingSettings {
+		@Doc("Whether ridden horses follow paths: blocks in the horseloyalty:path_blocks tag, by default dirt paths.")
+		private boolean enabled = true;
+
+		@Range(min = 100, max = 1000)
+		@Doc("While following a path, the time between gait drop rolls is this much of normal. 100 for no change.")
+		private double gaitDropTimePercent = 200;
+
+		@Range(min = 0.25, max = 3)
+		@Doc("How far ahead the horse looks, in seconds of travel at its gait (between 4 and 14 blocks).")
+		private double lookAheadSeconds = 1;
+
+		@Range(min = 0, max = 5)
+		@Doc("After you steer with A or D, the horse waits this long before following the path again.")
+		private double graceSeconds = 1;
+
+		@Range(min = 0, max = 2)
+		@Doc("How long the horse may be off the path, such as cutting a corner, before it stops following.")
+		private double offPathSeconds = 0.5;
+
+		@Range(min = 0, max = 15)
+		@Doc("Path less than this many degrees off the heading gives no turn, so the horse doesn't weave on a straight path.")
+		private double deadZoneDegrees = 3;
+
+		@Range(min = 0, max = 50)
+		@Doc("Path on both sides above this share, with little straight ahead, counts as a fork: the horse keeps its heading and you choose.")
+		private double junctionPercent = 35;
+
+		@Range(min = 0, max = 3)
+		@Doc("How hard the horse turns toward the path. At 1 it follows a smooth curve onto the path ahead; higher turns sooner and sharper.")
+		private double gain = 1;
+
+		@Range(min = 0, max = 2)
+		@Doc("How long a change of turn takes to settle in. Higher is smoother but slower to react; 0 for none.")
+		private double smoothingSeconds = 0.3;
+
+		@Doc("Per gait: widthBlocks is how far either side the horse looks at the far end, turnDegreesPerTick the fastest it turns to follow.")
+		private PathGaits byGait = new PathGaits();
+	}
+
+	/** Path following's numbers per gait. */
+	public static final class PathGaits {
+		private PathGait walk = new PathGait(2, 6);
+		private PathGait trot = new PathGait(2, 5);
+		private PathGait canter = new PathGait(2.5, 4);
+		private PathGait gallop = new PathGait(3, 3);
+	}
+
+	/** Path following's numbers for one gait. */
+	public static final class PathGait {
+		@Range(min = 1, max = 6)
+		private double widthBlocks = 2;
+		@Range(min = 0.5, max = 45)
+		private double turnDegreesPerTick = 5;
+
+		private PathGait() {
+		}
+
+		PathGait(double widthBlocks, double turnDegreesPerTick) {
+			this.widthBlocks = widthBlocks;
+			this.turnDegreesPerTick = turnDegreesPerTick;
+		}
 	}
 
 	/** Levels 1 to 4 roll every 45 s; level 5 never drops by chance, only on a fixed 10 minute timer. */
@@ -194,6 +265,15 @@ public final class RidingSettings implements SettingsSection {
 				gaitRaiseFailChance[gait.ordinal()][level] = percent == null ? 0 : Math.clamp(percent, 0, 100) / 100.0;
 			}
 			gaitRaiseFailChance[gait.ordinal()][0] = gaitRaiseFailChance[gait.ordinal()][1];
+		}
+
+		PathGaits paths = pathFollowing.byGait;
+		PathGait[] byGait = {paths.walk, paths.walk, paths.trot, paths.canter, paths.gallop};
+		pathWidth = new double[byGait.length];
+		pathTurn = new float[byGait.length];
+		for (int gait = 0; gait < byGait.length; gait++) {
+			pathWidth[gait] = byGait[gait].widthBlocks;
+			pathTurn[gait] = (float) byGait[gait].turnDegreesPerTick;
 		}
 	}
 
@@ -289,5 +369,60 @@ public final class RidingSettings implements SettingsSection {
 	/** Volume (0.4 = 40%) of the straining breaths while pushing. 0 for none. */
 	public float gallopPushSoundVolume() {
 		return (float) (gallopPush.soundVolumePercent / 100.0);
+	}
+
+	/** Whether ridden horses follow paths. */
+	public boolean pathFollowingEnabled() {
+		return pathFollowing.enabled;
+	}
+
+	/** What the time between gait drop rolls is multiplied by while following a path (2 = twice as long). */
+	public double pathGaitDropTimeFactor() {
+		return pathFollowing.gaitDropTimePercent / 100.0;
+	}
+
+	/** Ticks of travel the cone looks ahead. */
+	public int pathLookAheadTicks() {
+		return (int) Math.round(pathFollowing.lookAheadSeconds * 20);
+	}
+
+	/** Ticks after A or D before the horse follows the path again. */
+	public int pathGraceTicks() {
+		return (int) Math.round(pathFollowing.graceSeconds * 20);
+	}
+
+	/** Ticks the horse may be off the path before it stops following. */
+	public int pathOffPathTicks() {
+		return (int) Math.round(pathFollowing.offPathSeconds * 20);
+	}
+
+	/** Errors smaller than this many degrees give no turn. */
+	public double pathDeadZoneDegrees() {
+		return pathFollowing.deadZoneDegrees;
+	}
+
+	/** Share (0.35 = 35%) of the far path weight on each side that makes a fork. */
+	public double pathJunctionShare() {
+		return pathFollowing.junctionPercent / 100.0;
+	}
+
+	/** How hard the horse turns toward the path: 1 follows the smooth curve onto it exactly. */
+	public double pathGain() {
+		return pathFollowing.gain;
+	}
+
+	/** Share (0 to 1) of the way the turn moves toward its new target each tick. 1 for no smoothing. */
+	public double pathSmoothingShare() {
+		return 1 / (1 + pathFollowing.smoothingSeconds * 20);
+	}
+
+	/** Blocks either side of the heading the cone reaches at its far end, at this gait. */
+	public double pathWidthBlocks(Gait gait) {
+		return pathWidth[gait.ordinal()];
+	}
+
+	/** Fastest turn while following a path at this gait, in degrees per tick. */
+	public float pathTurnDegreesPerTick(Gait gait) {
+		return pathTurn[gait.ordinal()];
 	}
 }
