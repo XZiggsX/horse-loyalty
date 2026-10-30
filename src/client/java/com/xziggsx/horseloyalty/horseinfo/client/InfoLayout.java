@@ -8,7 +8,7 @@ package com.xziggsx.horseloyalty.horseinfo.client;
 public final class InfoLayout {
 	/** The info window's size when the screen has room; vanilla's horse window is 176 × 166. */
 	public static final int PREFERRED_WIDTH = 256;
-	public static final int PREFERRED_HEIGHT = 222;
+	public static final int PREFERRED_HEIGHT = 232;
 	public static final int VANILLA_WIDTH = 176;
 	public static final int VANILLA_HEIGHT = 166;
 
@@ -24,7 +24,7 @@ public final class InfoLayout {
 	public static final int LABEL_WIDTH = 42;
 
 	static final int MODEL_SIZE = 54;
-	static final int SIDE_HEIGHT = 64;
+	static final int SIDE_HEIGHT = 74;
 	static final int LOOKS_HEIGHT = 22;
 	static final int GAP = 4;
 
@@ -54,7 +54,7 @@ public final class InfoLayout {
 	 * Every part of the info view.
 	 *
 	 * @param model      the black box the horse is drawn in
-	 * @param side       right of the model: header, stats and parents, top to bottom
+	 * @param side       right of the model: header, stats, parents and tastes, top to bottom
 	 * @param separatorY the line between the top part and the looks and genes
 	 * @param looks      the coat and markings; zero height for donkeys and mules
 	 * @param genes      the gene table, which scrolls when it doesn't fit

@@ -52,6 +52,9 @@ public final class Hunger {
 		if (!horse.isTamed() || !HorseScope.inScope(horse)) {
 			return;
 		}
+		if (config.preferences()) {
+			Tastes.refresh(horse);
+		}
 		long now = level.getGameTime();
 		State state = horse.getAttached(STATE);
 		if (state == null) {

@@ -10,7 +10,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param feeds       times this player has fed it (with a cooldown, see {@link LoyaltySettings})
  * @param rideTicks   ticks this player has spent riding it while it was moving
  * @param lastFedTick game time of the last counted feed, 0 if never fed
- * @param lostPoints  points lost to hunger (see {@code Hunger}). Never more than the points earned,
+ * @param lostPoints  points lost to hunger or disliked food (see {@code Hunger}). Never more than the points earned,
  *                    so a neglected horse bottoms out at level 1 instead of building up a debt.
  * @param bonusPoints points given outright, such as a bred foal's head start (see {@code Family})
  */
@@ -35,7 +35,7 @@ public record LoyaltyData(int feeds, int rideTicks, long lastFedTick, int lostPo
 		return new LoyaltyData(feeds, rideTicks + 1, lastFedTick, lostPoints, bonusPoints);
 	}
 
-	/** A copy that has lost {@code points} more to hunger, capped so points never go below 0. */
+	/** A copy that has lost {@code points} more, capped so points never go below 0. */
 	public LoyaltyData withLoss(int points) {
 		return new LoyaltyData(feeds, rideTicks, lastFedTick, Math.min(lostPoints + points, earnedPoints()), bonusPoints);
 	}
@@ -62,7 +62,7 @@ public record LoyaltyData(int feeds, int rideTicks, long lastFedTick, int lostPo
 		return feeds * config.pointsPerFeed() + rideTicks / config.ridingTicksPerPoint() + bonusPoints;
 	}
 
-	/** Current points: earned minus lost to hunger. */
+	/** Current points: earned minus lost. */
 	public int points() {
 		return Math.max(0, earnedPoints() - lostPoints);
 	}

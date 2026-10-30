@@ -11,6 +11,7 @@ import com.xziggsx.horseloyalty.horseinfo.client.section.InfoSection;
 import com.xziggsx.horseloyalty.horseinfo.client.section.LooksSection;
 import com.xziggsx.horseloyalty.horseinfo.client.section.ParentsSection;
 import com.xziggsx.horseloyalty.horseinfo.client.section.StatsSection;
+import com.xziggsx.horseloyalty.horseinfo.client.section.TastesSection;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -30,7 +31,8 @@ public final class HorseInfoPanel {
 	private static final int MODEL_SCALE = 17;
 
 	/** Beside the horse, top to bottom. */
-	private static final List<InfoSection> SIDE = List.of(new HeaderSection(), new StatsSection(), new ParentsSection());
+	private static final List<InfoSection> SIDE = List.of(new HeaderSection(), new StatsSection(), new ParentsSection(),
+			new TastesSection());
 	private static final LooksSection LOOKS = new LooksSection();
 	private static final GenesSection GENES = new GenesSection();
 

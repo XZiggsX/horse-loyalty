@@ -54,6 +54,14 @@ public final class HorseEvents {
 				return false;
 			});
 
+	/** Server: a tamed horse refused food or a treat from this player's hand, because nothing wanted it to eat. */
+	public static final Event<Refused> REFUSED = EventFactory.createArrayBacked(Refused.class,
+			listeners -> (horse, player, stack) -> {
+				for (Refused listener : listeners) {
+					listener.refused(horse, player, stack);
+				}
+			});
+
 	/** Server: a tamed horse ate from this player's hand. */
 	public static final Event<Ate> ATE = EventFactory.createArrayBacked(Ate.class,
 			listeners -> (horse, player, stack) -> {
@@ -109,6 +117,12 @@ public final class HorseEvents {
 		boolean wantsTreat(AbstractHorse horse, Player player, ItemStack stack);
 	}
 
+	/** A refusal listener. */
+	@FunctionalInterface
+	public interface Refused {
+		void refused(AbstractHorse horse, Player player, ItemStack stack);
+	}
+
 	/** An eating listener. */
 	@FunctionalInterface
 	public interface Ate {
@@ -155,6 +169,11 @@ public final class HorseEvents {
 		});
 		ListenerGates.register(WANTS_TREAT, (listener, isOn) -> (horse, player, stack) ->
 				isOn.getAsBoolean() && listener.wantsTreat(horse, player, stack));
+		ListenerGates.register(REFUSED, (listener, isOn) -> (horse, player, stack) -> {
+			if (isOn.getAsBoolean()) {
+				listener.refused(horse, player, stack);
+			}
+		});
 		ListenerGates.register(ATE, (listener, isOn) -> (horse, player, stack) -> {
 			if (isOn.getAsBoolean()) {
 				listener.ate(horse, player, stack);

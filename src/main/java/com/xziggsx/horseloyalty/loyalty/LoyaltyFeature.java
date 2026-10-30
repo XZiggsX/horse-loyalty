@@ -7,6 +7,7 @@ import com.xziggsx.horseloyalty.core.feature.Feature;
 import com.xziggsx.horseloyalty.core.feature.FeatureContext;
 import com.xziggsx.horseloyalty.horseinfo.api.InfoProvider;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
+import com.xziggsx.horseloyalty.loyalty.api.FeedModifiers;
 
 /** Loyalty: levels 0 to 5 per rider, earned by feeding and riding, see {@link Loyalty}. */
 public final class LoyaltyFeature implements Feature {
@@ -33,9 +34,12 @@ public final class LoyaltyFeature implements Feature {
 		context.provide(Bond.KEY, new LoyaltyBond());
 		// A tamed horse at full health also takes a treat once the feeder's cooldown has passed.
 		context.on(HorseEvents.WANTS_TREAT, (horse, player, stack) -> Loyalty.canCountFeed(horse, player));
+		// Refused within the cooldown: the horse snorts and the feeder sees how long until it's hungry again.
+		context.on(HorseEvents.REFUSED, (horse, player, stack) -> FeedRefusal.play(horse, player));
 		context.on(HorseEvents.ATE, (horse, player, stack) -> {
 			if (Loyalty.canCountFeed(horse, player)) {
-				Loyalty.recordFeed(horse, player);
+				int base = LoyaltySettings.get().pointsPerFeed();
+				Loyalty.recordFeed(horse, player, FeedModifiers.feedPoints(horse, player, stack, base));
 			}
 		});
 		context.on(HorseEvents.SERVER_TICK, RideTicks::tick);

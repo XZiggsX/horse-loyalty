@@ -4,8 +4,10 @@ import com.xziggsx.horseloyalty.core.feature.FeatureSwitch;
 import com.xziggsx.horseloyalty.core.feature.Features;
 import com.xziggsx.horseloyalty.foals.Family;
 import com.xziggsx.horseloyalty.genetics.world.GeneticsData;
+import com.xziggsx.horseloyalty.hunger.FeedableFoods;
 import com.xziggsx.horseloyalty.hunger.Hunger;
 import com.xziggsx.horseloyalty.hunger.HungerSettings;
+import com.xziggsx.horseloyalty.hunger.Tastes;
 import com.xziggsx.horseloyalty.loyalty.Loyalty;
 import com.xziggsx.horseloyalty.loyalty.LoyaltySettings;
 import com.xziggsx.horseloyalty.loyalty.api.Bond;
@@ -62,18 +64,49 @@ public class HorseLoyaltyGameTests {
 		}
 	}
 
+	/** A mock player whose items get used up: the mock player is always in creative, which never uses them up. */
+	private static ServerPlayer survivalPlayer(GameTestHelper helper) {
+		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		player.getAbilities().instabuild = false;
+		return player;
+	}
+
+	/** Gives the horse these preferences, nothing revealed, so a test doesn't depend on the roll. */
+	private static void tastes(AbstractHorse horse, List<String> favorites, List<String> dislikes) {
+		Tastes.set(horse, new Tastes.State(favorites, dislikes, List.of()));
+	}
+
 	/** A tamed horse at full health takes a treat when the feeder's cooldown has passed, and the feed counts. */
 	@GameTest
 	public void loyaltyFromFeeding(GameTestHelper helper) {
-		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		ServerPlayer player = survivalPlayer(helper);
 		Horse horse = tamedHorse(helper, player);
+		tastes(horse, List.of(), List.of());
 		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT, 4));
 		horse.mobInteract(player, InteractionHand.MAIN_HAND);
 		helper.assertValueEqual(Loyalty.get(horse, player).feeds(), 1, "feeds after one treat");
 		helper.assertValueEqual(Loyalty.get(horse, player).points(), LoyaltySettings.get().pointsPerFeed(), "points after one treat");
-		// The cooldown means the second treat right away doesn't count.
+		// Full, and within the feeder's cooldown: the horse refuses the second treat and the wheat stays.
 		horse.mobInteract(player, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(player.getMainHandItem().getCount(), 3, "the second wheat was refused");
 		helper.assertValueEqual(Loyalty.get(horse, player).feeds(), 1, "feeds after a second treat within the cooldown");
+		helper.succeed();
+	}
+
+	/** A hungry horse eats within the feeder's cooldown, and the meal resets its hunger but doesn't count. */
+	@GameTest
+	public void hungryHorseEatsWithinTheCooldown(GameTestHelper helper) {
+		ServerPlayer player = survivalPlayer(helper);
+		Horse horse = tamedHorse(helper, player);
+		tastes(horse, List.of(), List.of());
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT, 4));
+		horse.mobInteract(player, InteractionHand.MAIN_HAND);
+		Hunger.starve(horse);
+		helper.assertTrue(Hunger.isHungry(horse), "hungry before the second treat");
+		horse.mobInteract(player, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(player.getMainHandItem().getCount(), 2, "the hungry horse ate the second wheat");
+		helper.assertFalse(Hunger.isHungry(horse), "fed again");
+		helper.assertValueEqual(Loyalty.get(horse, player).feeds(), 1, "the second treat doesn't count within the cooldown");
 		helper.succeed();
 	}
 
@@ -266,5 +299,78 @@ public class HorseLoyaltyGameTests {
 			helper.assertValueEqual(player.getMainHandItem().getCount(), 4, "the wheat wasn't eaten");
 		});
 		helper.succeed();
+	}
+
+	/** A favorite food is worth the multiplier, and feeding it reveals it on the info screen. */
+	@GameTest
+	public void favoriteFoodDoublesLoyalty(GameTestHelper helper) {
+		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		Horse horse = tamedHorse(helper, player);
+		tastes(horse, List.of("minecraft:wheat"), List.of("minecraft:apple"));
+		helper.assertValueEqual(horse.getAttached(Tastes.KNOWN).hiddenLoves(), 1, "the favorite starts hidden");
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT, 4));
+		horse.mobInteract(player, InteractionHand.MAIN_HAND);
+		int expected = (int) Math.round(LoyaltySettings.get().pointsPerFeed() * HungerSettings.get().favoriteLoyaltyMultiplier());
+		helper.assertValueEqual(Loyalty.get(horse, player).points(), expected, "points after a favorite");
+		Tastes.Known known = horse.getAttached(Tastes.KNOWN);
+		helper.assertValueEqual(known.loves(), List.of("minecraft:wheat"), "the favorite is revealed");
+		helper.assertValueEqual(known.hiddenDislikes(), 1, "the dislike stays hidden");
+		helper.succeed();
+	}
+
+	/** A disliked food costs only the feeder, and never takes anyone below level 1. */
+	@GameTest
+	public void dislikedFoodCostsTheFeeder(GameTestHelper helper) {
+		ServerPlayer feeder = survivalPlayer(helper);
+		ServerPlayer other = helper.makeMockServerPlayerInLevel();
+		Horse horse = tamedHorse(helper, feeder);
+		tastes(horse, List.of(), List.of("minecraft:wheat"));
+		Loyalty.setPoints(horse, feeder, 10);
+		Loyalty.setPoints(horse, other, 10);
+		feeder.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT, 4));
+		horse.mobInteract(feeder, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(Loyalty.get(horse, feeder).points(), 10 - HungerSettings.get().dislikeLoyaltyLoss(), "feeder's points");
+		helper.assertValueEqual(Loyalty.get(horse, other).points(), 10, "the other rider keeps theirs");
+		helper.assertValueEqual(feeder.getMainHandItem().getCount(), 3, "the horse still ate it");
+
+		ServerPlayer stranger = helper.makeMockServerPlayerInLevel();
+		stranger.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT, 4));
+		horse.mobInteract(stranger, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(Loyalty.get(horse, stranger).points(), 0, "no debt below 0 points");
+		helper.assertValueEqual(Loyalty.level(horse, stranger), 1, "still level 1");
+		helper.succeed();
+	}
+
+	/** A food from the config list that isn't horse food in vanilla is eaten; items used on horses never are. */
+	@GameTest
+	public void feedableFoodsFromTheConfig(GameTestHelper helper) {
+		ServerPlayer player = survivalPlayer(helper);
+		Horse horse = tamedHorse(helper, player);
+		tastes(horse, List.of(), List.of());
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.CARROT, 4));
+		horse.mobInteract(player, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(player.getMainHandItem().getCount(), 3, "the carrot was eaten");
+		helper.assertValueEqual(Loyalty.get(horse, player).feeds(), 1, "the carrot counts as a feed");
+		helper.assertTrue(FeedableFoods.isFeedable(new ItemStack(Items.CARROT)), "carrots are feedable by default");
+		helper.assertFalse(FeedableFoods.isFeedable(new ItemStack(Items.SADDLE)), "a saddle is never feedable");
+		helper.assertFalse(FeedableFoods.isFeedable(new ItemStack(Items.STONE_BRICKS)), "stone bricks aren't in the default list");
+		helper.succeed();
+	}
+
+	/** A tamed horse rolls its preferences on its own, from the feedable foods, and keeps them. */
+	@GameTest(maxTicks = 100)
+	public void preferencesAreRolledOnce(GameTestHelper helper) {
+		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		Horse horse = tamedHorse(helper, player);
+		helper.succeedWhen(() -> {
+			Tastes.State state = horse.getAttached(Tastes.STATE);
+			helper.assertTrue(state != null, "preferences are rolled");
+			HungerSettings settings = HungerSettings.get();
+			int favorites = state.favorites().size();
+			helper.assertTrue(favorites >= settings.minFavorites() && favorites <= settings.maxFavorites(), "favorites in range: " + favorites);
+			helper.assertValueEqual(state.dislikes().size(), settings.dislikes(), "dislikes");
+			helper.assertTrue(state.favorites().stream().allMatch(FeedableFoods::has), "favorites come from the list");
+			helper.assertValueEqual(Tastes.get(horse), state, "asking again doesn't re-roll");
+		});
 	}
 }

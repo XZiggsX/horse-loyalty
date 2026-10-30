@@ -107,9 +107,39 @@ public final class Loyalty {
 		return last == 0L || horse.level().getGameTime() - last >= LoyaltySettings.get().feedCooldownTicks();
 	}
 
-	/** Adds one counted feed for this player. Server side. */
+	/** Ticks until this player's next feed counts for loyalty, 0 once the cooldown has passed. */
+	public static long feedCooldownLeft(AbstractHorse horse, Player player) {
+		long last = get(horse, player).lastFedTick();
+		if (last == 0L) {
+			return 0L;
+		}
+		return Math.max(0L, last + LoyaltySettings.get().feedCooldownTicks() - horse.level().getGameTime());
+	}
+
+	/** Adds one counted feed for this player, worth the usual points per feed. Server side. */
 	public static void recordFeed(AbstractHorse horse, Player player) {
-		update(horse, player, get(horse, player).withFeed(horse.level().getGameTime()), true);
+		recordFeed(horse, player, LoyaltySettings.get().pointsPerFeed());
+	}
+
+	/**
+	 * Adds one counted feed for this player, worth {@code points} (see {@code FeedModifiers}). More
+	 * than the usual points per feed are kept as bonus points; fewer, or a negative number, as a
+	 * loss, which never takes the player below level 1. Server side.
+	 */
+	public static void recordFeed(AbstractHorse horse, Player player, int points) {
+		int before = level(horse, player);
+		LoyaltyData next = get(horse, player).withFeed(horse.level().getGameTime());
+		int extra = points - LoyaltySettings.get().pointsPerFeed();
+		if (extra > 0) {
+			next = next.withBonus(extra);
+		} else if (extra < 0) {
+			next = next.withLoss(-extra);
+		}
+		update(horse, player, next, true);
+		int after = level(horse, player);
+		if (after < before && player instanceof ServerPlayer serverPlayer) {
+			notifyChange(horse, serverPlayer, after, false);
+		}
 	}
 
 	/** Adds one tick of riding for this player. Server side, called every tick while they ride. */

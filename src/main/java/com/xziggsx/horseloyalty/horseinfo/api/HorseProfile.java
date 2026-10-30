@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
  * @param parents  the parents' names, if recorded
  * @param looks    real names of what the horse shows, such as its coat; empty for donkeys and mules
  * @param genes    one row per gene the horse shows, in trait order
+ * @param tastes   the foods the horse is known to love and dislike
  */
 public record HorseProfile(
 		Shown<Identity> identity,
@@ -27,7 +28,8 @@ public record HorseProfile(
 		Shown<List<StatLine>> stats,
 		Shown<Parents> parents,
 		Shown<List<TraitLine>> looks,
-		Shown<List<GeneRow>> genes) {
+		Shown<List<GeneRow>> genes,
+		Shown<TastesLine> tastes) {
 
 	/**
 	 * @param kind        the kind of horse, such as "Donkey"
@@ -80,6 +82,15 @@ public record HorseProfile(
 	}
 
 	/**
+	 * @param loves          the revealed favorite foods' names
+	 * @param hiddenLoves    favorites nobody has found out yet
+	 * @param dislikes       the revealed disliked foods' names
+	 * @param hiddenDislikes dislikes nobody has found out yet
+	 */
+	public record TastesLine(List<Component> loves, int hiddenLoves, List<Component> dislikes, int hiddenDislikes) {
+	}
+
+	/**
 	 * Collects what each feature adds to a profile. A part nobody adds is off. Built once per
 	 * profile by horse info, which then applies the reveal policy (see {@link #build}).
 	 */
@@ -91,6 +102,7 @@ public record HorseProfile(
 		private Supplier<Parents> parents;
 		private Supplier<List<TraitLine>> looks;
 		private Supplier<List<GeneRow>> genes;
+		private Supplier<TastesLine> tastes;
 
 		/** Starts a profile with what every horse has: its kind and its stats. */
 		public Builder(Component kind, Supplier<List<StatLine>> stats) {
@@ -128,6 +140,12 @@ public record HorseProfile(
 			return this;
 		}
 
+		/** The foods the horse is known to love and dislike. */
+		public Builder tastes(Supplier<TastesLine> value) {
+			tastes = value;
+			return this;
+		}
+
 		/** The profile as this player may see it: parts nobody added are off, the rest go through the policy. */
 		public HorseProfile build(RevealPolicy policy, AbstractHorse horse, Player player) {
 			Supplier<Personality> shownPersonality = personality;
@@ -138,7 +156,8 @@ public record HorseProfile(
 					reveal(policy, InfoTopic.STATS, horse, player, stats),
 					reveal(policy, InfoTopic.PARENTS, horse, player, parents),
 					reveal(policy, InfoTopic.LOOKS, horse, player, looks),
-					reveal(policy, InfoTopic.GENES, horse, player, genes));
+					reveal(policy, InfoTopic.GENES, horse, player, genes),
+					reveal(policy, InfoTopic.TASTES, horse, player, tastes));
 		}
 
 		private static <T> Shown<T> reveal(RevealPolicy policy, InfoTopic topic, AbstractHorse horse, Player player,

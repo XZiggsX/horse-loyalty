@@ -46,7 +46,7 @@ final class LoyaltyInfo implements InfoProvider, DebugSource {
 		section.add("Points", data.points() + (earned >= Loyalty.MAX_LEVEL ? "  (max)"
 				: "  (next at " + settings.pointsNeeded(earned + 1) + ")"));
 		if (data.lostPoints() > 0) {
-			section.add("Lost", data.lostPoints() + " to hunger", DebugTone.WARN);
+			section.add("Lost", data.lostPoints() + " to hunger and dislikes", DebugTone.WARN);
 		}
 		long sinceFed = serverHorse.level().getGameTime() - data.lastFedTick();
 		long cooldown = data.lastFedTick() == 0L ? 0 : Math.max(0, settings.feedCooldownTicks() - sinceFed);

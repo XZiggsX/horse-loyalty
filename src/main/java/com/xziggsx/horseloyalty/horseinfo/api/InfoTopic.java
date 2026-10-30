@@ -13,5 +13,7 @@ public enum InfoTopic {
 	/** The real names of the coat and markings. */
 	LOOKS,
 	/** The gene table. */
-	GENES
+	GENES,
+	/** The foods the horse is known to love and dislike. */
+	TASTES
 }
